@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -23,4 +26,30 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+@layer base {
+  html {
+    @apply text-gray-800;   /* 全体のデフォルト文字色を濃くする */
+  }
+
+  h1, h2, h3, h4, h5, h6, label {
+    @apply text-gray-900 font-bold;   /* 見出しをはっきり濃く */
+  }
+
+  input::placeholder,
+  textarea::placeholder, div {
+    @apply text-gray-400;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply text-gray-900 bg-white border-gray-300;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-1;
+  }
 }

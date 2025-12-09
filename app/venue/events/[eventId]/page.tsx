@@ -9,23 +9,28 @@ import {
   acceptOffer,
   type OfferWithMusician,
 } from '@/lib/api/offers';
+import {
+  getVenueBookingsWithDetails,
+  type VenueBookingWithDetails,
+} from '@/lib/api/bookings';
 
 type PageParams = {
   eventId: string;
 };
 
 export default function EventOffersPage() {
-  const params = useParams<PageParams>();
+  const params = useParams<{ eventId: string }>();
   const router = useRouter();
   const eventId = params.eventId;
 
   const [event, setEvent] = useState<Event | null>(null);
   const [offers, setOffers] = useState<OfferWithMusician[]>([]);
+  const [acceptedCount, setAcceptedCount] = useState<number>(0);
+
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-
   useEffect(() => {
     const load = async () => {
       if (!eventId) return;
@@ -34,12 +39,26 @@ export default function EventOffersPage() {
       setInfo(null);
 
       try {
-        const [ev, ofs] = await Promise.all([
+        // ★ イベント本体・応募一覧・ブッキング一覧をまとめてロード
+        const [ev, ofs, bookings] = await Promise.all([
           getMyEventById(eventId),
           getOffersForEvent(eventId),
+          getVenueBookingsWithDetails(),
         ]);
+
         setEvent(ev);
         setOffers(ofs);
+
+        // ★ acceptedCount を計算
+        if (ev) {
+          const count = bookings.filter(
+            (b) =>
+              b.event_id === ev.id &&
+              (b.status === 'upcoming' || b.status === 'accepted')
+          ).length;
+
+          setAcceptedCount(count);
+        }
       } catch (e: any) {
         console.error(e);
         setError('イベントまたは応募の読み込みに失敗しました。');
@@ -51,6 +70,8 @@ export default function EventOffersPage() {
     void load();
   }, [eventId]);
 
+  const formatTime = (t?: string) => (t ? t.slice(0, 5) : '');
+
   const handleAccept = async (offerId: string) => {
     setError(null);
     setInfo(null);
@@ -60,14 +81,14 @@ export default function EventOffersPage() {
       await acceptOffer(offerId);
       setInfo('この応募を承認しました。ブッキングが作成されました。');
 
-      // 承認後の状態を反映（1件accepted、他はdeclined）
+      {/* 承認後の状態を反映（1件accepted、他はdeclined） */ }
       setOffers((prev) =>
         prev.map((o) =>
           o.id === offerId ? { ...o, status: 'accepted' } : { ...o, status: 'declined' }
         )
       );
 
-      // イベントの状態も matched に更新
+      {/* イベントの状態も matched に更新 */ } 
       if (event) {
         setEvent({ ...event, status: 'matched' });
       }
@@ -78,9 +99,6 @@ export default function EventOffersPage() {
       setActionId(null);
     }
   };
-
-  const formatTime = (t: string | undefined) =>
-    t ? t.slice(0, 5) : '';
 
   if (loading) {
     return (
@@ -136,6 +154,9 @@ export default function EventOffersPage() {
         <div className="text-gray-600">
           {event.event_date} {formatTime(event.start_time)}〜{formatTime(event.end_time)}
         </div>
+        <div className="text-xs text-gray-600 mt-1">
+  最大 {event.max_artists} 組 / 現在 {acceptedCount} 組決定
+</div>{}
       </div>
 
       {error && (
@@ -157,13 +178,13 @@ export default function EventOffersPage() {
         </p>
       ) : (
         <ul className="space-y-3">
-    {offers.map((offer) => {
-  const musician = offer.musicians?.[0] ?? null;
-  const profile = musician?.profiles?.[0] ?? null;
+
+{offers.map((offer) => {
+  const musician = offer.musicians;
+  const profile = musician?.profiles ?? null;
 
   const name =
     profile?.display_name ||
-    // 将来ここに「musicians側にもnameを持たせた」場合などをフォールバック候補にできる
     `(ID: ${musician?.id?.slice(0, 8) ?? 'unknown'})`;
 
   let statusText = '応募中';
@@ -222,6 +243,7 @@ export default function EventOffersPage() {
     </li>
   );
 })}
+
 
         </ul>
       )}

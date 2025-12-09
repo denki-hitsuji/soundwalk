@@ -66,13 +66,14 @@ export default function VenueBookingsPage() {
 
       <ul className="space-y-3">
         {bookings.map((b) => {
-          const ev = b.events?.[0] ?? null;
-          const musician = b.musicians?.[0] ?? null;
-          const profile = musician?.profiles?.[0] ?? null;
+          const ev = b.events;
+          const musician = b.musicians;
+          const profile = musician?.profiles ?? null;
+            console.log(musician);
 
           const musicianName =
-            profile?.display_name ||
-            `(ID: ${musician?.id?.slice(0, 8) ?? 'unknown'})`;
+                profile?.display_name ||
+                `(ID: ${musician?.id?.slice(0, 8) ?? 'unknown'})`;
 
           return (
             <li key={b.id} className="rounded border bg-white px-4 py-3 text-sm shadow-sm">

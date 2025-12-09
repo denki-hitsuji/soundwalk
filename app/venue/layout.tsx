@@ -1,7 +1,7 @@
 // app/venue/layout.tsx
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { BackLink } from '@/app/components/layout/BackLink';
+import { BackLink } from '@/components/layout/BackLink';
 
 export default function VenueLayout({ children }: { children: ReactNode }) {
     return (
@@ -9,9 +9,10 @@ export default function VenueLayout({ children }: { children: ReactNode }) {
             <header className="border-b bg-white">
                 <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
                     <div className="text-sm font-semibold">
+                        <a href="/">
                         MusicMatch <span className="text-gray-400 text-xs">/ 店舗</span>
+                        </a>
                     </div>
-          // app/venue/layout.tsx の nav 部分
                     <nav className="flex gap-4 text-sm">
                         <Link href="/venue" className="hover:underline">
                             ダッシュボード
@@ -31,9 +32,8 @@ export default function VenueLayout({ children }: { children: ReactNode }) {
             </header>
             <div className="border-b bg-white">
                 <div className="mx-auto max-w-5xl px-6 py-2 text-xs">
-                    <a href="/" className="text-blue-600 hover:underline">トップへ戻る</a>
+                    <BackLink />
                 </div>
-                <BackLink/>
             </div>
 
             <main className="mx-auto max-w-5xl px-6 py-6">{children}</main>

@@ -22,6 +22,10 @@ export default function MusicianBookingsPage() {
       } finally {
         setLoading(false);
       }
+        const data = await getMyBookingsWithDetails();
+        console.log('bookings:', data);
+        setBookings(data);
+
     };
 
     void load();
@@ -63,8 +67,8 @@ export default function MusicianBookingsPage() {
 
       <ul className="space-y-3">
         {bookings.map((b) => {
-          const ev = b.events?.[0] ?? null;
-          const venue = b.venues?.[0] ?? null;
+          const ev = b.events;
+          const venue = b.venues;
 
           return (
             <li key={b.id} className="rounded border bg-white px-4 py-3 text-sm shadow-sm">

@@ -25,7 +25,7 @@ export default function Home() {
 
   return (
     <main className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">MusicMatch（仮）</h1>
+      <h1 className="text-2xl font-bold"><a href="/">MusicMatch（仮）</a></h1>
 
       <p className="text-sm text-gray-700">
         ミュージシャンと店舗が、街のあちこちでライブを生み出すためのマッチングツールです。

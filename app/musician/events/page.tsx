@@ -28,6 +28,7 @@ export default function MusicianEventsPage() {
           getMyOffers(),
         ]);
 
+      console.log('getOpenEventsForMusician result:', evs);
         setEvents(evs);
 
         // event_id ごとの応募状態マップを作成
@@ -106,69 +107,35 @@ export default function MusicianEventsPage() {
       )}
 
       <ul className="space-y-3">
-        {events.map((ev) => {
-          const venue = ev.venues?.[0] ?? null;
-          const appliedStatus = appliedMap[ev.id]; // undefinedなら未応募
+        // app/musician/events/page.tsx の一部
 
-          let buttonLabel = '応募する';
-          let disabled = false;
+{events.map((ev) => {
+  const venue = ev.venues;
 
-          if (appliedStatus === 'pending') {
-            buttonLabel = '応募済み（返信待ち）';
-            disabled = true;
-          } else if (appliedStatus === 'accepted') {
-            buttonLabel = '承認済み';
-            disabled = true;
-          } else if (appliedStatus === 'declined') {
-            buttonLabel = '不採用（再応募不可）';
-            disabled = true;
-          }
+  return (
+    <li key={ev.id} className="rounded border bg-white px-4 py-3 text-sm shadow-sm">
+      <div className="flex items-center justify-between mb-1">
+        <div className="font-medium">{ev.title}</div>
+        <span className="text-xs text-gray-600">
+          {ev.event_date}{' '}
+          {ev.start_time.slice(0, 5)}〜{ev.end_time.slice(0, 5)}
+        </span>
+      </div>
 
-          if (applyingId === ev.id) {
-            buttonLabel = '送信中...';
-            disabled = true;
-          }
+      <div className="text-xs text-gray-600">
+        会場:{' '}
+        {venue ? (
+          <span>{venue.name}</span>
+        ) : (
+          <span className="italic text-gray-400">会場未設定</span>
+        )}
+      </div>
 
-          return (
-            <li key={ev.id} className="rounded border px-4 py-3 text-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{ev.title}</div>
-                  <div className="text-gray-600">
-                    {ev.event_date}{' '}
-                    {ev.start_time.slice(0, 5)}〜{ev.end_time.slice(0, 5)}
-                  </div>
-                  {venue && (
-                    <div className="text-gray-500 text-xs mt-1">
-                      会場：{venue.name}
-                      {venue.address ? ` / ${venue.address}` : ''}
-                    </div>
-                  )}
-                </div>
+      {/* 既存の「応募する」ボタンなど */}
+    </li>
+  );
+})}
 
-                <div className="flex flex-col items-end gap-1">
-                  <button
-                    onClick={() => handleApply(ev.id)}
-                    disabled={disabled}
-                    className="inline-flex items-center rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
-                  >
-                    {buttonLabel}
-                  </button>
-
-                  {appliedStatus && (
-                    <span className="text-[10px] text-gray-500">
-                      状態: {appliedStatus === 'pending'
-                        ? '応募送信済み'
-                        : appliedStatus === 'accepted'
-                        ? '承認済み（ブッキング）'
-                        : '不採用'}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </li>
-          );
-        })}
       </ul>
     </div>
   );
