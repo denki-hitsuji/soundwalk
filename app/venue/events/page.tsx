@@ -2,13 +2,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getMyEvents, type Event } from '@/lib/api/events';
 import Link from 'next/link';
+import { deleteEvent } from '@/lib/api/events';
 
 export default function VenueEventsPage() {
+  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -26,6 +30,24 @@ export default function VenueEventsPage() {
     };
     void load();
   }, []);
+
+    const handleDelete = async (id: string) => {
+    if (!window.confirm('このイベントを削除しますか？\n応募や予約も同時に削除されます。')) {
+      return;
+    }
+
+    setError(null);
+    setDeletingId(id);
+    try {
+      await deleteEvent(id);
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+    } catch (e: any) {
+      console.error(e);
+      setError('イベントの削除に失敗しました。時間をおいて再度お試しください。');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
  return (
     <div className="max-w-3xl mx-auto px-6 py-8">
@@ -56,6 +78,9 @@ export default function VenueEventsPage() {
                 <div className="text-gray-600">
                   {ev.event_date} {ev.start_time.slice(0, 5)}〜{ev.end_time.slice(0, 5)}
                 </div>
+                <div className="text-[11px] text-gray-500 mt-1">
+                  最大 {ev.max_artists} 組
+                </div>
               </div>
               <div className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
                 {ev.status === 'open'
@@ -64,6 +89,21 @@ export default function VenueEventsPage() {
                   ? 'マッチ済み'
                   : 'キャンセル'}
               </div>
+               <div className="flex flex-col items-end gap-1">
+                  <button
+                    onClick={() => router.push(`/venue/events/${ev.id}/edit`)}
+                    className="inline-flex items-center rounded bg-green-200 px-3 py-1 text-[11px] text-gray-800"
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={() => handleDelete(ev.id)}
+                    disabled={deletingId === ev.id}
+                    className="inline-flex items-center rounded bg-red-500 px-3 py-1 text-[11px] font-medium text-white disabled:opacity-60"
+                  >
+                    {deletingId === ev.id ? '削除中...' : '削除'}
+                  </button>
+                </div>
             </div>
           </li>
         ))}

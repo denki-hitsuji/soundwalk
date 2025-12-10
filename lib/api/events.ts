@@ -174,6 +174,67 @@ export async function createEvent(input: {
   }
 }
 
+// lib/api/events.ts（一部抜粋）
+
+// 既存: Event / EventStatus / getCurrentUser / createEvent などはそのまま
+
+// ★ イベント更新
+export async function updateEvent(eventId: string, input: {
+  title: string;
+  event_date: string;
+  start_time: string;
+  end_time: string;
+  max_artists: number;
+}): Promise<void> {
+  const user = await getCurrentUser();
+
+  const { error } = await supabase
+    .from('events')
+    .update({
+      title: input.title,
+      event_date: input.event_date,
+      start_time: input.start_time,
+      end_time: input.end_time,
+      max_artists: input.max_artists,
+    })
+    .eq('id', eventId)
+    .eq('venue_id', user.id); // 自分のイベントだけ更新できるように制限
+
+  if (error) {
+    throw error;
+  }
+}
+
+// ★ イベント削除
+export async function deleteEvent(eventId: string): Promise<void> {
+  const user = await getCurrentUser();
+
+  // まず「自分のイベントか」を確認（任意だが安全）
+  const { data: ev, error: evError } = await supabase
+    .from('events')
+    .select('id')
+    .eq('id', eventId)
+    .eq('venue_id', user.id)
+    .maybeSingle();
+
+  if (evError) throw evError;
+  if (!ev) throw new Error('指定されたイベントが見つからないか、権限がありません。');
+
+  // ここで関連レコードを先に消す（FKの ON DELETE CASCADE を貼っているなら不要）
+//   await supabase.from('bookings').delete().eq('event_id', eventId);
+//   await supabase.from('offers').delete().eq('event_id', eventId);
+
+  const { error } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', eventId)
+    .eq('venue_id', user.id);
+
+  if (error) {
+    throw error;
+  }
+}
+
 /**
  * 店舗として自分のイベント一覧
  */
