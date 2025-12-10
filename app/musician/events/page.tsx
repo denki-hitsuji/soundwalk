@@ -107,34 +107,33 @@ export default function MusicianEventsPage() {
       )}
 
       <ul className="space-y-3">
-        // app/musician/events/page.tsx の一部
 
-{events.map((ev) => {
-  const venue = ev.venues;
+        {events.map((ev) => {
+        const venue = ev.venues;
 
-  return (
-    <li key={ev.id} className="rounded border bg-white px-4 py-3 text-sm shadow-sm">
-      <div className="flex items-center justify-between mb-1">
-        <div className="font-medium">{ev.title}</div>
-        <span className="text-xs text-gray-600">
-          {ev.event_date}{' '}
-          {ev.start_time.slice(0, 5)}〜{ev.end_time.slice(0, 5)}
-        </span>
-      </div>
+        return (
+            <li key={ev.id} className="rounded border bg-white px-4 py-3 text-sm shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+                <div className="font-medium">{ev.title}</div>
+                <span className="text-xs text-gray-600">
+                {ev.event_date}{' '}
+                {ev.start_time.slice(0, 5)}〜{ev.end_time.slice(0, 5)}
+                </span>
+            </div>
 
-      <div className="text-xs text-gray-600">
-        会場:{' '}
-        {venue ? (
-          <span>{venue.name}</span>
-        ) : (
-          <span className="italic text-gray-400">会場未設定</span>
-        )}
-      </div>
+            <div className="text-xs text-gray-600">
+                会場:{' '}
+                {venue ? (
+                <span>{venue.name}</span>
+                ) : (
+                <span className="italic text-gray-400">会場未設定</span>
+                )}
+            </div>
 
-      {/* 既存の「応募する」ボタンなど */}
-    </li>
-  );
-})}
+            {/* 既存の「応募する」ボタンなど */}
+            </li>
+        );
+        })}
 
       </ul>
     </div>
