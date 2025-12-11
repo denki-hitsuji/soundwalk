@@ -1,7 +1,7 @@
 // lib/api/events.ts
 import { supabase } from '@/lib/supabaseClient';
 
-export type EventStatus = 'open' | 'matched' | 'cancelled';
+export type EventStatus = 'open' | 'pending' | 'draft' | 'matched' | 'cancelled';
 
 export type Event = {
   id: string;
