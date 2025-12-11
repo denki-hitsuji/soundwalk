@@ -28,7 +28,7 @@ export default function MusicianDashboardPage() {
           </Link>
         </div>
 
-        {/* イベント一覧カード */}
+        {/* 募集中のイベント一覧カード */}
         <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
           <h2 className="text-sm font-semibold mb-1">募集中のイベント</h2>
           <p className="text-xs text-gray-600 mb-3">
@@ -55,6 +55,21 @@ export default function MusicianDashboardPage() {
             className="inline-flex items-center rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white"
           >
             ブッキング一覧を開く
+          </Link>
+        </div>
+
+        {/* ★ 自分が企画したイベントカード */}
+        <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
+          <h2 className="text-sm font-semibold mb-1">自分が企画したイベント</h2>
+          <p className="text-xs text-gray-600 mb-3">
+            あなた自身が企画者として立てたイベントの一覧です。
+            会場に関係なく、「自分発」の企画をまとめて確認できます。
+          </p>
+          <Link
+            href="/musician/organized-events"
+            className="inline-flex items-center rounded bg-purple-600 px-3 py-1.5 text-xs font-medium text-white"
+          >
+            自分の企画イベントを見る
           </Link>
         </div>
       </div>

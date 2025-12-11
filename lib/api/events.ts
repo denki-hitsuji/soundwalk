@@ -12,7 +12,8 @@ export type Event = {
   end_time: string;
   status: EventStatus;
   created_at: string;
-  max_artists: number;  // ★ 追加
+  max_artists: number;  
+  organizer_profile_id: string;
 };
 
 export type EventWithVenue = Event & {
@@ -57,7 +58,8 @@ export async function getMyEventById(eventId: string): Promise<Event | null> {
   end_time,
   status,
   created_at,
-  max_artists
+  max_artists,
+  organizer_profile_id
 `)
         .eq('id', eventId)
         .eq('venue_id', user.id) // 自分の店のイベントだけ見えるようにする
@@ -78,6 +80,7 @@ export async function getMyEventById(eventId: string): Promise<Event | null> {
         status: data.status as EventStatus,
         created_at: data.created_at,
         max_artists: data.max_artists ?? 1,
+        organizer_profile_id: data.organizer_profile_id
     };
 }
 
@@ -102,6 +105,7 @@ export async function getOpenEventsForMusician(): Promise<EventWithVenue[]> {
       status,
       created_at,
       max_artists,
+      organizer_profile_id,
       venues (
         id,
         name,
@@ -166,7 +170,8 @@ export async function createEvent(input: {
     start_time: input.start_time,
     end_time: input.end_time,
     status: 'open',                // 新規は募集中
-    max_artists: input.max_artists // ★ ここが今回の本題
+    max_artists: input.max_artists, 
+    organizer_profile_id: user.id
   });
 
   if (error) {

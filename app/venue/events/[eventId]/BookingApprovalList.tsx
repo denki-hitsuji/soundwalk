@@ -113,7 +113,7 @@ export function BookingApprovalList({ eventId }: Props) {
     maxArtists != null && acceptedCount >= maxArtists;
 
   // 承認
-  const handleApprove = async (booking: BookingRow) => {
+   const handleApprove = async (booking: BookingRow) => {
     setError(null);
 
     // ★ 枠制限チェック
@@ -148,8 +148,23 @@ export function BookingApprovalList({ eventId }: Props) {
 
       if (eaError) throw eaError;
 
+      // 3. ★ 上限に達したら events.status を matched に更新
+      if (maxArtists != null) {
+        const newAcceptedCount =
+          acceptedCount + (booking.status === "accepted" ? 0 : 1);
+
+        if (newAcceptedCount >= maxArtists) {
+          const { error: statusError } = await supabase
+            .from("events")
+            .update({ status: "matched" })
+            .eq("id", booking.event_id);
+
+          if (statusError) throw statusError;
+        }
+      }
+
       await load();
-      router.refresh(); // 上部の acceptedCount / max_artists 表示も更新
+      router.refresh(); // 上部のステータス表示と acceptedCount / max も更新
     } catch (e: any) {
       console.error(e);
       setError(e.message ?? "承認に失敗しました。");
