@@ -31,16 +31,8 @@ export default function LoginPage() {
       }
 
       // ログイン成功 → role を見てリダイレクト先を決める
-      const role = await getCurrentUserRole();
-
-      if (role === 'musician') {
-        router.push('/musician');
-      } else if (role === 'venue') {
-        router.push('/venue');
-      } else {
-        // role 未設定などの場合はトップへ
-        router.push('/');
-      }
+      router.push('/musician');
+      
     } catch (e: any) {
       console.error(e);
       setError('ログインに失敗しました。時間をおいて再度お試しください。');

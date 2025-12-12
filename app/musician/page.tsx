@@ -7,18 +7,31 @@ export default function MusicianDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold mb-2">ミュージシャンダッシュボード</h1>
         <p className="text-sm text-gray-600">
-          ここから、プロフィール編集やイベント応募など、
-          ミュージシャンとしての機能にまとめてアクセスできます。
+          ここから、プロフィール編集やイベント応募・企画など、
+          あなたの音楽活動に関する機能へアクセスできます。
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {/* プロフィールカード */}
+        {/* 新しいイベントを企画する */}
+        <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
+          <h2 className="text-sm font-semibold mb-1">新しいイベントを企画する</h2>
+          <p className="text-xs text-gray-600 mb-3">
+            自分が企画者となるイベントを作成します。
+          </p>
+          <Link
+            href="/events/new"
+            className="inline-flex items-center rounded bg-purple-600 px-3 py-1.5 text-xs font-medium text-white"
+          >
+            イベントを企画する
+          </Link>
+        </div>
+
+        {/* プロフィール */}
         <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
           <h2 className="text-sm font-semibold mb-1">プロフィール</h2>
           <p className="text-xs text-gray-600 mb-3">
-            お店側があなたを選ぶときに見る基本情報です。
-            ジャンル・エリア・動画リンクなどを設定できます。
+            お店やイベンターがあなたを選ぶときに見る基本情報です。
           </p>
           <Link
             href="/musician/profile"
@@ -28,12 +41,11 @@ export default function MusicianDashboardPage() {
           </Link>
         </div>
 
-        {/* 募集中のイベント一覧カード */}
+        {/* 募集中のイベント */}
         <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
           <h2 className="text-sm font-semibold mb-1">募集中のイベント</h2>
           <p className="text-xs text-gray-600 mb-3">
-            店舗が作成した「この日・この時間に演奏してほしい」という枠の一覧です。
-            気になる枠に応募できます。
+            店舗やイベンターが立てた募集枠の一覧です。気になる枠に応募できます。
           </p>
           <Link
             href="/musician/events"
@@ -43,12 +55,11 @@ export default function MusicianDashboardPage() {
           </Link>
         </div>
 
-        {/* ブッキング一覧カード */}
+        {/* ブッキング一覧 */}
         <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
           <h2 className="text-sm font-semibold mb-1">ブッキング一覧</h2>
           <p className="text-xs text-gray-600 mb-3">
-            承認された出演予定（ブッキング）の一覧です。
-            直近のライブスケジュールをここから確認できます。
+            承認された出演予定の一覧です。直近のライブスケジュールを確認できます。
           </p>
           <Link
             href="/musician/bookings"
@@ -58,12 +69,11 @@ export default function MusicianDashboardPage() {
           </Link>
         </div>
 
-        {/* ★ 自分が企画したイベントカード */}
+        {/* 自分が企画したイベント */}
         <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
           <h2 className="text-sm font-semibold mb-1">自分が企画したイベント</h2>
           <p className="text-xs text-gray-600 mb-3">
             あなた自身が企画者として立てたイベントの一覧です。
-            会場に関係なく、「自分発」の企画をまとめて確認できます。
           </p>
           <Link
             href="/musician/organized-events"
@@ -72,11 +82,26 @@ export default function MusicianDashboardPage() {
             自分の企画イベントを見る
           </Link>
         </div>
+
+        {/* ★ 自分が管理している会場 */}
+        <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
+          <h2 className="text-sm font-semibold mb-1">自分が管理している会場</h2>
+          <p className="text-xs text-gray-600 mb-3">
+            あなたが管理権限を持っている会場（バーやライブハウスなど）の一覧です。
+            ここから会場情報やイベントを管理できます。
+          </p>
+          <Link
+            href="/venue"
+            className="inline-flex items-center rounded bg-orange-600 px-3 py-1.5 text-xs font-medium text-white"
+          >
+            会場ダッシュボードを開く
+          </Link>
+        </div>
       </div>
 
       <div className="text-[11px] text-gray-400">
-        ※ まずは「プロフィール → 募集中のイベント」の順に整えておくと、
-        店舗側から見ても選びやすくなります。
+        ※ まずは「プロフィール → 募集中のイベント」を整えてから、
+        企画や会場管理に進むと運用しやすくなります。
       </div>
     </div>
   );
