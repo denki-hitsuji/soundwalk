@@ -130,6 +130,7 @@ export async function getOpenEventsForMusician(): Promise<EventWithVenue[]> {
         return {
             id: row.id,
             venue_id: row.venue_id,
+            organizer_profile_id: row.organizer_profile_id, 
             title: row.title,
             event_date: row.event_date,
             start_time: row.start_time,
