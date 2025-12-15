@@ -183,6 +183,12 @@ export default function MusicianPerformancesPage() {
           {p.memo}
         </p>
       )}
+      <Link
+  href={`/musician/performances/${p.id}`}
+  className="inline-flex items-center rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white"
+>
+  確認
+</Link>
     </div>
   );
 })}
