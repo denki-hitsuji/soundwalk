@@ -7,541 +7,542 @@ import { supabase } from "@/lib/supabaseClient";
 type ActRow = { id: string; name: string; act_type: string | null };
 
 type PerformanceRow = {
-  id: string;
-  profile_id: string;
-  act_id: string | null;
-  event_date: string;
-  venue_name: string | null;
-  memo: string | null;
+    id: string;
+    profile_id: string;
+    act_id: string | null;
+    event_date: string;
+    venue_name: string | null;
+    memo: string | null;
 };
 
 type DetailsRow = {
-  performance_id: string;
-  load_in_time: string | null;
-  set_start_time: string | null;
-  set_end_time: string | null;
-  set_minutes: number | null;
-  customer_charge_yen: number | null;
-  one_drink_required: boolean | null;
-  notes: string | null;
+    performance_id: string;
+    load_in_time: string | null;
+    set_start_time: string | null;
+    set_end_time: string | null;
+    set_minutes: number | null;
+    customer_charge_yen: number | null;
+    one_drink_required: boolean | null;
+    notes: string | null;
 };
 
 type AttachmentRow = {
-  id: string;
-  file_url: string;
-  file_path: string | null;
-  file_type: string;
-  caption: string | null;
-  created_at: string;
+    id: string;
+    file_url: string;
+    file_path: string | null;
+    file_type: string;
+    caption: string | null;
+    created_at: string;
 };
 
 type MessageRow = {
-  id: string;
-  body: string;
-  source: string | null;
-  created_at: string;
+    id: string;
+    body: string;
+    source: string | null;
+    created_at: string;
 };
 
 const BUCKET = "performance-attachments";
 
 export default function PerformanceDetailClient({ performanceId }: { performanceId: string }) {
-  const [loading, setLoading] = useState(true);
-  const [savingDetails, setSavingDetails] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [posting, setPosting] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [savingDetails, setSavingDetails] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [posting, setPosting] = useState(false);
 
-  const [performance, setPerformance] = useState<PerformanceRow | null>(null);
-  const [act, setAct] = useState<ActRow | null>(null);
+    const [performance, setPerformance] = useState<PerformanceRow | null>(null);
+    const [act, setAct] = useState<ActRow | null>(null);
 
-  const [details, setDetails] = useState<DetailsRow>({
-    performance_id: performanceId,
-    load_in_time: null,
-    set_start_time: null,
-    set_end_time: null,
-    set_minutes: null,
-    customer_charge_yen: null,
-    one_drink_required: null,
-    notes: null,
-  });
+    const [details, setDetails] = useState<DetailsRow>({
+        performance_id: performanceId,
+        load_in_time: null,
+        set_start_time: null,
+        set_end_time: null,
+        set_minutes: null,
+        customer_charge_yen: null,
+        one_drink_required: null,
+        notes: null,
+    });
 
-  const [attachments, setAttachments] = useState<AttachmentRow[]>([]);
-  const [messages, setMessages] = useState<MessageRow[]>([]);
+    const [attachments, setAttachments] = useState<AttachmentRow[]>([]);
+    const [messages, setMessages] = useState<MessageRow[]>([]);
 
-  const [newMessage, setNewMessage] = useState("");
-  const [newMessageSource, setNewMessageSource] = useState("LINE");
+    const [newMessage, setNewMessage] = useState("");
+    const [newMessageSource, setNewMessageSource] = useState("LINE");
 
-  const titleLine = useMemo(() => {
-    if (!performance) return "";
-    const venue = performance.venue_name ? ` @ ${performance.venue_name}` : "";
-    return `${performance.event_date}${venue}`;
-  }, [performance]);
+    const titleLine = useMemo(() => {
+        if (!performance) return "";
+        const venue = performance.venue_name ? ` @ ${performance.venue_name}` : "";
+        return `${performance.event_date}${venue}`;
+    }, [performance]);
 
-  const actLabel = useMemo(() => {
-    if (!act) return "出演名義：なし";
-    return act.act_type ? `${act.name}（${act.act_type}）` : act.name;
-  }, [act]);
+    const actLabel = useMemo(() => {
+        if (!act) return "出演名義：なし";
+        return act.act_type ? `${act.name}（${act.act_type}）` : act.name;
+    }, [act]);
 
-  const reloadAll = async () => {
-    setLoading(true);
+    const reloadAll = async () => {
+        setLoading(true);
 
-    // performance 本体
-    const { data: perf, error: perfErr } = await supabase
-      .from("musician_performances")
-      .select("id, profile_id, act_id, event_date, venue_name, memo")
-      .eq("id", performanceId)
-      .single();
+        // performance 本体
+        const { data: perf, error: perfErr } = await supabase
+            .from("musician_performances")
+            .select("id, profile_id, act_id, event_date, venue_name, memo")
+            .eq("id", performanceId)
+            .single();
 
-    if (perfErr) {
-      console.error("load performance error", perfErr);
-      setPerformance(null);
-      setLoading(false);
-      return;
-    }
-    setPerformance(perf as PerformanceRow);
+        if (perfErr) {
+            console.error("load performance error", perfErr);
+            setPerformance(null);
+            setLoading(false);
+            return;
+        }
+        setPerformance(perf as PerformanceRow);
 
-    // act
-    if ((perf as any).act_id) {
-      const { data: actData, error: actErr } = await supabase
-        .from("acts")
-        .select("id, name, act_type")
-        .eq("id", (perf as any).act_id)
-        .single();
+        // act
+        if ((perf as any).act_id) {
+            const { data: actData, error: actErr } = await supabase
+                .from("acts")
+                .select("id, name, act_type")
+                .eq("id", (perf as any).act_id)
+                .single();
 
-      if (actErr) {
-        console.error("load act error", actErr);
-        setAct(null);
-      } else {
-        setAct(actData as ActRow);
-      }
-    } else {
-      setAct(null);
-    }
+            if (actErr) {
+                console.error("load act error", actErr);
+                setAct(null);
+            } else {
+                setAct(actData as ActRow);
+            }
+        } else {
+            setAct(null);
+        }
 
-    // details（無ければ空でOK）
-    const { data: det, error: detErr } = await supabase
-      .from("performance_details")
-      .select(
-        "performance_id, load_in_time, set_start_time, set_end_time, set_minutes, customer_charge_yen, one_drink_required, notes",
-      )
-      .eq("performance_id", performanceId)
-      .maybeSingle();
+        // details（無ければ空でOK）
+        const { data: det, error: detErr } = await supabase
+            .from("performance_details")
+            .select(
+                "performance_id, load_in_time, set_start_time, set_end_time, set_minutes, customer_charge_yen, one_drink_required, notes",
+            )
+            .eq("performance_id", performanceId)
+            .maybeSingle();
 
-    if (detErr) {
-      console.error("load details error", detErr);
-    } else if (det) {
-      setDetails(det as DetailsRow);
-    } else {
-      setDetails((prev) => ({ ...prev, performance_id: performanceId }));
-    }
+        if (detErr) {
+            console.error("load details error", detErr);
+        } else if (det) {
+            setDetails(det as DetailsRow);
+        } else {
+            setDetails((prev) => ({ ...prev, performance_id: performanceId }));
+        }
 
-    // attachments
-    const { data: att, error: attErr } = await supabase
-      .from("performance_attachments")
-      .select("id, file_url, file_path, file_type, caption, created_at")
-      .eq("performance_id", performanceId)
-      .order("created_at", { ascending: false });
+        // attachments
+        const { data: att, error: attErr } = await supabase
+            .from("performance_attachments")
+            .select("id, file_url, file_path, file_type, caption, created_at")
+            .eq("performance_id", performanceId)
+            .order("created_at", { ascending: false });
 
-    if (attErr) {
-      console.error("load attachments error", attErr);
-      setAttachments([]);
-    } else {
-      setAttachments((att ?? []) as AttachmentRow[]);
-    }
+        if (attErr) {
+            console.error("load attachments error", attErr);
+            setAttachments([]);
+        } else {
+            setAttachments((att ?? []) as AttachmentRow[]);
+        }
 
-    // messages
-    const { data: msg, error: msgErr } = await supabase
-      .from("performance_messages")
-      .select("id, body, source, created_at")
-      .eq("performance_id", performanceId)
-      .order("created_at", { ascending: false });
+        // messages
+        const { data: msg, error: msgErr } = await supabase
+            .from("performance_messages")
+            .select("id, body, source, created_at")
+            .eq("performance_id", performanceId)
+            .order("created_at", { ascending: false });
 
-    if (msgErr) {
-      console.error("load messages error", msgErr);
-      setMessages([]);
-    } else {
-      setMessages((msg ?? []) as MessageRow[]);
-    }
+        if (msgErr) {
+            console.error("load messages error", msgErr);
+            setMessages([]);
+        } else {
+            setMessages((msg ?? []) as MessageRow[]);
+        }
 
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    void reloadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [performanceId]);
-
-  const saveDetails = async () => {
-    setSavingDetails(true);
-
-    const payload = {
-      performance_id: performanceId,
-      load_in_time: details.load_in_time || null,
-      set_start_time: details.set_start_time || null,
-      set_end_time: details.set_end_time || null,
-      set_minutes: details.set_minutes ?? null,
-      customer_charge_yen: details.customer_charge_yen ?? null,
-      one_drink_required: details.one_drink_required,
-      notes: details.notes || null,
+        setLoading(false);
     };
 
-    const { error } = await supabase.from("performance_details").upsert(payload);
+    useEffect(() => {
+        void reloadAll();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [performanceId]);
 
-    setSavingDetails(false);
+    const saveDetails = async () => {
+        setSavingDetails(true);
 
-    if (error) {
-      console.error("save details error", error);
-      alert("保存に失敗しました（details）。");
-      return;
+        const payload = {
+            performance_id: performanceId,
+            load_in_time: details.load_in_time || null,
+            set_start_time: details.set_start_time || null,
+            set_end_time: details.set_end_time || null,
+            set_minutes: details.set_minutes ?? null,
+            customer_charge_yen: details.customer_charge_yen ?? null,
+            one_drink_required: details.one_drink_required,
+            notes: details.notes || null,
+        };
+
+        const { error } = await supabase.from("performance_details").upsert(payload);
+
+        setSavingDetails(false);
+
+        if (error) {
+            console.error("save details error", error);
+            alert("保存に失敗しました（details）。");
+            return;
+        }
+        await reloadAll();
+    };
+
+    const onUploadFlyer = async (file: File) => {
+        if (!file) return;
+
+        setUploading(true);
+
+        // 画像だけ許可（必要ならpdfもOKに）
+        const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
+        const safeExt = ["png", "jpg", "jpeg", "webp"].includes(ext) ? ext : "bin";
+
+        // userごとのフォルダに分ける（後で掃除しやすい）
+        const actId = performance?.act_id;
+        if (!actId) {
+            alert("このライブに出演名義（act）が設定されていません。共有アップロードできません。");
+            setUploading(false);
+            return;
+        }
+        const path = `${actId}/${performanceId}/${crypto.randomUUID()}.${safeExt}`;
+
+        const { error: upErr } = await supabase.storage
+            .from(BUCKET)
+            .upload(path, file, { upsert: false, contentType: file.type });
+
+        if (upErr) {
+            console.error("upload error", upErr);
+            setUploading(false);
+            alert("アップロードに失敗しました。");
+            return;
+        }
+
+        const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
+        const fileUrl = pub.publicUrl;
+
+        const { error: insErr } = await supabase.from("performance_attachments").insert({
+            performance_id: performanceId,
+            file_url: fileUrl,
+            file_path: path,
+            file_type: "flyer",
+            caption: null,
+        });
+
+        setUploading(false);
+
+        if (insErr) {
+            console.error("insert attachment error", insErr);
+            alert("添付情報の保存に失敗しました。");
+            return;
+        }
+
+        await reloadAll();
+    };
+
+    const deleteAttachment = async (att: AttachmentRow) => {
+        const ok = window.confirm("この画像を削除しますか？");
+        if (!ok) return;
+
+        // DB削除
+        const { error: delErr } = await supabase
+            .from("performance_attachments")
+            .delete()
+            .eq("id", att.id)
+            .eq("performance_id", performanceId);
+
+        if (delErr) {
+            console.error("delete attachment row error", delErr);
+            alert("削除に失敗しました。");
+            return;
+        }
+
+        // storage削除（file_pathがある場合）
+        if (att.file_path) {
+            const { error: stErr } = await supabase.storage.from(BUCKET).remove([att.file_path]);
+            if (stErr) {
+                // storage削除失敗しても致命ではないので警告のみ
+                console.warn("storage remove failed", stErr);
+            }
+        }
+
+        await reloadAll();
+    };
+
+    const postMessage = async () => {
+        if (!newMessage.trim()) return;
+
+        setPosting(true);
+
+        const { error } = await supabase.from("performance_messages").insert({
+            performance_id: performanceId,
+            body: newMessage.trim(),
+            source: newMessageSource || null,
+        });
+
+        setPosting(false);
+
+        if (error) {
+            console.error("insert message error", error);
+            alert("保存に失敗しました（message）。");
+            return;
+        }
+
+        setNewMessage("");
+        await reloadAll();
+    };
+
+    if (loading) {
+        return <main className="p-4 text-sm text-gray-500">読み込み中…</main>;
     }
-    await reloadAll();
-  };
 
-  const onUploadFlyer = async (file: File) => {
-    if (!file) return;
-
-    setUploading(true);
-
-    // 画像だけ許可（必要ならpdfもOKに）
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
-    const safeExt = ["png", "jpg", "jpeg", "webp"].includes(ext) ? ext : "bin";
-
-    // userごとのフォルダに分ける（後で掃除しやすい）
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const uid = user?.id ?? "unknown";
-
-    const path = `${uid}/${performanceId}/${crypto.randomUUID()}.${safeExt}`;
-
-    const { error: upErr } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, file, { upsert: false, contentType: file.type });
-
-    if (upErr) {
-      console.error("upload error", upErr);
-      setUploading(false);
-      alert("アップロードに失敗しました。");
-      return;
+    if (!performance) {
+        return (
+            <main className="p-4 space-y-2">
+                <p className="text-sm text-red-600">ライブ情報が見つかりませんでした。</p>
+                <Link href="/musician/performances" className="text-sm text-blue-600 underline">
+                    タイムラインへ戻る
+                </Link>
+            </main>
+        );
     }
 
-    const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    const fileUrl = pub.publicUrl;
-
-    const { error: insErr } = await supabase.from("performance_attachments").insert({
-      performance_id: performanceId,
-      file_url: fileUrl,
-      file_path: path,
-      file_type: "flyer",
-      caption: null,
-    });
-
-    setUploading(false);
-
-    if (insErr) {
-      console.error("insert attachment error", insErr);
-      alert("添付情報の保存に失敗しました。");
-      return;
-    }
-
-    await reloadAll();
-  };
-
-  const deleteAttachment = async (att: AttachmentRow) => {
-    const ok = window.confirm("この画像を削除しますか？");
-    if (!ok) return;
-
-    // DB削除
-    const { error: delErr } = await supabase
-      .from("performance_attachments")
-      .delete()
-      .eq("id", att.id)
-      .eq("performance_id", performanceId);
-
-    if (delErr) {
-      console.error("delete attachment row error", delErr);
-      alert("削除に失敗しました。");
-      return;
-    }
-
-    // storage削除（file_pathがある場合）
-    if (att.file_path) {
-      const { error: stErr } = await supabase.storage.from(BUCKET).remove([att.file_path]);
-      if (stErr) {
-        // storage削除失敗しても致命ではないので警告のみ
-        console.warn("storage remove failed", stErr);
-      }
-    }
-
-    await reloadAll();
-  };
-
-  const postMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    setPosting(true);
-
-    const { error } = await supabase.from("performance_messages").insert({
-      performance_id: performanceId,
-      body: newMessage.trim(),
-      source: newMessageSource || null,
-    });
-
-    setPosting(false);
-
-    if (error) {
-      console.error("insert message error", error);
-      alert("保存に失敗しました（message）。");
-      return;
-    }
-
-    setNewMessage("");
-    await reloadAll();
-  };
-
-  if (loading) {
-    return <main className="p-4 text-sm text-gray-500">読み込み中…</main>;
-  }
-
-  if (!performance) {
     return (
-      <main className="p-4 space-y-2">
-        <p className="text-sm text-red-600">ライブ情報が見つかりませんでした。</p>
-        <Link href="/musician/performances" className="text-sm text-blue-600 underline">
-          タイムラインへ戻る
-        </Link>
-      </main>
+        <main className="p-4 space-y-6">
+            {/* ヘッダー（答えの場所） */}
+            <section className="rounded-xl border bg-white px-4 py-3 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <div className="text-sm font-semibold">{titleLine}</div>
+                        <div className="text-base font-bold">{actLabel}</div>
+                        {performance.memo && (
+                            <p className="mt-2 text-xs text-gray-700 whitespace-pre-wrap">{performance.memo}</p>
+                        )}
+                    </div>
+                    <Link
+                        href="/musician/performances"
+                        className="shrink-0 inline-flex items-center rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white"
+                    >
+                        タイムラインへ
+                    </Link>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="grid grid-cols-2 gap-2">
+                        <label className="block">
+                            <span className="text-[11px] text-gray-500">入り（任意）</span>
+                            <input
+                                type="time"
+                                className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                                value={details.load_in_time ?? ""}
+                                onChange={(e) => setDetails((p) => ({ ...p, load_in_time: e.target.value || null }))}
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="text-[11px] text-gray-500">出番（開始）</span>
+                            <input
+                                type="time"
+                                className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                                value={details.set_start_time ?? ""}
+                                onChange={(e) => setDetails((p) => ({ ...p, set_start_time: e.target.value || null }))}
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="text-[11px] text-gray-500">出番（終了）</span>
+                            <input
+                                type="time"
+                                className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                                value={details.set_end_time ?? ""}
+                                onChange={(e) => setDetails((p) => ({ ...p, set_end_time: e.target.value || null }))}
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="text-[11px] text-gray-500">持ち時間（分）</span>
+                            <input
+                                type="number"
+                                className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                                value={details.set_minutes ?? ""}
+                                onChange={(e) =>
+                                    setDetails((p) => ({ ...p, set_minutes: e.target.value === "" ? null : Number(e.target.value) }))
+                                }
+                                min={0}
+                            />
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <label className="block">
+                            <span className="text-[11px] text-gray-500">チャージ（円）</span>
+                            <input
+                                type="number"
+                                className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                                value={details.customer_charge_yen ?? ""}
+                                onChange={(e) =>
+                                    setDetails((p) => ({
+                                        ...p,
+                                        customer_charge_yen: e.target.value === "" ? null : Number(e.target.value),
+                                    }))
+                                }
+                                min={0}
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="text-[11px] text-gray-500">1ドリンク</span>
+                            <select
+                                className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                                value={
+                                    details.one_drink_required === null
+                                        ? ""
+                                        : details.one_drink_required
+                                            ? "true"
+                                            : "false"
+                                }
+                                onChange={(e) =>
+                                    setDetails((p) => ({
+                                        ...p,
+                                        one_drink_required:
+                                            e.target.value === "" ? null : e.target.value === "true",
+                                    }))
+                                }
+                            >
+                                <option value="">未設定</option>
+                                <option value="true">必要</option>
+                                <option value="false">不要</option>
+                            </select>
+                        </label>
+
+                        <label className="block col-span-2">
+                            <span className="text-[11px] text-gray-500">補足メモ（任意）</span>
+                            <textarea
+                                className="mt-1 w-full rounded border px-2 py-1 text-sm h-20"
+                                value={details.notes ?? ""}
+                                onChange={(e) => setDetails((p) => ({ ...p, notes: e.target.value || null }))}
+                                placeholder="機材/駐車/集合場所など"
+                            />
+                        </label>
+
+                        <button
+                            type="button"
+                            onClick={saveDetails}
+                            disabled={savingDetails}
+                            className="col-span-2 inline-flex items-center justify-center rounded bg-blue-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
+                        >
+                            {savingDetails ? "保存中…" : "確認事項を保存"}
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* フライヤー */}
+            <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold">フライヤー</h2>
+                    <label className="inline-flex items-center rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white cursor-pointer">
+                        {uploading ? "アップロード中…" : "画像を追加"}
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void onUploadFlyer(file);
+                                e.currentTarget.value = "";
+                            }}
+                            disabled={uploading}
+                        />
+                    </label>
+                </div>
+
+                {attachments.length === 0 ? (
+                    <p className="text-xs text-gray-600">
+                        ここにフライヤー画像を入れておくと、「場所/入り/出番/チャージ」を探す回数が激減します。
+                    </p>
+                ) : (
+                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                        {attachments.map((a) => (
+                            <div key={a.id} className="rounded border overflow-hidden">
+                                <a href={a.file_url} target="_blank" rel="noreferrer">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={a.file_url} alt="flyer" className="w-full h-40 object-cover" />
+                                </a>
+                                <div className="p-2 flex items-center justify-between">
+                                    <span className="text-[11px] text-gray-500">追加: {new Date(a.created_at).toLocaleDateString()}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => void deleteAttachment(a)}
+                                        className="text-[11px] text-red-600 hover:underline"
+                                    >
+                                        削除
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            {/* コピペ本文 */}
+            <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold">主催者からの文章（コピペ）</h2>
+                </div>
+
+                <div className="grid gap-2">
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            className="w-28 rounded border px-2 py-1 text-sm"
+                            value={newMessageSource}
+                            onChange={(e) => setNewMessageSource(e.target.value)}
+                            placeholder="LINE"
+                        />
+                        <button
+                            type="button"
+                            onClick={postMessage}
+                            disabled={posting || !newMessage.trim()}
+                            className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                        >
+                            {posting ? "保存中…" : "保存"}
+                        </button>
+                    </div>
+
+                    <textarea
+                        className="w-full rounded border px-2 py-1 text-sm h-28"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="LINEで届いた案内文を、そのまま貼り付けてください。"
+                    />
+                </div>
+
+                {messages.length === 0 ? (
+                    <p className="text-xs text-gray-600">
+                        文章で届く案内（入り時間・出番・料金など）をここに集約できます。
+                    </p>
+                ) : (
+                    <div className="space-y-2">
+                        {messages.map((m) => (
+                            <div key={m.id} className="rounded border bg-white px-3 py-2">
+                                <div className="text-[11px] text-gray-500 mb-1">
+                                    {m.source ? `${m.source} / ` : ""}
+                                    {new Date(m.created_at).toLocaleString()}
+                                </div>
+                                <div className="text-xs text-gray-800 whitespace-pre-wrap">{m.body}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </section>
+        </main>
     );
-  }
-
-  return (
-    <main className="p-4 space-y-6">
-      {/* ヘッダー（答えの場所） */}
-      <section className="rounded-xl border bg-white px-4 py-3 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold">{titleLine}</div>
-            <div className="text-base font-bold">{actLabel}</div>
-            {performance.memo && (
-              <p className="mt-2 text-xs text-gray-700 whitespace-pre-wrap">{performance.memo}</p>
-            )}
-          </div>
-          <Link
-            href="/musician/performances"
-            className="shrink-0 inline-flex items-center rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white"
-          >
-            タイムラインへ
-          </Link>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <div className="grid grid-cols-2 gap-2">
-            <label className="block">
-              <span className="text-[11px] text-gray-500">入り（任意）</span>
-              <input
-                type="time"
-                className="mt-1 w-full rounded border px-2 py-1 text-sm"
-                value={details.load_in_time ?? ""}
-                onChange={(e) => setDetails((p) => ({ ...p, load_in_time: e.target.value || null }))}
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-[11px] text-gray-500">出番（開始）</span>
-              <input
-                type="time"
-                className="mt-1 w-full rounded border px-2 py-1 text-sm"
-                value={details.set_start_time ?? ""}
-                onChange={(e) => setDetails((p) => ({ ...p, set_start_time: e.target.value || null }))}
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-[11px] text-gray-500">出番（終了）</span>
-              <input
-                type="time"
-                className="mt-1 w-full rounded border px-2 py-1 text-sm"
-                value={details.set_end_time ?? ""}
-                onChange={(e) => setDetails((p) => ({ ...p, set_end_time: e.target.value || null }))}
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-[11px] text-gray-500">持ち時間（分）</span>
-              <input
-                type="number"
-                className="mt-1 w-full rounded border px-2 py-1 text-sm"
-                value={details.set_minutes ?? ""}
-                onChange={(e) =>
-                  setDetails((p) => ({ ...p, set_minutes: e.target.value === "" ? null : Number(e.target.value) }))
-                }
-                min={0}
-              />
-            </label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <label className="block">
-              <span className="text-[11px] text-gray-500">チャージ（円）</span>
-              <input
-                type="number"
-                className="mt-1 w-full rounded border px-2 py-1 text-sm"
-                value={details.customer_charge_yen ?? ""}
-                onChange={(e) =>
-                  setDetails((p) => ({
-                    ...p,
-                    customer_charge_yen: e.target.value === "" ? null : Number(e.target.value),
-                  }))
-                }
-                min={0}
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-[11px] text-gray-500">1ドリンク</span>
-              <select
-                className="mt-1 w-full rounded border px-2 py-1 text-sm"
-                value={
-                  details.one_drink_required === null
-                    ? ""
-                    : details.one_drink_required
-                      ? "true"
-                      : "false"
-                }
-                onChange={(e) =>
-                  setDetails((p) => ({
-                    ...p,
-                    one_drink_required:
-                      e.target.value === "" ? null : e.target.value === "true",
-                  }))
-                }
-              >
-                <option value="">未設定</option>
-                <option value="true">必要</option>
-                <option value="false">不要</option>
-              </select>
-            </label>
-
-            <label className="block col-span-2">
-              <span className="text-[11px] text-gray-500">補足メモ（任意）</span>
-              <textarea
-                className="mt-1 w-full rounded border px-2 py-1 text-sm h-20"
-                value={details.notes ?? ""}
-                onChange={(e) => setDetails((p) => ({ ...p, notes: e.target.value || null }))}
-                placeholder="機材/駐車/集合場所など"
-              />
-            </label>
-
-            <button
-              type="button"
-              onClick={saveDetails}
-              disabled={savingDetails}
-              className="col-span-2 inline-flex items-center justify-center rounded bg-blue-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
-            >
-              {savingDetails ? "保存中…" : "確認事項を保存"}
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* フライヤー */}
-      <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">フライヤー</h2>
-          <label className="inline-flex items-center rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white cursor-pointer">
-            {uploading ? "アップロード中…" : "画像を追加"}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void onUploadFlyer(file);
-                e.currentTarget.value = "";
-              }}
-              disabled={uploading}
-            />
-          </label>
-        </div>
-
-        {attachments.length === 0 ? (
-          <p className="text-xs text-gray-600">
-            ここにフライヤー画像を入れておくと、「場所/入り/出番/チャージ」を探す回数が激減します。
-          </p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-            {attachments.map((a) => (
-              <div key={a.id} className="rounded border overflow-hidden">
-                <a href={a.file_url} target="_blank" rel="noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={a.file_url} alt="flyer" className="w-full h-40 object-cover" />
-                </a>
-                <div className="p-2 flex items-center justify-between">
-                  <span className="text-[11px] text-gray-500">追加: {new Date(a.created_at).toLocaleDateString()}</span>
-                  <button
-                    type="button"
-                    onClick={() => void deleteAttachment(a)}
-                    className="text-[11px] text-red-600 hover:underline"
-                  >
-                    削除
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* コピペ本文 */}
-      <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">主催者からの文章（コピペ）</h2>
-        </div>
-
-        <div className="grid gap-2">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              className="w-28 rounded border px-2 py-1 text-sm"
-              value={newMessageSource}
-              onChange={(e) => setNewMessageSource(e.target.value)}
-              placeholder="LINE"
-            />
-            <button
-              type="button"
-              onClick={postMessage}
-              disabled={posting || !newMessage.trim()}
-              className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-            >
-              {posting ? "保存中…" : "保存"}
-            </button>
-          </div>
-
-          <textarea
-            className="w-full rounded border px-2 py-1 text-sm h-28"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="LINEで届いた案内文を、そのまま貼り付けてください。"
-          />
-        </div>
-
-        {messages.length === 0 ? (
-          <p className="text-xs text-gray-600">
-            文章で届く案内（入り時間・出番・料金など）をここに集約できます。
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {messages.map((m) => (
-              <div key={m.id} className="rounded border bg-white px-3 py-2">
-                <div className="text-[11px] text-gray-500 mb-1">
-                  {m.source ? `${m.source} / ` : ""}
-                  {new Date(m.created_at).toLocaleString()}
-                </div>
-                <div className="text-xs text-gray-800 whitespace-pre-wrap">{m.body}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
-  );
 }

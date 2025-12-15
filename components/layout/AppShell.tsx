@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
+import LogoutButton from "@/components/layout/LogoutButton";
 
 type AppShellProps = {
   children: ReactNode;
@@ -32,15 +33,10 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
-      <header className="border-b bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-2 flex items-center justify-between gap-2">
-          {/* ロゴ */}
-          <Link
-            href="/dashboard"
-            className="text-sm font-bold whitespace-nowrap"
-            onClick={handleNavClick}
-          >
-            街に音楽が溢れるアプリ
+      <header className="sticky top-0 z-30 border-b bg-white">
+        <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
+          <Link href="/musician" className="font-semibold">
+            soundwalk
           </Link>
           ※ これは開発途中のデモです（スマホ推奨）
 
@@ -61,6 +57,7 @@ export function AppShell({ children }: AppShellProps) {
                 {item.label}
               </Link>
             ))}
+            <LogoutButton />
           </nav>
 
           {/* モバイル：ハンバーガー */}
