@@ -130,10 +130,10 @@ export default function MusicianPerformancesPage() {
 
       {!loading && !error && performances.length === 0 && (
         <div className="text-sm text-gray-600 space-y-2">
-          <p>まだライブの記録がありません。</p>
           <p>
-            まずは、すでに決まっている or 終わったライブを
-            1件だけでも登録してみてください。
+            👋 はじめての方へ
+            まずは、すでに決まっているライブを1件登録してみてください。
+            あとから、出演名義や会場、企画にも広げられます。
           </p>
           <Link
             href="/musician/performances/new"

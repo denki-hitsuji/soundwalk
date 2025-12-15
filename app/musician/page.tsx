@@ -1,18 +1,43 @@
 // app/musician/page.tsx
 import Link from "next/link";
+import QuickPerformanceBar from "@/app/musician/QuickPerformanceBar";
 
 export default function MusicianDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold mb-2">ミュージシャンダッシュボード</h1>
+        <QuickPerformanceBar />
         <p className="text-sm text-gray-600">
-          ここから、プロフィール編集や出演名義の管理、イベント応募、ライブ記録など、
-          ミュージシャンとしての機能にまとめてアクセスできます。
+          まずは、すでに決まっている・終わったライブを記録してみましょう。
+          1件登録するだけで、このアプリの使い方が分かります。
         </p>
       </div>
-
+        
       <div className="grid gap-4 md:grid-cols-2">
+        {/* ライブタイムラインカード */}
+        <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
+          <h2 className="text-sm font-semibold mb-1">ライブを記録する</h2>
+          <p className="text-xs text-gray-600 mb-3">
+            すでに決まっている・終わったライブを登録して、
+            自分の活動タイムラインを作りましょう。
+          </p>
+          <div className="flex gap-2">
+            <Link
+              href="/musician/performances/new"
+              className="inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white"
+            >
+              ライブを記録する
+            </Link>
+            <Link
+              href="/musician/performances"
+              className="inline-flex items-center rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white"
+            >
+              タイムラインを見る
+            </Link>
+          </div>
+        </div>
+
         {/* プロフィールカード */}
         <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
           <h2 className="text-sm font-semibold mb-1">プロフィール</h2>
@@ -74,28 +99,6 @@ export default function MusicianDashboardPage() {
           </Link>
         </div>
 
-        {/* ライブタイムラインカード */}
-        <div className="rounded-lg border bg-white px-4 py-4 shadow-sm md:col-span-2">
-          <h2 className="text-sm font-semibold mb-1">ライブタイムライン</h2>
-          <p className="text-xs text-gray-600 mb-3">
-            すでに決まっている・終わったライブを記録していくページです。
-            名義ごとの活動履歴を残しておくことで、自分の音楽人生の流れをあとから振り返ることができます。
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/musician/performances"
-              className="inline-flex items-center rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white"
-            >
-              ライブタイムラインを見る
-            </Link>
-            <Link
-              href="/musician/performances/new"
-              className="inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white"
-            >
-              新しいライブを記録する
-            </Link>
-          </div>
-        </div>
       </div>
 
       <div className="text-[11px] text-gray-400">

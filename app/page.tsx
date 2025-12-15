@@ -12,15 +12,8 @@ export default function Home() {
   useEffect(() => {
     // すでにログインしている場合はロールに応じて自動リダイレクト
     (async () => {
-      const role = await getCurrentUserRole();
-
-      if (role === 'musician') {
-        router.replace('/musician');
-      } else if (role === 'venue') {
-        router.replace('/venue');
-      }
-      // role が null の場合はそのままトップを表示（ロール選択画面として機能）
-    })();
+      router.push("/musician"); 
+   })();
   }, [router]);
 
   return (
