@@ -9,8 +9,9 @@ export default function MusicianDashboardPage() {
         <h1 className="text-2xl font-bold mb-2">ミュージシャンダッシュボード</h1>
         <QuickPerformanceBar />
         <p className="text-sm text-gray-600">
-          まずは、すでに決まっている・終わったライブを記録してみましょう。
-          1件登録するだけで、このアプリの使い方が分かります。
+          👋 はじめての方へ
+          まずは、すでに決まっているライブを1件登録してみてください。
+          フライヤーや入り時間をまとめておくと、当日が楽になります。
         </p>
       </div>
         

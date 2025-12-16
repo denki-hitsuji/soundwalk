@@ -6,11 +6,25 @@ export default function TopDashboardPage() {
     <main className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold mb-2">ダッシュボード</h1>
-        <p className="text-sm text-gray-600">
-          演奏する・企画する・会場を運営する。
-          あなたの音楽活動の入口をここにまとめました。
-        </p>
       </div>
+<div className="rounded-lg border bg-white p-4 space-y-3">
+  <p className="text-sm">
+    👋 soundwalk は、
+    ライブや演奏の予定をまとめておけるツールです。
+  </p>
+
+  <p className="text-sm text-gray-600">
+    まずはログインして、すでに決まっているライブを
+    1件だけ登録してみてください。
+  </p>
+
+  <Link
+    href="/login"
+    className="inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white"
+  >
+    ログイン / 新規登録
+  </Link>
+</div>
 
       <div className="grid gap-4 md:grid-cols-3">
         {/* 演奏活動 */}

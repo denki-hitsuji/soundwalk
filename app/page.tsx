@@ -18,44 +18,26 @@ export default function Home() {
 
   return (
     <main className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold"><a href="/">MusicMatch（仮）</a></h1>
+      <h1 className="text-2xl font-bold"><a href="/">soundwalk</a></h1>
+<div className="rounded-lg border bg-white p-4 space-y-3">
+  <p className="text-sm">
+    👋 soundwalk は、
+    ライブや演奏の予定をまとめておけるツールです。
+  </p>
 
-      <p className="text-sm text-gray-700">
-        ミュージシャンと店舗が、街のあちこちでライブを生み出すためのマッチングツールです。
-        まずはロールを選んでダッシュボードに進んでください。
-      </p>
+  <p className="text-sm text-gray-600">
+    まずはログインして、すでに決まっているライブを
+    1件だけ登録してみてください。
+  </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
-          <h2 className="text-sm font-semibold mb-1">ミュージシャンとして使う</h2>
-          <p className="text-xs text-gray-600 mb-3">
-            プロフィールを登録して、募集中のイベントに応募できます。
-          </p>
-          <Link
-            href="/musician"
-            className="inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white"
-          >
-            ミュージシャンダッシュボードへ
-          </Link>
-        </div>
+  <Link
+    href="/login"
+    className="inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white"
+  >
+    ログイン / 新規登録
+  </Link>
+</div>
 
-        <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
-          <h2 className="text-sm font-semibold mb-1">店舗として使う</h2>
-          <p className="text-xs text-gray-600 mb-3">
-            店舗プロフィールを登録し、イベント枠を作成してミュージシャンを募集できます。
-          </p>
-          <Link
-            href="/venue"
-            className="inline-flex items-center rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white"
-          >
-            店舗ダッシュボードへ
-          </Link>
-        </div>
-      </div>
-
-      <div className="text-[11px] text-gray-400">
-        ログイン済みの場合は、自動的にあなたのロールに応じたダッシュボードへ移動します。
-      </div>
     </main>
   );
 }
