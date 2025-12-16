@@ -1,8 +1,24 @@
 // app/musician/page.tsx
+'use client';
+
 import Link from "next/link";
 import QuickPerformanceBar from "@/app/musician/QuickPerformanceBar";
+import { useCurrentAct } from "@/lib/useCurrentAct";
+import { SongSummaryCard } from "@/components/songs/SongSummaryCard";
 
 export default function MusicianDashboardPage() {
+    const { currentAct, currentActId, loading } = useCurrentAct();
+
+  if (loading) return null;
+
+  if (!currentActId) {
+    return (
+      <div className="rounded border bg-white p-4 text-sm">
+        まだ出演名義がありません。
+        まずはソロ名義を作ってみてください。
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       <div>
@@ -99,7 +115,8 @@ export default function MusicianDashboardPage() {
             ブッキング一覧を開く
           </Link>
         </div>
-
+        {/* actId は「現在選択中のアクト」 */}
+        <SongSummaryCard actId={currentActId} />
       </div>
 
       <div className="text-[11px] text-gray-400">
