@@ -116,7 +116,7 @@ export default function MusicianDashboardPage() {
           </Link>
         </div>
         {/* actId は「現在選択中のアクト」 */}
-        <SongSummaryCard actId={currentActId} />
+        <SongSummaryCard initialActId={currentActId} />
       </div>
 
       <div className="text-[11px] text-gray-400">
