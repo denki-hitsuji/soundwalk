@@ -9,13 +9,6 @@ import { getCurrentUserRole } from '@/lib/authRole';
 export default function Home() {
   const router = useRouter();
 
-  useEffect(() => {
-    // すでにログインしている場合はロールに応じて自動リダイレクト
-    (async () => {
-      router.push("/musician"); 
-   })();
-  }, [router]);
-
   return (
     <main className="p-6 space-y-6">
       <h1 className="text-2xl font-bold"><a href="/">soundwalk</a></h1>

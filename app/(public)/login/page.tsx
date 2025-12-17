@@ -1,86 +1,68 @@
-// app/login/page.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { useRouter } from 'next/navigation';
-import { getCurrentUserRole } from '@/lib/authRole';
+import Link from "next/link";
+import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setErr(null);
     setLoading(true);
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      router.push("/dashboard"); 
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      router.replace("/musician");
     } catch (e: any) {
-      console.error(e);
-      setError('ログインに失敗しました。時間をおいて再度お試しください。');
+      setErr(e?.message ?? "ログインに失敗しました");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold mb-6">ログイン</h1>
+    <div className="rounded-2xl border bg-white p-5 shadow-sm">
+      <h1 className="text-lg font-bold">ログイン</h1>
+      <p className="mt-1 text-sm text-gray-600">続きを始めましょう。</p>
 
-      {error && (
-        <div className="mb-4 rounded border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      <form onSubmit={onSubmit} className="mt-4 space-y-3">
+        <input
+          className="w-full rounded border px-3 py-2 text-sm"
+          placeholder="メールアドレス"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          className="w-full rounded border px-3 py-2 text-sm"
+          placeholder="パスワード"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <form className="space-y-4" onSubmit={handleLogin}>
-        <div>
-          <label className="block text-sm font-medium mb-1">メールアドレス</label>
-          <input
-            type="email"
-            className="w-full rounded border px-3 py-2 text-sm"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">パスワード</label>
-          <input
-            type="password"
-            className="w-full rounded border px-3 py-2 text-sm"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-          />
-        </div>
+        {err && <div className="text-sm text-red-600">{err}</div>}
 
         <button
-          type="submit"
           disabled={loading}
-          className="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="w-full rounded bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
-          {loading ? 'ログイン中...' : 'ログイン'}
+          ログイン
         </button>
       </form>
+
+      <div className="mt-4 text-sm text-gray-600">
+        はじめて？{" "}
+        <Link href="/signup" className="text-gray-900 underline">
+          サインアップ
+        </Link>
+      </div>
     </div>
   );
 }

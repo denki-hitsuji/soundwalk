@@ -1,4 +1,6 @@
-import { supabase } from "@/lib/supabaseClient";
+// lib/songQueries.ts
+import { supabase, getCurrentUser } from "@/lib/supabaseClient";
+
 export type ActOption = {
   id: string;
   name: string;
@@ -6,7 +8,9 @@ export type ActOption = {
 };
 
 export async function getMyActsForSelect() {
-  // act_members から、自分が所属している act を引く（共有対応）
+  const user = await getCurrentUser();
+  if (!user) return []; // ★ここが重要（uuid "" を投げない）
+
   const { data, error } = await supabase
     .from("act_members")
     .select(
@@ -18,12 +22,11 @@ export async function getMyActsForSelect() {
       )
     `
     )
-    .eq("profile_id", (await supabase.auth.getUser()).data.user?.id ?? "")
+    .eq("profile_id", user.id)
     .eq("status", "active");
 
   if (error) throw error;
 
-  // join が配列/単体で揺れる可能性があるので安全に正規化
   const acts: ActOption[] = [];
   for (const row of data ?? []) {
     const a = (row as any).act;
@@ -31,11 +34,11 @@ export async function getMyActsForSelect() {
     if (act?.id && act?.name) acts.push(act);
   }
 
-  // 重複除去（念のため）
   const uniq = new Map<string, ActOption>();
   for (const a of acts) uniq.set(a.id, a);
   return Array.from(uniq.values());
 }
+
 
 export async function getRecentSongs(actId: string, limit = 2) {
   const { data, error } = await supabase
