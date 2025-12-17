@@ -53,3 +53,30 @@ export async function ensureMyDefaultAct(): Promise<MyAct> {
   if (error) throw error;
   return data as MyAct;
 }
+
+export async function getNextPerformance() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("performances")
+    .select(`
+      id,
+      event_date,
+      venue_name,
+      memo,
+      flyer_url,
+      acts (
+        id,
+        name,
+        act_type
+      )
+    `)
+    .gte("event_date", today)
+    .order("event_date", { ascending: true })
+    .limit(1);
+
+  if (error) throw error;
+
+  // 0 or 1 件
+  return data?.[0] ?? null;
+}

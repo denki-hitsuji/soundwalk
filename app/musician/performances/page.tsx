@@ -3,6 +3,25 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { PerformanceCard } from "@/components/performances/PerformanceCard";
+import {
+  PREP_DEFS,
+  normalizeAct,
+  detailsSummary,
+  parseLocalDate,
+  addDays,
+  fmtMMdd,
+  statusText,
+  type PerformanceWithActs,
+  type FlyerMap,
+  type DetailsRow,
+  type DetailsMap,
+  type PrepTaskRow,
+  type PrepMap,
+} from "@/lib/performanceUtils";
+
+import { updatePrepTaskDone } from "@/lib/performanceActions";
+
 
 type PerformanceRow = {
   id: string;
@@ -17,98 +36,6 @@ type ActRow = {
   name: string;
   act_type: string | null;
 };
-
-type PerformanceWithActs = PerformanceRow & {
-  // あなたの環境では join が単体で返るケースがあるので両対応にして正規化する
-  acts: ActRow | ActRow[] | null;
-};
-
-type FlyerMap = Record<string, { file_url: string; created_at: string }>;
-
-type DetailsRow = {
-  performance_id: string;
-  load_in_time: string | null;
-  set_start_time: string | null;
-  set_end_time: string | null;
-  set_minutes: number | null;
-  customer_charge_yen: number | null;
-  one_drink_required: boolean | null;
-};
-type DetailsMap = Record<string, DetailsRow>;
-
-type PrepTaskRow = {
-  id: string;
-  performance_id: string;
-  task_key: string; // announce_2w | announce_1w | announce_1d
-  act_id: string | null;
-  due_date: string; // YYYY-MM-DD
-  is_done: boolean;
-  done_at: string | null;
-  done_by_profile_id: string | null;
-};
-type PrepMap = Record<string, Record<string, PrepTaskRow>>; // prep[performanceId][task_key] = row
-
-function padTimeHHMM(t: string | null) {
-  if (!t) return null;
-  return t.slice(0, 5);
-}
-
-function detailsSummary(d?: DetailsRow) {
-  if (!d) return "未登録（入り/出番/チャージ）";
-
-  const loadIn = padTimeHHMM(d.load_in_time);
-  const start = padTimeHHMM(d.set_start_time);
-  const end = padTimeHHMM(d.set_end_time);
-  const minutes = d.set_minutes ?? null;
-  const charge = d.customer_charge_yen ?? null;
-  const oneDrink = d.one_drink_required;
-
-  const parts: string[] = [];
-  if (loadIn) parts.push(`入り ${loadIn}`);
-  if (start && end) parts.push(`出番 ${start}-${end}`);
-  else if (start) parts.push(`出番 ${start}`);
-  if (minutes !== null) parts.push(`${minutes}分`);
-  if (charge !== null) parts.push(`¥${charge.toLocaleString()}`);
-  if (oneDrink === true) parts.push("1Dあり");
-  if (oneDrink === false) parts.push("1Dなし");
-
-  return parts.length > 0 ? parts.join(" / ") : "未登録（入り/出番/チャージ）";
-}
-
-function parseLocalDate(yyyyMMdd: string) {
-  return new Date(`${yyyyMMdd}T00:00:00`);
-}
-function fmtMMdd(d: Date) {
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${m}/${day}`;
-}
-function addDays(date: Date, deltaDays: number) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + deltaDays);
-  return d;
-}
-function diffDays(a: Date, b: Date) {
-  return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
-}
-function statusText(target: Date, today: Date) {
-  const dd = diffDays(target, today);
-  if (dd < 0) return "期限超過";
-  if (dd === 0) return "今日";
-  return `あと${dd}日`;
-}
-
-const PREP_DEFS = [
-  { key: "announce_2w", label: "告知（2週前）", offsetDays: -14 },
-  { key: "announce_1w", label: "告知（1週前）", offsetDays: -7 },
-  { key: "announce_1d", label: "告知（前日）", offsetDays: -1 },
-] as const;
-
-function normalizeAct(p: PerformanceWithActs): ActRow | null {
-  const a = p.acts;
-  if (!a) return null;
-  return Array.isArray(a) ? a[0] ?? null : a;
-}
 
 export default function PerformancesPage() {
   const [loading, setLoading] = useState(true);
@@ -275,31 +202,23 @@ export default function PerformancesPage() {
     const row = prepByPerformanceId[performanceId]?.[taskKey];
     if (!row) return;
 
-    const nextDone = !row.is_done;
-    const payload = nextDone
-      ? { is_done: true, done_at: new Date().toISOString(), done_by_profile_id: userId }
-      : { is_done: false, done_at: null, done_by_profile_id: null };
+    try {
+      const updated = await updatePrepTaskDone({
+        taskId: row.id,
+        nextDone: !row.is_done,
+        userId,
+      });
 
-    const { data, error } = await supabase
-      .from("performance_prep_tasks")
-      .update(payload)
-      .eq("id", row.id)
-      .select("id, performance_id, task_key, act_id, due_date, is_done, done_at, done_by_profile_id")
-      .single();
-
-    if (error) {
-      console.error("prep update error", error);
-      return;
+      setPrepByPerformanceId((prev) => ({
+        ...prev,
+        [updated.performance_id]: {
+          ...(prev[updated.performance_id] ?? {}),
+          [updated.task_key]: updated,
+        },
+      }));
+    } catch (e) {
+      console.error("prep update error", e);
     }
-
-    const updated = data as PrepTaskRow;
-    setPrepByPerformanceId((prev) => ({
-      ...prev,
-      [updated.performance_id]: {
-        ...(prev[updated.performance_id] ?? {}),
-        [updated.task_key]: updated,
-      },
-    }));
   };
 
   if (loading) {
@@ -332,87 +251,36 @@ export default function PerformancesPage() {
           <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">未来のライブはまだありません。</div>
         ) : (
           <div className="space-y-3">
-            {futurePerformances.map((p) => {
-              const flyer = flyerByPerformanceId[p.id];
-              const d = detailsByPerformanceId[p.id];
-              const venue = p.venue_name ? `@ ${p.venue_name}` : "@（未設定）";
-              const act = normalizeAct(p);
-              const actName = act?.name ?? "出演名義：なし";
-              const summary = detailsSummary(d);
+   <div className="space-y-3">
 
-              const tasks = prepByPerformanceId[p.id] ?? {};
+              <div className="space-y-3">
+                {futurePerformances.map((p) => {
+                  const flyer = flyerByPerformanceId[p.id];
+                  const d = detailsByPerformanceId[p.id];
+                  const tasks = prepByPerformanceId[p.id] ?? {};
 
-              return (
-                <Link
-                  key={p.id}
-                  href={`/musician/performances/${p.id}`}
-                  className="block rounded-xl border bg-white shadow-sm hover:bg-gray-50"
-                >
-                  <div className="p-3 flex gap-3">
-                    {flyer ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={flyer.file_url}
-                        alt="フライヤー"
-                        className="h-24 w-24 rounded object-cover border"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="h-24 w-24 rounded border bg-gray-50 flex items-center justify-center text-[11px] text-gray-400">
-                        flyerなし
-                      </div>
-                    )}
+                  return (
+                    <PerformanceCard
+                      key={p.id}
+                      p={p}
+                      flyer={flyer}
+                      details={d}
+                      tasks={tasks}
+                      prepDefs={PREP_DEFS}
+                      todayDate={todayDate}
+                      normalizeAct={normalizeAct}
+                      detailsSummary={detailsSummary}
+                      parseLocalDate={parseLocalDate}
+                      addDays={addDays}
+                      fmtMMdd={fmtMMdd}
+                      statusText={statusText}
+                      onToggleDone={toggleDone}
+                    />
+                  );
+                })}
+              </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold truncate">
-                        {p.event_date} <span className="text-gray-700 font-normal">{venue}</span>
-                      </div>
-                      <div className="text-base font-bold truncate">{actName}</div>
-
-                      <div className="mt-2 text-xs text-gray-700 truncate">{summary}</div>
-
-                      {/* 段取り（永続化＆共有） */}
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {PREP_DEFS.map((def) => {
-                          const row = tasks[def.key];
-                          // row がまだ無いことは基本ないが保険
-                          const due = row?.due_date ? parseLocalDate(row.due_date) : addDays(parseLocalDate(p.event_date), def.offsetDays);
-                          const dueLabel = fmtMMdd(due);
-
-                          const done = row?.is_done === true;
-                          const stat = done ? "済" : statusText(due, todayDate);
-
-                          return (
-                            <button
-                              key={def.key}
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault(); // Link遷移を止める
-                                e.stopPropagation();
-                                void toggleDone(p.id, def.key);
-                              }}
-                              className={[
-                                "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px]",
-                                done ? "bg-gray-100 text-gray-600" : "bg-white text-gray-800",
-                              ].join(" ")}
-                              title="クリックで済/未済を切り替え"
-                            >
-                              <span className="text-gray-500">{dueLabel}</span>
-                              <span className={done ? "line-through" : ""}>{def.label}</span>
-                              <span className="text-gray-500">({stat})</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="mt-1 text-[11px] text-gray-500">
-                        タップで詳細（フライヤー/案内文/確認事項） / 段取りはここでチェック可
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+            </div>
           </div>
         )}
       </section>
