@@ -50,8 +50,14 @@ export default function SignupPage() {
     }
 
     try {
+      const next = typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("next")
+        : null;
+
+      const nextPath = next && next.startsWith("/") ? next : "/musician";
+
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-      const redirectTo = `${baseUrl}/auth/confirm`;
+      const redirectTo = `${baseUrl}/auth/confirm?next=${encodeURIComponent(nextPath)}`;
 
       const { error } = await supabase.auth.signUp({
         email,
