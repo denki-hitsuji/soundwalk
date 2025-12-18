@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ActInviteBox } from "@/components/acts/ActInviteBox";
 
 type ActRow = {
   id: string;
@@ -197,34 +198,42 @@ export default function MusicianActsPage() {
           </p>
         )}
 
-        <div className="space-y-2 max-w-md">
-          {acts.map((act) => {
-            const typeLabel =
-              ACT_TYPE_OPTIONS.find((o) => o.value === act.act_type)
-                ?.label ?? "種別未設定";
+<div className="space-y-2 max-w-md">
+  {acts.map((act) => {
+    const typeLabel =
+      ACT_TYPE_OPTIONS.find((o) => o.value === act.act_type)?.label ??
+      "種別未設定";
 
-            return (
-              <div
-                key={act.id}
-                className="flex items-center justify-between rounded border bg-white px-3 py-2 text-sm"
-              >
-                <div>
-                  <div className="font-medium">{act.name}</div>
-                  <div className="text-[11px] text-gray-500">
-                    {typeLabel}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(act.id)}
-                  className="text-[11px] text-red-600 hover:underline"
-                >
-                  削除
-                </button>
-              </div>
-            );
-          })}
+    return (
+      <div
+        key={act.id}
+        className="rounded border bg-white px-3 py-2 text-sm space-y-2"
+      >
+        {/* 1行目：名前/種別 + 削除 */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-medium truncate">{act.name}</div>
+            <div className="text-[11px] text-gray-500">{typeLabel}</div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleDelete(act.id)}
+            className="shrink-0 text-[11px] text-red-600 hover:underline"
+          >
+            削除
+          </button>
         </div>
+
+        {/* 2行目：招待（下に展開） */}
+        <div className="pt-1">
+          <ActInviteBox actId={act.id} />
+        </div>
+      </div>
+    );
+  })}
+</div>
+
       </section>
     </main>
   );

@@ -19,7 +19,13 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      router.replace("/musician");
+      const next = typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("next")
+        : null;
+
+      const nextPath = next && next.startsWith("/") ? next : "/musician";
+
+      router.replace(nextPath);
     } catch (e: any) {
       setErr(e?.message ?? "ログインに失敗しました");
     } finally {
