@@ -11,34 +11,59 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  function validate(email: string, password: string) {
+    if (!email.includes("@")) return "メールアドレスの形式が正しくありません。";
+    if (password.length < 6) return "パスワードは6文字以上にしてください。";
+    return null;
+  }
+
+  function humanizeAuthError(e: any): string {
+    const msg = String(e?.message ?? "");
+
+    // よくあるパターンを日本語化
+    if (/password/i.test(msg) && /(short|length|least|min)/i.test(msg)) {
+      return "パスワードが短すぎます。6文字以上にしてください。";
+    }
+    if (/invalid.*email/i.test(msg) || /email.*invalid/i.test(msg)) {
+      return "メールアドレスの形式が正しくありません。";
+    }
+    if (/already registered|already.*exists|User already registered/i.test(msg)) {
+      return "このメールアドレスは既に登録されています。ログインをお試しください。";
+    }
+    if (/redirect/i.test(msg)) {
+      return "認証URLの設定に問題があります。しばらくしてから再度お試しください。";
+    }
+
+    // それ以外はそのまま（ただし露骨に英語なら一般文に落とすのもアリ）
+    return msg || "サインアップに失敗しました。入力内容をご確認ください。";
+  }
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
-    setLoading(true);
+
+    // 1) 先にフロントで検証
+    const v = validate(email, password);
+    if (v) {
+      setErr(v);
+      return;
+    }
+
     try {
-const redirectTo = `${window.location.origin}/auth/confirm`;
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+      const redirectTo = `${baseUrl}/auth/confirm`;
 
-const { error } = await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    emailRedirectTo: redirectTo,   // ← メール内リンクの遷移先
-    data: { language: "ja" },      // ← 将来テンプレ分岐するなら
-  },
-});
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: redirectTo },
+      });
 
-if (error) {
-  // エラー表示
-  return;
-}
+      if (error) throw error;
 
-// ★ ここでダッシュボードへ行かない
-router.replace(`/signup/check-email?email=${encodeURIComponent(email)}`);
+      router.replace(`/signup/check-email?email=${encodeURIComponent(email)}`);
     } catch (e: any) {
-      setErr(e?.message ?? "サインアップに失敗しました");
-    } finally {
-      setLoading(false);
+      setErr(humanizeAuthError(e));
     }
   };
 
