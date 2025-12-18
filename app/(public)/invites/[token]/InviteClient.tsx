@@ -45,7 +45,8 @@ export default function InviteClient({ token }: { token: string }) {
     setJoining(true);
     setErr(null);
     try {
-      const { error } = await supabase.rpc("accept_act_invite", { p_token: token });
+      const { data, error } = await supabase.rpc("accept_act_invite", { p_token: token });
+      console.log("accept_act_invite result", { data, error });
       if (error) throw error;
 
       // 参加後はダッシュボードへ（必要なら act ページへ）
