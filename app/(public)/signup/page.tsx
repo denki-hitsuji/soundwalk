@@ -17,9 +17,24 @@ export default function SignupPage() {
     setErr(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
-      router.replace("/musician");
+const redirectTo = `${window.location.origin}/auth/confirm`;
+
+const { error } = await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    emailRedirectTo: redirectTo,   // ← メール内リンクの遷移先
+    data: { language: "ja" },      // ← 将来テンプレ分岐するなら
+  },
+});
+
+if (error) {
+  // エラー表示
+  return;
+}
+
+// ★ ここでダッシュボードへ行かない
+router.replace(`/signup/check-email?email=${encodeURIComponent(email)}`);
     } catch (e: any) {
       setErr(e?.message ?? "サインアップに失敗しました");
     } finally {
