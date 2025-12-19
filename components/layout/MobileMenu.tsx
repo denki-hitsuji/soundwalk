@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { ActSwitcher } from "@/components/acts/ActSwitcher";
 
 type NavItem = {
   label: string;
@@ -81,7 +82,9 @@ export function MobileMenu({ userId }: { userId: string | null }) {
               );
             })}
           </nav>
-
+<div className="px-3 py-2 border-b">
+  <ActSwitcher />
+</div>
           <div className="mt-6 border-t pt-4">
             {isAuthed ? (
               <button

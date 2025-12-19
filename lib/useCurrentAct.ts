@@ -8,7 +8,12 @@ export type ActRow = {
   name: string;
   act_type: string | null;
 };
-
+type CurrentActContextValue = {
+  currentAct: ActRow | null;
+  currentActId: string | null;
+  setCurrentAct: React.Dispatch<React.SetStateAction<ActRow | null>>;
+  loading: boolean;
+};
 const STORAGE_KEY = "soundwalk.currentActId";
 
 function normalizeAct(value: unknown): ActRow | null {
@@ -37,7 +42,7 @@ function normalizeAct(value: unknown): ActRow | null {
   return null;
 }
 
-export function useCurrentAct() {
+export function useCurrentAct(): CurrentActContextValue {
   const [currentAct, setCurrentAct] = useState<ActRow | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -115,15 +120,18 @@ export function useCurrentAct() {
     void load();
   }, []);
 
-  const setAct = (act: ActRow) => {
-    localStorage.setItem(STORAGE_KEY, act.id);
-    setCurrentAct(act);
+  const setAct = (act: ActRow | null) => {
+    if (act)
+    {
+      localStorage.setItem(STORAGE_KEY, act?.id);
+      setCurrentAct(act);
+    }
   };
 
   return {
     currentAct,
     currentActId: currentAct?.id ?? null,
-    setCurrentAct: setAct,
+    setCurrentAct,
     loading,
   };
 }
