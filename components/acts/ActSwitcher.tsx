@@ -1,47 +1,68 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { useCurrentAct } from "@/lib/useCurrentAct"; // ←あなたの実体に合わせて
+import { useCurrentAct } from "@/lib/useCurrentAct";
+import { ACTS_UPDATED_EVENT } from "@/lib/actEvents";
 
 type ActRow = { id: string; name: string; act_type: string | null };
 
 export function ActSwitcher() {
-  const { currentAct, setCurrentAct } = useCurrentAct(); // ←ここがポイント
+  const { currentAct, setCurrentAct } = useCurrentAct();
   const [acts, setActs] = useState<ActRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+  const load = useCallback(async () => {
+    setLoading(true);
 
-      const { data: u } = await supabase.auth.getUser();
-      const uid = u.user?.id ?? null;
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u.user?.id ?? null;
 
-      if (!uid) {
-        setActs([]);
-        setLoading(false);
-        return;
-      }
-
-      // RLSで「owner or member」が見える前提（すでに整備済みの想定）
-      const { data, error } = await supabase
-        .from("acts")
-        .select("id, name, act_type")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("load acts error", error);
-        setActs([]);
-      } else {
-        setActs((data ?? []) as ActRow[]);
-      }
-
+    if (!uid) {
+      setActs([]);
       setLoading(false);
-    };
+      return;
+    }
 
+    const { data, error } = await supabase
+      .from("acts")
+      .select("id, name, act_type")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("load acts error", error);
+      setActs([]);
+      setLoading(false);
+      return;
+    }
+
+    const list = (data ?? []) as ActRow[];
+    setActs(list);
+
+    // もし currentAct が存在するのに、一覧の名前が更新されていたら追随させる（重要）
+    if (currentAct) {
+      const fresh = list.find((a) => a.id === currentAct.id);
+      if (fresh && fresh.name !== currentAct.name) {
+        setCurrentAct(fresh);
+      }
+    }
+
+    setLoading(false);
+  }, [currentAct, setCurrentAct]);
+
+  // 初回ロード
+  useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
+
+  // acts 更新通知を購読して再ロード
+  useEffect(() => {
+    const onUpdate = () => {
+      void load();
+    };
+    window.addEventListener(ACTS_UPDATED_EVENT, onUpdate);
+    return () => window.removeEventListener(ACTS_UPDATED_EVENT, onUpdate);
+  }, [load]);
 
   const currentId = currentAct?.id ?? "";
 
@@ -62,8 +83,8 @@ export function ActSwitcher() {
         value={currentId}
         onChange={(e) => {
           const id = e.target.value;
-          const found = acts.find((a) => a.id === id) ?? null;
-          setCurrentAct(found); // ← IDではなくオブジェクトをセット
+          const found = acts.find((a) => a.id === id);
+          if (found) setCurrentAct(found);
         }}
         title="操作対象の名義を切り替え"
       >
@@ -75,9 +96,9 @@ export function ActSwitcher() {
         ))}
       </select>
 
-      {/* <span className="text-[11px] text-gray-500 truncate max-w-[140px]">
+      <span className="text-[11px] text-gray-500 truncate max-w-[140px]">
         {currentAct ? `現在：${currentAct.name}` : "未選択"}
-      </span> */}
+      </span>
     </label>
   );
 }
