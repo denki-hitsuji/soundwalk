@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { PerformanceMemoEditor } from "@/components/performances/PerformanceMemoEditor";
 
 type ActRow = { id: string; name: string; act_type: string | null };
 
@@ -322,9 +323,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                     <div>
                         <div className="text-sm font-semibold">{titleLine}</div>
                         <div className="text-base font-bold">{actLabel}</div>
-                        {performance.memo && (
-                            <p className="mt-2 text-xs text-gray-700 whitespace-pre-wrap">{performance.memo}</p>
-                        )}
+
                     </div>
                     <Link
                         href="/musician/performances"
@@ -420,16 +419,6 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                                 <option value="true">必要</option>
                                 <option value="false">不要</option>
                             </select>
-                        </label>
-
-                        <label className="block col-span-2">
-                            <span className="text-[11px] text-gray-500">補足メモ（任意）</span>
-                            <textarea
-                                className="mt-1 w-full rounded border px-2 py-1 text-sm h-20"
-                                value={details.notes ?? ""}
-                                onChange={(e) => setDetails((p) => ({ ...p, notes: e.target.value || null }))}
-                                placeholder="機材/駐車/集合場所など"
-                            />
                         </label>
 
                         <button
@@ -543,6 +532,12 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                     </div>
                 )}
             </section>
+            <PerformanceMemoEditor
+                performanceId={performance.id}
+                eventDate={performance.event_date} // YYYY-MM-DD
+                initialRecordMemo={performance.memo}
+                initialPrepNotes={details?.notes ?? null}
+            />
         </main>
     );
 }
