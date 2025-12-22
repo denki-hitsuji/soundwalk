@@ -1,6 +1,7 @@
 // lib/actQueries.ts
 import { supabase } from "@/lib/supabaseClient";
 import { getCurrentUser } from "@/lib/supabaseClient";
+import { toYmdLocal } from "./dateUtils";
 
 export type MyAct = {
   id: string;
@@ -55,7 +56,7 @@ export async function ensureMyDefaultAct(): Promise<MyAct> {
 }
 
 export async function getNextPerformance() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toYmdLocal();
 
   const { data, error } = await supabase
     .from("performances")

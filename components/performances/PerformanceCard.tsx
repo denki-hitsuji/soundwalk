@@ -22,7 +22,7 @@ export type PerformanceCardProps = {
   detailsSummary: (d: any) => string;
 
   // 既存 util を流用（ページ側から渡す）
-  parseLocalDate: (s: string) => Date;
+  toYmdLocal: (s: string) => Date;
   addDays: (d: Date, days: number) => Date;
   fmtMMdd: (d: Date) => string;
   statusText: (due: Date, today: Date) => string;
@@ -40,7 +40,7 @@ export function PerformanceCard({
   todayDate,
   normalizeAct,
   detailsSummary,
-  parseLocalDate,
+  toYmdLocal,
   addDays,
   fmtMMdd,
   statusText,
@@ -86,8 +86,8 @@ export function PerformanceCard({
             {prepDefs.map((def) => {
               const row = tasks[def.key];
               const due = row?.due_date
-                ? parseLocalDate(row.due_date)
-                : addDays(parseLocalDate(p.event_date), def.offsetDays);
+                ? toYmdLocal(row.due_date)
+                : addDays(toYmdLocal(p.event_date), def.offsetDays);
 
               const dueLabel = fmtMMdd(due);
               const done = row?.is_done === true;

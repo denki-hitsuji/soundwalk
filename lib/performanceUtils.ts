@@ -1,5 +1,7 @@
 // lib/performanceUtils.ts
 
+import { diffDays } from "./dateUtils";
+
 export type PerformanceRow = {
   id: string;
   event_date: string; // YYYY-MM-DD
@@ -75,26 +77,6 @@ export function detailsSummary(d?: DetailsRow) {
   if (oneDrink === false) parts.push("1Dなし");
 
   return parts.length > 0 ? parts.join(" / ") : "未登録（入り/出番/チャージ）";
-}
-
-export function parseLocalDate(yyyyMMdd: string) {
-  return new Date(`${yyyyMMdd}T00:00:00`);
-}
-
-export function fmtMMdd(d: Date) {
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${m}/${day}`;
-}
-
-export function addDays(date: Date, deltaDays: number) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + deltaDays);
-  return d;
-}
-
-export function diffDays(a: Date, b: Date) {
-  return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export function statusText(target: Date, today: Date) {

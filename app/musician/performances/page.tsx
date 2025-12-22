@@ -8,9 +8,6 @@ import {
   PREP_DEFS,
   normalizeAct,
   detailsSummary,
-  parseLocalDate,
-  addDays,
-  fmtMMdd,
   statusText,
   type PerformanceWithActs,
   type FlyerMap,
@@ -21,6 +18,7 @@ import {
 } from "@/lib/performanceUtils";
 
 import { updatePrepTaskDone } from "@/lib/performanceActions";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays, fmtMMdd } from "@/lib/dateUtils";
 
 
 type PerformanceRow = {
@@ -47,8 +45,8 @@ export default function PerformancesPage() {
   const [detailsByPerformanceId, setDetailsByPerformanceId] = useState<DetailsMap>({});
   const [prepByPerformanceId, setPrepByPerformanceId] = useState<PrepMap>({});
 
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const todayDate = useMemo(() => parseLocalDate(todayStr), [todayStr]);
+  const todayStr = useMemo(() => toYmdLocal(), []);
+  const todayDate = useMemo(() => parseYmdLocal(todayStr), [todayStr]);
 
   const futurePerformances = useMemo(
     () => performances.filter((p) => p.event_date >= todayStr),
@@ -151,7 +149,7 @@ export default function PerformancesPage() {
         const desired = list
           .filter((p) => p.event_date >= todayStr)
           .flatMap((p) => {
-            const eventDate = parseLocalDate(p.event_date);
+            const eventDate = parseYmdLocal(p.event_date);
             return PREP_DEFS.map((def) => {
               const due = addDays(eventDate, def.offsetDays);
               const dueStr = due.toISOString().slice(0, 10);
@@ -270,7 +268,7 @@ export default function PerformancesPage() {
                       todayDate={todayDate}
                       normalizeAct={normalizeAct}
                       detailsSummary={detailsSummary}
-                      parseLocalDate={parseLocalDate}
+                      toYmdLocal={parseYmdLocal}
                       addDays={addDays}
                       fmtMMdd={fmtMMdd}
                       statusText={statusText}

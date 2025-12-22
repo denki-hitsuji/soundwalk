@@ -2,13 +2,11 @@
 "use client";
 
 import { PerformanceCard } from "@/components/performances/PerformanceCard";
+import { toYmdLocal, parseYmdLocal, addDays, fmtMMdd } from "@/lib/dateUtils";
 import {
   PREP_DEFS,
   normalizeAct,
   detailsSummary,
-  parseLocalDate,
-  addDays,
-  fmtMMdd,
   statusText,
 } from "@/lib/performanceUtils";
 
@@ -30,7 +28,7 @@ export function DashboardPerformanceCard(props: {
       todayDate={props.todayDate}
       normalizeAct={normalizeAct}
       detailsSummary={detailsSummary}
-      parseLocalDate={parseLocalDate}
+      toYmdLocal={parseYmdLocal}
       addDays={addDays}
       fmtMMdd={fmtMMdd}
       statusText={statusText}

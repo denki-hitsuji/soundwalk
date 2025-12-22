@@ -9,10 +9,11 @@ import type {
   PrepTaskRow,
   FlyerRow,
 } from "@/lib/performanceUtils";
-import { PREP_DEFS, addDays, parseLocalDate } from "@/lib/performanceUtils";
+import { PREP_DEFS } from "@/lib/performanceUtils";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/dateUtils";
 
 export async function getNextPerformance(todayStr?: string) {
-  const t = todayStr ?? new Date().toISOString().slice(0, 10);
+  const t = todayStr ?? toYmdLocal();
 
   const { data, error } = await supabase
     .from("musician_performances")
@@ -84,7 +85,7 @@ export async function ensureAndFetchPrepMap(params: {
   if (performances.length === 0) return {} as PrepMap;
 
   const desired = performances.flatMap((p) => {
-    const eventDate = parseLocalDate(p.event_date);
+    const eventDate = parseYmdLocal(p.event_date);
     return PREP_DEFS.map((def) => {
       const due = addDays(eventDate, def.offsetDays);
       const dueStr = due.toISOString().slice(0, 10);

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/dateUtils";
 
 type ActOption = {
   id: string;
@@ -18,7 +19,7 @@ export default function NewPerformanceClient() {
 
   // クエリから初期値（クイックバーから渡される）
   const [eventDate, setEventDate] = useState(
-    sp.get("date") ?? new Date().toISOString().slice(0, 10),
+    sp.get("date") ?? toYmdLocal(),
   );
   const [actId, setActId] = useState(sp.get("actId") ?? "");
   const [venueName, setVenueName] = useState(sp.get("venue") ?? "");

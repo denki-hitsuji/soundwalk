@@ -4,13 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/dateUtils";
 
 type ActOption = { id: string; name: string; act_type: string | null };
 
 export default function QuickPerformanceBar() {
   const router = useRouter();
 
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const today = useMemo(() => toYmdLocal(), []);
   const [eventDate, setEventDate] = useState(today);
   const [venueName, setVenueName] = useState("");
   const [actId, setActId] = useState("");

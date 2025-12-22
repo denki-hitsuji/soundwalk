@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { DashboardPerformanceCard } from "@/components/performances/DashboardPerformanceCard";
-import { parseLocalDate, type PrepMap } from "@/lib/performanceUtils";
+import { type PrepMap } from "@/lib/performanceUtils";
 import { updatePrepTaskDone } from "@/lib/performanceActions";
 import {
   getNextPerformance,
@@ -12,10 +12,11 @@ import {
   getDetailsMapForPerformances,
   ensureAndFetchPrepMap,
 } from "@/lib/performanceQueries";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/dateUtils";
 
 export function NextPerformanceSection() {
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const todayDate = useMemo(() => parseLocalDate(todayStr), [todayStr]);
+  const todayStr = useMemo(() => toYmdLocal(), []);
+  const todayDate = useMemo(() => parseYmdLocal(todayStr), [todayStr]);
 
   const [userId, setUserId] = useState<string | null>(null);
   const [p, setP] = useState<any | null>(null);
