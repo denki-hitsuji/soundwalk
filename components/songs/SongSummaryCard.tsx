@@ -240,7 +240,7 @@ export function SongSummaryCard() {
   const addSong = async (actId: string, title: string) => {
     // insert → state反映（再取得でもいいが軽く即反映）
     const { data, error } = await supabase
-      .from("songs")
+      .from("act_songs")
       .insert({ act_id: actId, title }) // ←曲名カラムが違うならここ
       .select("id, act_id, title")
       .single();
@@ -251,12 +251,12 @@ export function SongSummaryCard() {
   };
 
   if (loading) {
-    return <main className="p-4 text-sm text-gray-500">読み込み中…</main>;
+    return <main className="text-sm text-gray-500">読み込み中…</main>;
   }
 
   if (!userId) {
     return (
-      <main className="p-4 space-y-2">
+      <main className="space-y-2">
         <h1 className="text-xl font-bold">演奏できる曲</h1>
         <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">
           ログインすると、名義ごとの曲リストを管理できます。
@@ -266,7 +266,7 @@ export function SongSummaryCard() {
   }
 
   return (
-    <main className="p-4 space-y-4">
+    <main className="space-y-4">
       <header className="space-y-1">
         <h1 className="text-xl font-bold">演奏できる曲</h1>
         <p className="text-xs text-gray-600">

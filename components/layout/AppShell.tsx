@@ -16,7 +16,8 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "トップ", href: "/musician" , requiresAuth: true },         // ダッシュボード
-  { label: "演奏活動", href: "/musician/performances", requiresAuth: true },
+  { label: "演奏できる曲", href: "/musician/songs", requiresAuth: true },
+  { label: "ライブ", href: "/musician/performances", requiresAuth: true },
   { label: "出演名義（アクト）", href: "/musician/acts" , requiresAuth: true },
   { label: "企画管理", href: "/musician/organized-events", requiresAuth: true },
   { label: "会場管理", href: "/venue", requiresAuth: true },           // 将来ここを統合するなら置換
@@ -164,7 +165,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="space-y-4">
           {/* モバイル用：上部に簡易ナビ（ハンバーガーはあなたの既存実装に合わせて差し替えOK） */}
           <div className="md:hidden space-y-2">
-            <div className="flex gap-2 overflow-x-auto">
+            {/* <div className="flex gap-2 overflow-x-auto">
               {visibleNav.map((item) => {
                 const active = pathname === item.href || pathname.startsWith(item.href + "/");
                 const locked = item.requiresAuth && !isAuthed;
@@ -183,7 +184,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
-            </div>
+            </div> */}
 
             {shouldShowInvite && <AuthInviteBanner />}
           </div>
