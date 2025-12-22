@@ -96,9 +96,9 @@ export function ActSwitcher() {
         ))}
       </select>
 
-      <span className="text-[11px] text-gray-500 truncate max-w-[140px]">
+      {/* <span className="text-[11px] text-gray-500 truncate max-w-[140px]">
         {currentAct ? `現在：${currentAct.name}` : "未選択"}
-      </span>
+      </span> */}
     </label>
   );
 }

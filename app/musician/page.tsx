@@ -1,4 +1,4 @@
-import DashboardClient from "./DashboardClient.tsx";
+import DashboardClient from "./DashboardClient";
 
 export default function MusicianDashboardPage() {
   return (

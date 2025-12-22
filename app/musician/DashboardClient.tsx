@@ -20,7 +20,7 @@ export default function DashboardClient() {
       {/* <QuickPerformanceBar /> */}
 
       {/* 演奏できる曲（act 選択UIがあるなら initialActId 無くてもOK） */}
-      <SongSummaryCard initialActId={currentActId} />
+      <SongSummaryCard />
 
       {/* 例：導線など */}
       <div className="grid gap-4 md:grid-cols-2">
