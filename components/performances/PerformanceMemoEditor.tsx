@@ -29,9 +29,11 @@ export function PerformanceMemoEditor({
   const [savingRecord, setSavingRecord] = useState(false);
   const [prepSavedAt, setPrepSavedAt] = useState<string | null>(null);
   const [recordSavedAt, setRecordSavedAt] = useState<string | null>(null);
+  const [savedPrepNotes, setSavedPrepNotes] = useState<string>(initialPrepNotes ?? "");
+  const [savedRecordMemo, setSavedRecordMemo] = useState<string>(initialRecordMemo ?? "");
 
-  const prepChanged = (prepNotes ?? "") !== (initialPrepNotes ?? "");
-  const recordChanged = (recordMemo ?? "") !== (initialRecordMemo ?? "");
+  const prepChanged = (prepNotes ?? "") !== (savedPrepNotes ?? "");
+  const recordChanged = (recordMemo ?? "") !== (savedRecordMemo ?? "");
 
   const savePrep = async () => {
     setSavingPrep(true);
@@ -49,6 +51,8 @@ export function PerformanceMemoEditor({
 
       if (error) throw error;
       setPrepSavedAt(new Date().toLocaleTimeString());
+      const normalized = prepNotes.trim();
+      setSavedPrepNotes(normalized ? normalized : "");
     } finally {
       setSavingPrep(false);
     }
@@ -68,6 +72,8 @@ export function PerformanceMemoEditor({
 
       if (error) throw error;
       setRecordSavedAt(new Date().toLocaleTimeString());
+      const normalized = recordMemo.trim();
+      setSavedRecordMemo(normalized ? normalized : "");
     } finally {
       setSavingRecord(false);
     }
