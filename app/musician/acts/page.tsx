@@ -32,6 +32,7 @@ function ActCard({
   onDelete,
   canEditName,
   onRename,
+  onProfileUpdated, // ★追加
 }: {
   act: ActRow;
   subtitle: React.ReactNode;
@@ -40,12 +41,12 @@ function ActCard({
   onDelete?: () => void;
   canEditName: boolean;
   onRename: (nextName: string) => Promise<void>;
+  onProfileUpdated?: (patch: Partial<ActRow>) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(act.name);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [acts, setActs] = useState<ActRow[]>([]);
   // 外から name が更新された場合の追随
   useEffect(() => {
     if (!editing) setName(act.name);
@@ -144,13 +145,9 @@ function ActCard({
 
       </div>
         <ActProfileEditor
-                    act={act as ActRow}
-                    onUpdated={(patch) => {
-                      setActs((prev) =>
-                        prev.map((a) => (a.id === act.id ? ({ ...a, ...patch } as any) : a))
-                      );
-                    }}
-                  />
+          act={act}
+          onUpdated={(patch) => onProfileUpdated?.(patch)}
+        />
  
       {canInvite && <ActInviteBox actId={act.id} />}
     </div>
@@ -174,73 +171,92 @@ export default function ActsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
 
   const ownedIds = useMemo(() => new Set(ownedActs.map((a) => a.id)), [ownedActs]);
+  const applyActPatch = (actId: string, patch: Partial<ActRow>) => {
+    setOwnedActs((prev) => prev.map((a) => (a.id === actId ? { ...a, ...patch } : a)));
+    setMemberActs((prev) => prev.map((a) => (a.id === actId ? { ...a, ...patch } : a)));
 
+    setCurrentAct((prev) => {
+      if (!prev || prev.id !== actId) return prev;
+      return { ...prev, ...patch };
+    });
+    notifyActsUpdated();
+  };
   const load = async () => {
     setLoading(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id ?? null;
+      setUserId(uid);
 
-    const { data: u } = await supabase.auth.getUser();
-    const uid = u.user?.id ?? null;
-    setUserId(uid);
+      if (!uid) {
+        setOwnedActs([]);
+        setMemberActs([]);
+        setMemberMap({});
+        return;
+      }
 
-    if (!uid) {
-      setOwnedActs([]);
-      setMemberActs([]);
-      setMemberMap({});
+      const { data: owned, error: ownedErr } = await supabase
+        .from("acts")
+        .select("id, name, act_type, description, photo_url, profile_link_url, owner_profile_id, created_at")
+        .eq("owner_profile_id", uid)
+        .order("created_at", { ascending: false });
+
+      if (ownedErr) console.error("load owned acts error", ownedErr);
+
+      const { data: mem, error: memErr } = await supabase
+        .from("act_members")
+        .select("act_id, is_admin, status, acts:acts ( id, name, act_type, owner_profile_id )")
+        .eq("profile_id", uid)
+        .eq("status", "active");
+
+      if (memErr) console.error("load member acts error", memErr);
+
+      const mm: Record<string, { is_admin: boolean }> = {};
+      const mActs: ActRow[] = [];
+
+      for (const r of (mem ?? []) as unknown as MemberRow[]) {
+        mm[r.act_id] = { is_admin: r.is_admin === true };
+        const a = normalizeAct(r.acts);
+        if (a) mActs.push(a);
+      }
+
+      const ownedSet = new Set((owned ?? []).map((a: any) => a.id as string));
+      const filteredMember = mActs.filter((a) => !ownedSet.has(a.id));
+
+      setOwnedActs((owned ?? []) as unknown as ActRow[]);
+      setMemberActs(filteredMember);
+      setMemberMap(mm);
+
+      if ((owned ?? []).length === 0 && soloName.trim() === "") {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", uid)
+          .single();
+        const dn = (prof?.display_name ?? "").trim();
+        if (dn) setSoloName(dn);
+      }
+    } catch (e) {
+      console.error("acts load fatal", e);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // owner：自分が作った名義
-    const { data: owned, error: ownedErr } = await supabase
-      .from("acts")
-      .select("id, name, act_type, description, photo_url, profile_link_url, owner_profile_id, created_at")
-      .eq("owner_profile_id", uid)
-      .order("created_at", { ascending: false });
-
-    if (ownedErr) console.error("load owned acts error", ownedErr);
-
-    // member：参加中の名義（act_members -> acts）
-    const { data: mem, error: memErr } = await supabase
-      .from("act_members")
-      .select("act_id, is_admin, status, acts:acts ( id, name, act_type, owner_profile_id )")
-      .eq("profile_id", uid)
-      .eq("status", "active");
-
-    if (memErr) console.error("load member acts error", memErr);
-
-    const mm: Record<string, { is_admin: boolean }> = {};
-    const mActs: ActRow[] = [];
-
-    for (const r of (mem ?? []) as unknown as MemberRow[]) {
-      mm[r.act_id] = { is_admin: r.is_admin === true };
-      const a = normalizeAct(r.acts);
-      if (a) mActs.push(a);
-    }
-
-    // owner と member が同じ act を二重に表示しない（owner優先）
-    const ownedSet = new Set((owned ?? []).map((a: any) => a.id as string));
-    const filteredMember = mActs.filter((a) => !ownedSet.has(a.id));
-
-    setOwnedActs((owned ?? []) as unknown as ActRow[]);
-    setMemberActs(filteredMember);
-    setMemberMap(mm);
-
-    // ソロ名義作成フォームの初期値を補助（profiles.display_name）
-    if ((owned ?? []).length === 0 && soloName.trim() === "") {
-      const { data: prof } = await supabase.from("profiles").select("display_name").eq("id", uid).single();
-      const dn = (prof?.display_name ?? "").trim();
-      if (dn) setSoloName(dn);
-    }
-
-    setLoading(false);
   };
 
+
   useEffect(() => {
-    void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    void load();
   }, []);
 
+  useEffect(() => {
+    console.log("parent member acts", memberActs.map(a => ({ id: a.id, desc: a.description })));
+  }, [memberActs]);
+  useEffect(() => {
+        console.log("parent owned acts", ownedActs.map(a => ({ id: a.id, desc: a.description })));
+    }, [ownedActs]);
   const createSoloAct = async () => {
+    
     setCreateError(null);
 
     const name = soloName.trim();
@@ -383,18 +399,15 @@ export default function ActsPage() {
           <div className="space-y-2 max-w-md">
               {ownedActs.map((act) => (
               <ActCard
-                key={act.id}
-                act={act}
-                subtitle={<Badge>owner</Badge>}
-                canInvite={canInvite(act)}
-                canDelete={true}
-                onDelete={() => {
-                  // 既存の handleDelete に差し替えてOK
-                  // handleDelete(act.id)
-                }}
-                canEditName={canEditName(act)}
-                onRename={(next) => renameAct(act.id, next)}
-              />
+  key={act.id}
+  act={act}
+  subtitle={<Badge>owner</Badge>}
+  canInvite={canInvite(act)}
+  canDelete={true}
+  canEditName={canEditName(act)}
+  onRename={(next) => renameAct(act.id, next)}
+  onProfileUpdated={(patch) => applyActPatch(act.id, patch)}
+/>
             
             ))}
           </div>
@@ -431,6 +444,7 @@ export default function ActsPage() {
                   canDelete={false}
                   canEditName={isAdmin} // admin member は編集できる設計にしておく（安全）
                   onRename={(next) => renameAct(act.id, next)}
+                  onProfileUpdated={(patch): void => applyActPatch(act.id, patch)}
                 />
               );
             })}
