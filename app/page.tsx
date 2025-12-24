@@ -1,7 +1,19 @@
 // app/page.tsx
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // すでにログインしている場合はロールに応じて自動リダイレクト
+    (async () => {
+      router.push("/musician"); 
+   })();
+  }, [router]);
 
   return (
     <main className="p-6 space-y-6">
