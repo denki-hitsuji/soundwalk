@@ -79,7 +79,7 @@ export function ActSwitcher() {
       <span className="text-[11px] text-gray-500">名義</span>
 
       <select
-        className="h-8 rounded-md border bg-white px-2 text-sm"
+        className="h-8 w-40 rounded-md border bg-white px-2 text-sm"
         value={currentId}
         onChange={(e) => {
           const id = e.target.value;
