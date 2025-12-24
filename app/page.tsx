@@ -1,11 +1,6 @@
 // app/page.tsx
 import Link from 'next/link';
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Soundwalk",
-  description: "街に音楽が溢れるためのアプリ",
-};
 export default function Home() {
 
   return (
