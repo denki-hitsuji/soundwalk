@@ -149,7 +149,7 @@ export default function NewEventPage() {
           href="/musician"
           className="text-xs text-blue-600 underline"
         >
-          ミュージシャンダッシュボードへ戻る
+          ダッシュボードへ戻る
         </Link>
       </div>
 

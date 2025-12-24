@@ -150,7 +150,7 @@ export default function MusicianOrganizedEventsPage() {
           href="/musician"
           className="text-xs text-blue-600 underline"
         >
-          ミュージシャンダッシュボードに戻る
+          ダッシュボードに戻る
         </Link>
       </div>
 
@@ -159,7 +159,7 @@ export default function MusicianOrganizedEventsPage() {
       {!error && events.length === 0 && (
         <p className="text-sm text-gray-500">
           まだあなたが企画したイベントはありません。
-          「ミュージシャンダッシュボード → 新しいイベントを企画する」から作成できます。
+          「企画管理 → 新しいイベントを企画する」から作成できます。
         </p>
       )}
 
