@@ -5,7 +5,12 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUserRole } from '@/lib/authRole';
+import type { Metadata } from "next";
 
+export const metadata: Metadata = {
+  title: "Soundwalk",
+  description: "街に音楽が溢れるためのアプリ",
+};
 export default function Home() {
   const router = useRouter();
 
