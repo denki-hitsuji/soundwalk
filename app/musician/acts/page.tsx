@@ -170,7 +170,6 @@ export default function ActsPage() {
   const [creatingSolo, setCreatingSolo] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const ownedIds = useMemo(() => new Set(ownedActs.map((a) => a.id)), [ownedActs]);
   const applyActPatch = (actId: string, patch: Partial<ActRow>) => {
     setOwnedActs((prev) => prev.map((a) => (a.id === actId ? { ...a, ...patch } : a)));
     setMemberActs((prev) => prev.map((a) => (a.id === actId ? { ...a, ...patch } : a)));
@@ -316,10 +315,6 @@ export default function ActsPage() {
     setOwnedActs((prev) => prev.map((a) => (a.id === actId ? (data as ActRow) : a)));
     setMemberActs((prev) => prev.map((a) => (a.id === actId ? (data as ActRow) : a)));
 
-    // currentAct だったら追随
-    if (currentAct?.id === actId) {
-      setCurrentAct(data as ActRow);
-    }
     // currentAct だったら追随
     if (currentAct?.id === actId) {
       setCurrentAct(data as ActRow);

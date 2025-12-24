@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export type ActRow = {
   id: string;
   name: string;
   act_type: string | null;
-  description: string | null;         // プロフィール文
-  photo_url: string | null;           // 写真
-  profile_link_url: string | null;    // リンク1本
+  description: string | null;
+  photo_url: string | null;
+  profile_link_url: string | null;
   owner_profile_id: string;
 };
 
@@ -19,41 +19,37 @@ type Props = {
 };
 
 export function ActProfileEditor({ act, onUpdated }: Props) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
   const [photoUrl, setPhotoUrl] = useState(act.photo_url ?? "");
   const [desc, setDesc] = useState(act.description ?? "");
   const [link, setLink] = useState(act.profile_link_url ?? "");
-  useEffect(() => {
-    setPhotoUrl(act.photo_url ?? "");
-    setDesc(act.description ?? "");
-    setLink(act.profile_link_url ?? "");
-  }, [act.photo_url, act.description, act.profile_link_url]);
-  useEffect(() => {
-  console.log("child act prop changed", act.id, act.description);
-}, [act.id, act.description]);
+
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
   const norm = (v: string | null | undefined) => (v ?? "").trim();
+
+  // 写真は即反映するので、changed判定からは外す（保存ボタンで扱うのは desc/link のみ）
   const changed = useMemo(() => {
-    return (
-      norm(photoUrl) !== norm(act.photo_url) ||
-      norm(desc) !== norm(act.description) ||
-      norm(link) !== norm(act.profile_link_url)
-    );
-  }, [photoUrl, desc, link, act.photo_url, act.description, act.profile_link_url]);
+    return norm(desc) !== norm(act.description) || norm(link) !== norm(act.profile_link_url);
+  }, [desc, link, act.description, act.profile_link_url]);
 
-  const debug = () => {
-    console.log({
-      photoUrl,
-      desc,
-      link,
-      actPhoto: act.photo_url,
-      actDesc: act.description,
-      actLink: act.profile_link_url,
-    });
-  }
+  const cacheBust = (url: string) => {
+    const v = `v=${Date.now()}`;
+    return url.includes("?") ? `${url}&${v}` : `${url}?${v}`;
+  };
 
-  const uploadPhoto = async (file: File) => {
+  const uploadAndApplyPhoto = async (file: File) => {
+    setErr(null);
     setUploading(true);
+
+    // 先にローカルプレビュー（体感が良い）
+    const localPreview = URL.createObjectURL(file);
+    setPhotoUrl(localPreview);
+
     try {
       const ext = file.name.split(".").pop() || "png";
       const filename = `${crypto.randomUUID()}.${ext}`;
@@ -66,41 +62,93 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
           upsert: false,
           contentType: file.type || "image/png",
         });
-
       if (upErr) throw upErr;
 
       const { data } = supabase.storage.from("act-photos").getPublicUrl(path);
-      const url = data.publicUrl;
+      const publicUrl = data.publicUrl;
 
-      setPhotoUrl(url);
-      onUpdated?.({ photo_url: url });
+      // CDNキャッシュ避け（更新が反映しない時の定番原因）
+      const busted = cacheBust(publicUrl);
+
+      // ★ここが本命：DBにも即反映
+      const { error: dbErr } = await supabase.from("acts").update({ photo_url: publicUrl }).eq("id", act.id);
+      if (dbErr) throw dbErr;
+
+      // UIは bust 付きで表示、DBは素のURL（次回ロードで二重?が付かない）
+      setPhotoUrl(busted);
+      onUpdated?.({ photo_url: publicUrl });
+    } catch (e: any) {
+      console.error(e);
+      setErr(e?.message ?? "アップロードに失敗しました");
+      // 失敗したら元に戻す
+      setPhotoUrl(act.photo_url ?? "");
     } finally {
       setUploading(false);
+      // input をリセット（同じファイルを選び直せるように）
+      if (fileRef.current) fileRef.current.value = "";
+      // プレビューURL解放
+      URL.revokeObjectURL(localPreview);
     }
   };
 
-  const save = async () => {
+  // “できる範囲で” storage から消す（photo_url しか無いので推測）
+  const tryRemoveFromStorageByUrl = async (url: string) => {
+    // 例: https://xxx.supabase.co/storage/v1/object/public/act-photos/<PATH>
+    const marker = "/storage/v1/object/public/act-photos/";
+    const idx = url.indexOf(marker);
+    if (idx < 0) return; // 形式が違うなら諦める
+    const path = url.slice(idx + marker.length).split("?")[0]; // クエリ除去
+    await supabase.storage.from("act-photos").remove([path]);
+  };
+
+  const deletePhoto = async () => {
+    if (!act.photo_url && !photoUrl) return;
+
+    setErr(null);
+    setDeleting(true);
+    try {
+      // 先にDBを消す（表示＆共有が一発で揃う）
+      const { error: dbErr } = await supabase.from("acts").update({ photo_url: null }).eq("id", act.id);
+      if (dbErr) throw dbErr;
+
+      // storage実ファイルは“ベスト努力”
+      if (act.photo_url) {
+        try {
+          await tryRemoveFromStorageByUrl(act.photo_url);
+        } catch (e) {
+          // 消せなくても致命ではないので握りつぶす
+          console.warn("remove storage file skipped:", e);
+        }
+      }
+
+      setPhotoUrl("");
+      onUpdated?.({ photo_url: null });
+    } catch (e: any) {
+      console.error(e);
+      setErr(e?.message ?? "削除に失敗しました");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const saveText = async () => {
+    setErr(null);
     setSaving(true);
     try {
       const patch = {
-        photo_url: photoUrl.trim() ? photoUrl.trim() : null,
         description: desc.trim() ? desc.trim() : null,
         profile_link_url: link.trim() ? link.trim() : null,
       };
 
       const { error } = await supabase.from("acts").update(patch).eq("id", act.id);
       if (error) throw error;
-      // DBに入った形（trim + null）に UI state も揃える
-      setPhotoUrl(patch.photo_url ?? "");
+
       setDesc(patch.description ?? "");
       setLink(patch.profile_link_url ?? "");
-
-      debug();
-      onUpdated?.({
-        photo_url: patch.photo_url,
-        description: patch.description,
-        profile_link_url: patch.profile_link_url,
-      });
+      onUpdated?.(patch);
+    } catch (e: any) {
+      console.error(e);
+      setErr(e?.message ?? "保存に失敗しました");
     } finally {
       setSaving(false);
     }
@@ -122,21 +170,36 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
         </div>
 
         <div className="flex-1 space-y-2">
-          <label className="block text-[11px] text-gray-600">
-            写真をアップロード（1枚）
-            <input
-              type="file"
-              accept="image/*"
-              disabled={uploading}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void uploadPhoto(f);
-              }}
-              className="mt-1 block w-full text-xs"
-            />
-          </label>
+          <div className="flex items-center gap-2">
+            <label className="block text-[11px] text-gray-600">
+              写真を選ぶ（選んだ瞬間にアップロード）
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                disabled={uploading || deleting}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadAndApplyPhoto(f);
+                }}
+                className="mt-1 block w-full text-xs"
+              />
+            </label>
 
-          {uploading && <div className="text-[11px] text-gray-500">アップロード中…</div>}
+            <button
+              type="button"
+              disabled={!photoUrl || uploading || deleting}
+              onClick={() => void deletePhoto()}
+              className="mt-5 shrink-0 rounded border px-2 py-1 text-[11px] hover:bg-gray-100 disabled:opacity-40"
+              title="写真を削除"
+            >
+              {deleting ? "削除中…" : "削除"}
+            </button>
+          </div>
+
+          {(uploading || deleting) && (
+            <div className="text-[11px] text-gray-500">{uploading ? "アップロード中…" : "削除中…"}</div>
+          )}
         </div>
       </div>
 
@@ -162,15 +225,17 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
         />
       </label>
 
+      {err && <div className="text-[11px] text-red-600">{err}</div>}
+
       <div className="flex items-center justify-end gap-2">
         {changed && <span className="text-[11px] text-gray-500">未保存の変更があります</span>}
         <button
           type="button"
-          disabled={!changed || saving || uploading}
-          onClick={() => void save()}
+          disabled={!changed || saving || uploading || deleting}
+          onClick={() => void saveText()}
           className="rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
         >
-          {saving ? "保存中…" : "保存"}
+          {saving ? "保存中…" : "保存（文/リンク）"}
         </button>
       </div>
     </div>
