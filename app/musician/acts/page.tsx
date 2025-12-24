@@ -6,13 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useCurrentAct } from "@/lib/useCurrentAct";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import { notifyActsUpdated } from "@/lib/actEvents";
-
-type ActRow = {
-  id: string;
-  name: string;
-  act_type: string | null;
-  owner_profile_id: string;
-};
+import { ActProfileEditor, ActRow } from "@/components/acts/ActProfileEditor";
 
 type MemberRow = {
   act_id: string;
@@ -51,7 +45,7 @@ function ActCard({
   const [name, setName] = useState(act.name);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
+  const [acts, setActs] = useState<ActRow[]>([]);
   // 外から name が更新された場合の追随
   useEffect(() => {
     if (!editing) setName(act.name);
@@ -122,8 +116,7 @@ function ActCard({
             </div>
           )}
         </div>
-
-        <div className="shrink-0 flex items-center gap-3">
+       <div className="shrink-0 flex items-center gap-3">
           {!editing && canEditName && (
             <button
               type="button"
@@ -148,8 +141,17 @@ function ActCard({
             </button>
           )}
         </div>
-      </div>
 
+      </div>
+        <ActProfileEditor
+                    act={act as ActRow}
+                    onUpdated={(patch) => {
+                      setActs((prev) =>
+                        prev.map((a) => (a.id === act.id ? ({ ...a, ...patch } as any) : a))
+                      );
+                    }}
+                  />
+ 
       {canInvite && <ActInviteBox actId={act.id} />}
     </div>
   );
@@ -191,7 +193,7 @@ export default function ActsPage() {
     // owner：自分が作った名義
     const { data: owned, error: ownedErr } = await supabase
       .from("acts")
-      .select("id, name, act_type, owner_profile_id")
+      .select("id, name, act_type, description, photo_url, profile_link_url, owner_profile_id, created_at")
       .eq("owner_profile_id", uid)
       .order("created_at", { ascending: false });
 
@@ -260,9 +262,12 @@ export default function ActsPage() {
         .insert({
           name,
           act_type: "solo",
+          photo_url: null,
+          profile_link_url: null,
           owner_profile_id: uid,
+          description: ""
         })
-        .select("id, name, act_type, owner_profile_id")
+        .select("id, name, act_type, owner_profile_id, photo_url, profile_link_url, description")
         .single();
 
       if (insErr) throw insErr;
@@ -286,7 +291,7 @@ export default function ActsPage() {
       .from("acts")
       .update({ name: nextName })
       .eq("id", actId)
-      .select("id, name, act_type, owner_profile_id")
+      .select("id, name, act_type, owner_profile_id,photo_url, profile_link_url, description")
       .single();
 
     if (error) throw error;
@@ -376,7 +381,7 @@ export default function ActsPage() {
           </div>
         ) : (
           <div className="space-y-2 max-w-md">
-            {ownedActs.map((act) => (
+              {ownedActs.map((act) => (
               <ActCard
                 key={act.id}
                 act={act}
@@ -390,6 +395,7 @@ export default function ActsPage() {
                 canEditName={canEditName(act)}
                 onRename={(next) => renameAct(act.id, next)}
               />
+            
             ))}
           </div>
         )}
