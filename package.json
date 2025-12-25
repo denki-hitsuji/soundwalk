@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.87.1",
     "dotenv": "^17.2.3",
     "leaflet": "^1.9.4",
