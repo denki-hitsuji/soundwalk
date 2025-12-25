@@ -5,12 +5,21 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { PerformanceMemoEditor } from "@/components/performances/PerformanceMemoEditor";
 
+// ★追加：編集UI
+import { CoreInfoEditor } from "@/components/CoreInfoEditor";
+import { PersonalPerformanceCoreEditor } from "@/components/PersonalPerformanceCoreEditor";
+
 type ActRow = { id: string; name: string; act_type: string | null };
 
 type PerformanceRow = {
     id: string;
     profile_id: string;
     act_id: string | null;
+
+    // ★追加
+    event_id: string | null;
+    venue_id: string | null;
+
     event_date: string;
     venue_name: string | null;
     memo: string | null;
@@ -43,6 +52,15 @@ type MessageRow = {
     created_at: string;
 };
 
+type VenueRow = { id: string; name: string };
+
+type EventRow = {
+    id: string;
+    date: string; // timestamptz文字列想定
+    venue_id: string | null;
+    organizer_profile_id: string;
+};
+
 const BUCKET = "performance-attachments";
 
 export default function PerformanceDetailClient({ performanceId }: { performanceId: string }) {
@@ -53,6 +71,14 @@ export default function PerformanceDetailClient({ performanceId }: { performance
 
     const [performance, setPerformance] = useState<PerformanceRow | null>(null);
     const [act, setAct] = useState<ActRow | null>(null);
+
+    // ★追加：event / venues / organizer判定
+    const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+    const [event, setEvent] = useState<EventRow | null>(null);
+    const [venues, setVenues] = useState<VenueRow[]>([]);
+    const isOrganizer = useMemo(() => {
+        return !!event && !!currentProfileId && event.organizer_profile_id === currentProfileId;
+    }, [event, currentProfileId]);
 
     const [details, setDetails] = useState<DetailsRow>({
         performance_id: performanceId,
@@ -85,20 +111,59 @@ export default function PerformanceDetailClient({ performanceId }: { performance
     const reloadAll = async () => {
         setLoading(true);
 
+        // ★現在ユーザー（profiles.id = auth.users.id なので profile_id として使う）
+        const { data: auth } = await supabase.auth.getUser();
+        setCurrentProfileId(auth.user?.id ?? null);
+
+        // ★venues（個人登録編集で使う。軽いので毎回でOK）
+        {
+            const { data: v, error: vErr } = await supabase
+                .from("venues")
+                .select("id,name")
+                .order("name", { ascending: true });
+
+            if (vErr) {
+                console.error("load venues error", vErr);
+                setVenues([]);
+            } else {
+                setVenues((v ?? []) as VenueRow[]);
+            }
+        }
+
         // performance 本体
         const { data: perf, error: perfErr } = await supabase
             .from("musician_performances")
-            .select("id, profile_id, act_id, event_date, venue_name, memo")
+            // ★ event_id, venue_id を追加
+            .select("id, profile_id, act_id, event_id, venue_id, event_date, venue_name, memo")
             .eq("id", performanceId)
             .single();
 
         if (perfErr) {
             console.error("load performance error", perfErr);
             setPerformance(null);
+            setEvent(null);
             setLoading(false);
             return;
         }
         setPerformance(perf as PerformanceRow);
+
+        // ★event（連動している場合のみ）
+        if ((perf as any).event_id) {
+            const { data: ev, error: evErr } = await supabase
+                .from("events")
+                .select("id, date, venue_id, organizer_profile_id")
+                .eq("id", (perf as any).event_id)
+                .single();
+
+            if (evErr) {
+                console.error("load event error", evErr);
+                setEvent(null);
+            } else {
+                setEvent(ev as EventRow);
+            }
+        } else {
+            setEvent(null);
+        }
 
         // act
         if ((perf as any).act_id) {
@@ -269,7 +334,6 @@ export default function PerformanceDetailClient({ performanceId }: { performance
         if (att.file_path) {
             const { error: stErr } = await supabase.storage.from(BUCKET).remove([att.file_path]);
             if (stErr) {
-                // storage削除失敗しても致命ではないので警告のみ
                 console.warn("storage remove failed", stErr);
             }
         }
@@ -317,13 +381,12 @@ export default function PerformanceDetailClient({ performanceId }: { performance
 
     return (
         <main className="p-4 space-y-6">
-            {/* ヘッダー（答えの場所） */}
+            {/* ヘッダー */}
             <section className="rounded-xl border bg-white px-4 py-3 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                     <div>
                         <div className="text-sm font-semibold">{titleLine}</div>
                         <div className="text-base font-bold">{actLabel}</div>
-
                     </div>
                     <Link
                         href="/musician/performances"
@@ -331,6 +394,34 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                     >
                         タイムラインへ
                     </Link>
+                </div>
+
+                {/* ★追加：ここに「日付・会場の編集」ブロックを差し込む */}
+                <div className="mt-4">
+                    {performance.event_id ? (
+                        // event連動：主催者だけが編集できる（CoreInfoEditor）
+                        isOrganizer && event && event.venue_id? (
+                            <CoreInfoEditor
+                                eventId={event.id}
+                                currentDateISO={event.date}
+                                currentVenueId={event.venue_id}
+                                venues={venues}
+                            />
+                        ) : (
+                            <div className="rounded-xl border p-4 text-sm text-neutral-700">
+                                この出演はイベントに紐づいています。日付・会場の変更は主催者のみ可能です。
+                            </div>
+                        )
+                    ) : (
+                        // 個人登録：自分でサッと直せる（PersonalPerformanceCoreEditor）
+                        <PersonalPerformanceCoreEditor
+                            performanceId={performance.id}
+                            eventDate={performance.event_date}
+                            venueId={performance.venue_id}
+                            venueName={performance.venue_name}
+                            venues={venues}
+                        />
+                    )}
                 </div>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -532,6 +623,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                     </div>
                 )}
             </section>
+
             <PerformanceMemoEditor
                 performanceId={performance.id}
                 eventDate={performance.event_date} // YYYY-MM-DD
