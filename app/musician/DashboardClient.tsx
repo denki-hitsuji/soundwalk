@@ -24,7 +24,7 @@ export default function DashboardClient() {
 
       {/* 例：導線など */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border bg-white shadow-sm">
+        <div className="rounded-lg border bg-white shadow-sm p-4">
           <h2 className="text-sm font-semibold mb-1">ライブタイムライン</h2>
           <p className="text-xs text-gray-600 mb-3">
             未来のライブはフライヤーと段取りをまとめて確認できます。
