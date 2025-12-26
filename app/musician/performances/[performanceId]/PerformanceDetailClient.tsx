@@ -472,7 +472,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
     };
 
     return (
-        <main className="p-4 space-y-6">
+        <main className="space-y-6">
             {/* ヘッダー */}
             <section className="rounded-xl border bg-white px-4 py-3 shadow-sm">
                 <div className="flex items-start justify-between gap-3">

@@ -256,7 +256,7 @@ export function SongSummaryCard() {
 
   if (!userId) {
     return (
-      <main className="space-y-2">
+      <main className="py-4 space-y-2">
         <h1 className="text-xl font-bold">演奏できる曲</h1>
         <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">
           ログインすると、名義ごとの曲リストを管理できます。
@@ -266,7 +266,7 @@ export function SongSummaryCard() {
   }
 
   return (
-    <main className="space-y-4">
+    <main className="py-4 space-y-4">
       <header className="space-y-1">
         <h1 className="text-xl font-bold">演奏できる曲</h1>
         <p className="text-xs text-gray-600">

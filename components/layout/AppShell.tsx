@@ -162,9 +162,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* Main */}
-        <main className="space-y-4">
+        <main className="p-4 w-full max-w-full overflow-x-hidden">
+          <div className="mx-auto max-w-3xl min-w-0 md:hidden space-y-2">
           {/* モバイル用：上部に簡易ナビ（ハンバーガーはあなたの既存実装に合わせて差し替えOK） */}
-          <div className="md:hidden space-y-2">
             {/* <div className="flex gap-2 overflow-x-auto">
               {visibleNav.map((item) => {
                 const active = pathname === item.href || pathname.startsWith(item.href + "/");

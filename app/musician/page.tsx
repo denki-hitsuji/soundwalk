@@ -2,7 +2,7 @@ import DashboardClient from "./DashboardClient";
 
 export default function MusicianDashboardPage() {
   return (
-    <main className="p-4">
+    <main className="w-full max-w-md mx-auto">
       <DashboardClient />
     </main>
   );

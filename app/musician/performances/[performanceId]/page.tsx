@@ -11,7 +11,7 @@ export default async function Page({ params }: Props) {
   const { performanceId } = await params;
 
   return (
-    <Suspense fallback={<main className="p-4 text-sm text-gray-500">読み込み中…</main>}>
+    <Suspense fallback={<main className="text-sm text-gray-500">読み込み中…</main>}>
       <PerformanceDetailClient performanceId={performanceId} />
       <Link
         href="/musician/performances"

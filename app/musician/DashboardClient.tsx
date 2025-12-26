@@ -12,7 +12,7 @@ export default function DashboardClient() {
   if (loading) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="">
       {/* ★最上部：次回ライブ */}
       <NextPerformanceSection />
 
@@ -24,7 +24,7 @@ export default function DashboardClient() {
 
       {/* 例：導線など */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border bg-white px-4 py-4 shadow-sm">
+        <div className="rounded-lg border bg-white shadow-sm">
           <h2 className="text-sm font-semibold mb-1">ライブタイムライン</h2>
           <p className="text-xs text-gray-600 mb-3">
             未来のライブはフライヤーと段取りをまとめて確認できます。

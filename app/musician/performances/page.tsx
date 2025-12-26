@@ -224,7 +224,7 @@ export default function PerformancesPage() {
   }
 
   return (
-    <main className="p-4 space-y-6">
+    <main className="space-y-6">
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">ライブタイムライン</h1>
