@@ -203,7 +203,7 @@ export default function SongsPage() {
   }
 
   return (
-    <main className="p-4 space-y-4">
+    <main className="space-y-4">
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">演奏できる曲</h1>
