@@ -341,7 +341,7 @@ export default function ActsPage() {
   if (loading) return <main className="p-4 text-sm text-gray-500">読み込み中…</main>;
 
   return (
-    <main className="p-4 space-y-6">
+    <main className="space-y-6">
       <header className="space-y-1">
         <h1 className="text-xl font-bold">出演名義（アクト）</h1>
         <p className="text-xs text-gray-600">

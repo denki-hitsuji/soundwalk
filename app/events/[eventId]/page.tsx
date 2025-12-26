@@ -16,7 +16,7 @@ export default async function PublicEventPage({ params }: Props) {
   const { event, acceptedCount } = await getPublicEventForBooking(eventId);
 
   return (
-    <main className="p-4 space-y-6">
+    <main className="space-y-6">
       {/* イベント情報 */}
       <section>
         <h1 className="text-2xl font-bold mb-2">{event.title}</h1>

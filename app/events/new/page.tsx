@@ -137,7 +137,7 @@ export default function NewEventPage() {
   };
 
   return (
-    <main className="p-4 max-w-xl space-y-4">
+    <main className="max-w-xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold mb-1">新しいイベントを企画する</h1>

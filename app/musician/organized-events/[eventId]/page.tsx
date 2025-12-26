@@ -523,7 +523,7 @@ export default function MusicianOrganizedEventDetailPage() {
   const endTime = formatTime(event.end_time);
 
   return (
-    <main className="p-4 space-y-6 max-w-3xl">
+    <main className="space-y-6 max-w-3xl">
       {/* ヘッダー */}
       <div className="flex items-start justify-between gap-4">
         <div>

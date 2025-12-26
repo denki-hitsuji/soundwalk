@@ -5,7 +5,7 @@ export default async function MusicianEventsPage() {
   const events = await getRecruitingEvents();
 
   return (
-    <main className="p-4 space-y-4">
+    <main className="space-y-4">
       <h1 className="text-xl font-bold mb-4">募集中のイベント一覧</h1>
 
       {events.length === 0 && (

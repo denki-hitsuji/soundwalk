@@ -138,7 +138,7 @@ export default function MusicianOrganizedEventsPage() {
   }
 
   return (
-    <main className="p-4 space-y-4">
+    <main className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold mb-1">自分が企画したイベント</h1>
