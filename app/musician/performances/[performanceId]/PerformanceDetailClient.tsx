@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
@@ -64,6 +64,8 @@ type EventRow = {
 const BUCKET = "performance-attachments";
 
 export default function PerformanceDetailClient({ performanceId }: { performanceId: string }) {
+    const router = useRouter();
+    const [deleting, setDeleting] = useState(false);
     const [loading, setLoading] = useState(true);
     const [savingDetails, setSavingDetails] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -378,6 +380,96 @@ export default function PerformanceDetailClient({ performanceId }: { performance
             </main>
         );
     }
+    const deletePerformance = async () => {
+        if (!performance) return;
+
+        // event連動は物理削除しない（ここは方針）
+        if (performance.event_id) {
+            alert("この出演はイベントに紐づいているため、この画面から削除できません。辞退/キャンセルの操作を用意します。");
+            return;
+        }
+
+        const ok = window.confirm(
+            "このライブ（個人登録）を削除します。\n" +
+            "・確認事項、コピペ文章、添付フライヤーも一緒に消えます\n" +
+            "・元に戻せません\n\n" +
+            "本当に削除しますか？"
+        );
+        if (!ok) return;
+
+        setDeleting(true);
+
+        try {
+            // 1) 添付を先に取得（storage削除のため）
+            const { data: attRows, error: attLoadErr } = await supabase
+                .from("performance_attachments")
+                .select("id, file_path")
+                .eq("performance_id", performanceId);
+
+            if (attLoadErr) throw new Error(attLoadErr.message);
+
+            const paths = (attRows ?? [])
+                .map((a: any) => a.file_path)
+                .filter((p: any): p is string => typeof p === "string" && p.length > 0);
+
+            // 2) 添付DB削除
+            {
+                const { error } = await supabase
+                    .from("performance_attachments")
+                    .delete()
+                    .eq("performance_id", performanceId);
+                if (error) throw new Error(error.message);
+            }
+
+            // 3) storage削除（失敗しても致命じゃない：警告にして続行）
+            if (paths.length > 0) {
+                const { error: stErr } = await supabase.storage.from(BUCKET).remove(paths);
+                if (stErr) console.warn("storage remove failed", stErr);
+            }
+
+            // 4) messages削除
+            {
+                const { error } = await supabase
+                    .from("performance_messages")
+                    .delete()
+                    .eq("performance_id", performanceId);
+                if (error) throw new Error(error.message);
+            }
+
+            // 5) details削除
+            {
+                const { error } = await supabase
+                    .from("performance_details")
+                    .delete()
+                    .eq("performance_id", performanceId);
+                if (error) throw new Error(error.message);
+            }
+
+            // 6) 最後に performance 本体削除（所有者の安全柵として profile_id も条件に入れる）
+            {
+                const { data: auth } = await supabase.auth.getUser();
+                const uid = auth.user?.id;
+                if (!uid) throw new Error("Not authenticated");
+
+                const { error } = await supabase
+                    .from("musician_performances")
+                    .delete()
+                    .eq("id", performanceId)
+                    .eq("profile_id", uid);
+
+                if (error) throw new Error(error.message);
+            }
+
+            alert("削除しました。");
+            router.push("/musician/performances");
+            router.refresh();
+        } catch (e: any) {
+            console.error(e);
+            alert(e?.message ?? "削除に失敗しました。");
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     return (
         <main className="p-4 space-y-6">
@@ -388,12 +480,22 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                         <div className="text-sm font-semibold">{titleLine}</div>
                         <div className="text-base font-bold">{actLabel}</div>
                     </div>
-                    <Link
-                        href="/musician/performances"
-                        className="shrink-0 inline-flex items-center rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white"
-                    >
-                        タイムラインへ
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        {!performance.event_id && (
+                            <button
+                                type="button"
+                                onClick={() => void deletePerformance()}
+                                disabled={deleting}
+                                className="shrink-0 inline-flex items-center rounded border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-50"
+                                title="個人登録のライブのみ削除できます"
+                            >
+                                {deleting ? "削除中…" : "削除"}
+                            </button>
+                        )}
+
+
+                    </div>
+
                 </div>
 
                 {/* ★追加：ここに「日付・会場の編集」ブロックを差し込む */}
@@ -420,7 +522,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                             venueId={performance.venue_id}
                             venueName={performance.venue_name}
                             venues={venues}
-                              onSaved={() => void reloadAll()}   // ★これで即反映
+                            onSaved={() => void reloadAll()}   // ★これで即反映
                         />
                     )}
                 </div>
