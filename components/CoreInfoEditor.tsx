@@ -8,7 +8,7 @@ type Venue = { id: string; name: string };
 type Props = {
   eventId: string;
   currentDateISO: string;     // 現在のdate（ISO）
-  currentVenueId: string;
+  currentVenueId: string ;
   venues: Venue[];            // 例：候補会場一覧
 };
 

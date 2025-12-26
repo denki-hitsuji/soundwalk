@@ -1,19 +1,18 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { updatePersonalPerformanceCore } from "@/app/actions/updatePersonalPerformanceCore";
+import { supabase } from "@/lib/supabaseClient";
 
 type Venue = { id: string; name: string };
 
 export function PersonalPerformanceCoreEditor(props: {
   performanceId: string;
-  eventDate: string;                 // "YYYY-MM-DD"
+  eventDate: string; // "YYYY-MM-DD"
   venueId: string | null;
   venueName: string | null;
-  venues: Venue[];                   // 候補（任意。空ならフリーテキストのみでもOK）
+  venues: Venue[];
+  onSaved?: () => void; // ★追加：保存後に親のreloadAllを呼べる
 }) {
-  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -22,7 +21,7 @@ export function PersonalPerformanceCoreEditor(props: {
   const [draftVenueName, setDraftVenueName] = useState(props.venueName ?? "");
 
   const venueLabel = useMemo(() => {
-    if (props.venueId) return props.venues.find(v => v.id === props.venueId)?.name ?? props.venueName ?? "—";
+    if (props.venueId) return props.venues.find((v) => v.id === props.venueId)?.name ?? props.venueName ?? "—";
     return props.venueName ?? "—";
   }, [props.venueId, props.venueName, props.venues]);
 
@@ -37,10 +36,25 @@ export function PersonalPerformanceCoreEditor(props: {
     setDraftVenueName(props.venueName ?? "");
   }
 
+  async function save() {
+    // venueId が未選択なら、手入力名は必須にしてもいい（好み）
+    // if (!draftVenueId && !draftVenueName.trim()) throw new Error("会場名を入力してください。");
+
+    const { error } = await supabase.rpc("update_personal_performance_core", {
+      p_performance_id: props.performanceId,
+      p_event_date: draftDate,
+      p_venue_id: draftVenueId ? draftVenueId : null,
+      p_venue_name: draftVenueId ? null : (draftVenueName.trim() || null),
+    });
+
+    if (error) throw new Error(error.message);
+  }
+
   return (
     <section className="rounded-xl border p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">日付・会場（個人登録）</h3>
+
         {!isEditing ? (
           <button className="text-sm underline" onClick={() => setIsEditing(true)}>
             編集
@@ -62,16 +76,17 @@ export function PersonalPerformanceCoreEditor(props: {
               disabled={isPending || !hasChanges}
               onClick={() => {
                 startTransition(async () => {
-                  await updatePersonalPerformanceCore({
-                    performanceId: props.performanceId,
-                    eventDate: draftDate,
-                    venueId: draftVenueId ? draftVenueId : null,
-                    venueName: draftVenueId ? null : (draftVenueName.trim() || null),
-                  });
-                  setIsEditing(false);
-                  router.refresh();
+                  try {
+                    await save();
+                    setIsEditing(false);
+                    props.onSaved?.(); // ★親がreloadAllを渡してくれれば即反映
+                  } catch (e: any) {
+                    console.error(e);
+                    alert(e?.message ?? "保存に失敗しました。");
+                  }
                 });
               }}
+              title={!hasChanges ? "変更がありません" : ""}
             >
               保存
             </button>
@@ -81,8 +96,14 @@ export function PersonalPerformanceCoreEditor(props: {
 
       {!isEditing ? (
         <div className="text-sm text-neutral-800 space-y-1">
-          <div><span className="text-neutral-600">日付：</span>{props.eventDate}</div>
-          <div><span className="text-neutral-600">会場：</span>{venueLabel}</div>
+          <div>
+            <span className="text-neutral-600">日付：</span>
+            {props.eventDate}
+          </div>
+          <div>
+            <span className="text-neutral-600">会場：</span>
+            {venueLabel}
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -108,8 +129,10 @@ export function PersonalPerformanceCoreEditor(props: {
                 disabled={isPending}
               >
                 <option value="">（手入力）</option>
-                {props.venues.map(v => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
+                {props.venues.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
                 ))}
               </select>
             ) : (
@@ -117,7 +140,6 @@ export function PersonalPerformanceCoreEditor(props: {
             )}
           </div>
 
-          {/* venueId を選んでいないときだけ手入力を出す */}
           {!draftVenueId && (
             <div className="grid grid-cols-[120px_1fr] items-center gap-3">
               <div className="text-sm text-neutral-600">会場名</div>
@@ -133,7 +155,7 @@ export function PersonalPerformanceCoreEditor(props: {
           )}
 
           <div className="text-xs text-neutral-600">
-            ※ 会場を候補から選ぶと、会場名は自動で確定します（手入力のミスを防ぐため）
+            ※ 会場を候補から選ぶと、会場名はDBの値で確定します（手入力ミス防止）
           </div>
         </div>
       )}

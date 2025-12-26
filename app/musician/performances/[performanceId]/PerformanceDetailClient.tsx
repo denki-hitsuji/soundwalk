@@ -57,7 +57,7 @@ type VenueRow = { id: string; name: string };
 type EventRow = {
     id: string;
     date: string; // timestamptz文字列想定
-    venue_id: string | null;
+    venue_id: string;
     organizer_profile_id: string;
 };
 
@@ -400,7 +400,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                 <div className="mt-4">
                     {performance.event_id ? (
                         // event連動：主催者だけが編集できる（CoreInfoEditor）
-                        isOrganizer && event && event.venue_id? (
+                        isOrganizer && event ? (
                             <CoreInfoEditor
                                 eventId={event.id}
                                 currentDateISO={event.date}
@@ -420,6 +420,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                             venueId={performance.venue_id}
                             venueName={performance.venue_name}
                             venues={venues}
+                              onSaved={() => void reloadAll()}   // ★これで即反映
                         />
                     )}
                 </div>
