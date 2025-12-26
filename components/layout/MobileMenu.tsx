@@ -14,7 +14,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "トップ", href: "/musician", requiresAuth: true },
-  { label: "演奏できる曲", href: "/musician/", requiresAuth: true },
+  { label: "演奏できる曲", href: "/musician/songs", requiresAuth: true },
   { label: "ライブ", href: "/musician/performances", requiresAuth: true },
   { label: "出演名義（アクト）", href: "/musician/acts" },
   { label: "企画管理", href: "/organizer", requiresAuth: true },
