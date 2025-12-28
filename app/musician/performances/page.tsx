@@ -20,21 +20,6 @@ import {
 import { updatePrepTaskDone } from "@/lib/performanceActions";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays, fmtMMdd } from "@/lib/dateUtils";
 
-
-type PerformanceRow = {
-  id: string;
-  event_date: string; // YYYY-MM-DD
-  venue_name: string | null;
-  memo: string | null;
-  act_id: string | null;
-};
-
-type ActRow = {
-  id: string;
-  name: string;
-  act_type: string | null;
-};
-
 export default function PerformancesPage() {
   const [loading, setLoading] = useState(true);
 

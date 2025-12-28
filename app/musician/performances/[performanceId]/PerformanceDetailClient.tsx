@@ -8,22 +8,9 @@ import { PerformanceMemoEditor } from "@/components/performances/PerformanceMemo
 // ★追加：編集UI
 import { CoreInfoEditor } from "@/components/CoreInfoEditor";
 import { PersonalPerformanceCoreEditor } from "@/components/PersonalPerformanceCoreEditor";
+import { PerformanceRow } from "@/lib/performanceUtils";
 
 type ActRow = { id: string; name: string; act_type: string | null };
-
-type PerformanceRow = {
-    id: string;
-    profile_id: string;
-    act_id: string | null;
-
-    // ★追加
-    event_id: string | null;
-    venue_id: string | null;
-
-    event_date: string;
-    venue_name: string | null;
-    memo: string | null;
-};
 
 type DetailsRow = {
     performance_id: string;
@@ -136,7 +123,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
         const { data: perf, error: perfErr } = await supabase
             .from("musician_performances")
             // ★ event_id, venue_id を追加
-            .select("id, profile_id, act_id, event_id, venue_id, event_date, venue_name, memo")
+            .select("id, profile_id, act_id, event_id, venue_id, event_date, venue_name, memo, status, status_reason, status_changed_at")
             .eq("id", performanceId)
             .single();
 
@@ -365,6 +352,69 @@ export default function PerformanceDetailClient({ performanceId }: { performance
         setNewMessage("");
         await reloadAll();
     };
+    const [withdrawing, setWithdrawing] = useState(false);
+
+    const withdrawFromEvent = async () => {
+        if (!performance) return;
+        if (!performance.event_id) return; // 個人登録は対象外
+
+        // すでにキャンセル済みなら何もしない
+        if (performance.status === "canceled") {
+            alert("すでに辞退（キャンセル）済みです。");
+            return;
+        }
+
+        const ok = window.confirm(
+            "この出演を辞退します。\n" +
+            "・イベントからの出演枠は解放されます\n" +
+            "・元に戻すには、再度応募/オファーなどの手続きが必要になる可能性があります\n\n" +
+            "辞退しますか？"
+        );
+        if (!ok) return;
+
+        setWithdrawing(true);
+
+        try {
+            // 自分のperformanceだけ更新（安全柵として profile_id も条件に含める）
+            const { data: auth } = await supabase.auth.getUser();
+            const uid = auth.user?.id;
+            if (!uid) throw new Error("Not authenticated");
+
+            const { error } = await supabase
+                .from("musician_performances")
+                .update({
+                    status: "canceled",
+                    status_reason: "WITHDRAWN_BY_MUSICIAN",
+                    status_changed_at: new Date().toISOString(),
+                })
+                .eq("id", performanceId)
+                .eq("profile_id", uid);
+
+            if (error) throw new Error(error.message);
+
+            // できれば通知イベントを積む（将来の通知導線用）
+            // notification_events があるなら入れておくと後で効く
+            // （無ければこのブロックは削除してOK）
+            await supabase.from("notification_events").insert({
+                type: "PERFORMANCE_WITHDRAWN",
+                event_id: performance.event_id,
+                payload: {
+                    performance_id: performanceId,
+                    profile_id: uid,
+                    reason: "WITHDRAWN_BY_MUSICIAN",
+                },
+            });
+
+            alert("辞退しました。");
+            await reloadAll();
+        } catch (e: any) {
+            console.error(e);
+    alert(e?.message ?? "辞退に失敗しました。");
+  } finally {
+    setWithdrawing(false);
+  }
+};
+
 
     if (loading) {
         return <main className="p-4 text-sm text-gray-500">読み込み中…</main>;
@@ -481,13 +531,26 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                         <div className="text-base font-bold">{actLabel}</div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {/* event連動：辞退 */}
+                        {performance.event_id && performance.status !== "canceled" && (
+                            <button
+                                type="button"
+                                onClick={() => void withdrawFromEvent()}
+                                disabled={withdrawing}
+                                className="shrink-0 inline-flex items-center rounded border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 disabled:opacity-50"
+                                title="イベント連動の出演は削除ではなく辞退になります"
+                            >
+                                {withdrawing ? "辞退中…" : "辞退"}
+                            </button>
+                        )}
+
+                        {/* 個人登録：削除（前に作ったやつがあるならそのまま） */}
                         {!performance.event_id && (
                             <button
                                 type="button"
                                 onClick={() => void deletePerformance()}
                                 disabled={deleting}
                                 className="shrink-0 inline-flex items-center rounded border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-50"
-                                title="個人登録のライブのみ削除できます"
                             >
                                 {deleting ? "削除中…" : "削除"}
                             </button>
@@ -495,6 +558,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
 
 
                     </div>
+
 
                 </div>
 
