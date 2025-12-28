@@ -129,6 +129,11 @@ export default async function VenueEventPage({ params }: PageProps) {
           created_at: p.created_at,
           act_name: p.acts?.name ?? null,
           profile_name: p.profiles?.display_name ?? null,
+          event_id: p.event_id,
+          venue_id: p.venue_id,
+          event_date: p.event_date,
+          venue_name: p.venue_name,
+          memo: p.memo
         }))}
       />
     </div>
