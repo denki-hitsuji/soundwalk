@@ -231,3 +231,4 @@ export async function acceptOffer(offerId: string) {
     if (declineError) throw declineError;
   }
 }
+

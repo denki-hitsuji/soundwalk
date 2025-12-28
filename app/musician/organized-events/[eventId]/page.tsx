@@ -282,6 +282,14 @@ export default function MusicianOrganizedEventDetailPage() {
         });
 
       if (insertError) throw insertError;
+      
+      const { data, error } = await supabase.rpc("create_offer_and_inbox_performance", {
+        p_event_id: event.id,
+        p_act_id: inviteActId,
+      });
+
+      console.log("offer rpc result", { data, error });
+      if (error) throw error;
 
       setInviteActId("");
       setInviteMessage("");
@@ -488,7 +496,7 @@ export default function MusicianOrganizedEventDetailPage() {
 
   if (loading) {
     return (
-      <main className="p-4">
+      <main >
         <p className="text-sm text-gray-500">読み込み中...</p>
       </main>
     );
@@ -496,7 +504,7 @@ export default function MusicianOrganizedEventDetailPage() {
 
   if (userMissing) {
     return (
-      <main className="p-4">
+      <main >
         <p className="text-sm text-red-500">ログインが必要です。</p>
       </main>
     );
@@ -504,7 +512,7 @@ export default function MusicianOrganizedEventDetailPage() {
 
   if (!event) {
     return (
-      <main className="p-4 space-y-3">
+      <main className="space-y-3">
         <p className="text-sm text-red-500">
           {error ?? "イベントが見つかりませんでした。"}
         </p>

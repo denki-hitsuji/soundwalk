@@ -43,7 +43,7 @@ type VenueRow = { id: string; name: string };
 
 type EventRow = {
     id: string;
-    date: string; // timestamptz文字列想定
+    event_date: string; // timestamptz文字列想定
     venue_id: string;
     organizer_profile_id: string;
 };
@@ -140,7 +140,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
         if ((perf as any).event_id) {
             const { data: ev, error: evErr } = await supabase
                 .from("events")
-                .select("id, date, venue_id, organizer_profile_id")
+                .select("id, event_date, venue_id, organizer_profile_id")
                 .eq("id", (perf as any).event_id)
                 .single();
 
@@ -352,6 +352,86 @@ export default function PerformanceDetailClient({ performanceId }: { performance
         setNewMessage("");
         await reloadAll();
     };
+    const [accepting, setAccepting] = useState(false);
+
+    const acceptOffer = async () => {
+        if (!performance) return;
+        if (!performance.event_id) return;
+
+        if (!performance.act_id) {
+            alert("出演名義（act）が未設定のため受諾できません。名義を設定してください。");
+            return;
+        }
+
+        // offered 以外なら操作しない（好みで調整）
+        if (performance.status && performance.status !== "offered" && performance.status !== "pending_reconfirm") {
+            alert("この出演は受諾できる状態ではありません。");
+            return;
+        }
+
+        const ok = window.confirm("このオファーを受諾しますか？");
+        if (!ok) return;
+
+        setAccepting(true);
+
+        try {
+            // 1) 対象 booking を探す（event_id + act_id）
+            const { data: bk, error: bkErr } = await supabase
+                .from("venue_bookings")
+                .select("id, status")
+                .eq("event_id", performance.event_id)
+                .eq("act_id", performance.act_id)
+                .maybeSingle();
+
+            if (bkErr) throw new Error(bkErr.message);
+            if (!bk) throw new Error("booking が見つかりませんでした。主催者側の招待情報が欠けています。");
+
+            // 2) booking を accepted に
+            {
+                const { error } = await supabase
+                    .from("venue_bookings")
+                    .update({ status: "accepted" })
+                    .eq("id", bk.id);
+                if (error) throw new Error(error.message);
+            }
+
+            // 3) event_acts を accepted に upsert
+            {
+                const { error } = await supabase
+                    .from("event_acts")
+                    .upsert(
+                        { event_id: performance.event_id, act_id: performance.act_id, status: "accepted" },
+                        { onConflict: "event_id,act_id" }
+                    );
+      if (error) throw new Error(error.message);
+    }
+
+    // 4) performance を confirmed に
+    {
+      const { error } = await supabase
+        .from("musician_performances")
+        .update({
+          status: "confirmed",
+          status_reason: "ACCEPTED_BY_MUSICIAN",
+          status_changed_at: new Date().toISOString(),
+        })
+        .eq("id", performanceId);
+      if (error) throw new Error(error.message);
+    }
+
+    // 5) （任意）events.status matched 判定は主催者画面と同じロジックが必要
+    // ここでは最小仕様として触らない。必要なら後でRPC化する。
+
+    alert("受諾しました。");
+    await reloadAll();
+  } catch (e: any) {
+    console.error(e);
+    alert(e?.message ?? "受諾に失敗しました。");
+  } finally {
+    setAccepting(false);
+  }
+};
+
     const [withdrawing, setWithdrawing] = useState(false);
 
     const withdrawFromEvent = async () => {
@@ -530,19 +610,32 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                         <div className="text-sm font-semibold">{titleLine}</div>
                         <div className="text-base font-bold">{actLabel}</div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="grid gap-2 ">
                         {/* event連動：辞退 */}
                         {performance.event_id && performance.status !== "canceled" && (
-                            <button
-                                type="button"
-                                onClick={() => void withdrawFromEvent()}
-                                disabled={withdrawing}
-                                className="shrink-0 inline-flex items-center rounded border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 disabled:opacity-50"
-                                title="イベント連動の出演は削除ではなく辞退になります"
-                            >
-                                {withdrawing ? "辞退中…" : "辞退"}
-                            </button>
+                            <>
+                                {(performance.status === "offered" || performance.status === "pending_reconfirm") && (
+                                    <button
+                                        type="button"
+                                        onClick={() => void acceptOffer()}
+                                        disabled={accepting}
+                                        className="shrink-0 inline-flex items-center rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                                    >
+                                        {accepting ? "受諾中…" : "受諾"}
+                                    </button>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => void withdrawFromEvent()}
+                                    disabled={withdrawing}
+                                    className="shrink-0 inline-flex items-center rounded border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 disabled:opacity-50"
+                                >
+                                    {withdrawing ? "辞退中…" : "辞退"}
+                                </button>
+                            </>
                         )}
+
 
                         {/* 個人登録：削除（前に作ったやつがあるならそのまま） */}
                         {!performance.event_id && (
@@ -569,7 +662,7 @@ export default function PerformanceDetailClient({ performanceId }: { performance
                         isOrganizer && event ? (
                             <CoreInfoEditor
                                 eventId={event.id}
-                                currentDateISO={event.date}
+                                currentDateISO={event.event_date}
                                 currentVenueId={event.venue_id}
                                 venues={venues}
                             />

@@ -32,7 +32,7 @@ export default function PerformancesPage() {
 
   const todayStr = useMemo(() => toYmdLocal(), []);
   const todayDate = useMemo(() => parseYmdLocal(todayStr), [todayStr]);
-
+  const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
   const futurePerformances = useMemo(
     () => performances.filter((p) => p.event_date >= todayStr),
     [performances, todayStr],
@@ -63,6 +63,10 @@ export default function PerformancesPage() {
           venue_name,
           memo,
           act_id,
+          status,
+          status_reason,
+          status_changed_at,
+          created_at,
           acts:acts ( id, name, act_type )
         `,
         )
@@ -79,6 +83,12 @@ export default function PerformancesPage() {
       }
 
       const list = (data ?? []) as unknown as PerformanceWithActs[];
+
+      list.sort((a, b) => {
+        const r = rank(a.status) - rank(b.status);
+        if (r !== 0) return r;
+        return (b.event_date ?? "").localeCompare(a.event_date ?? "");
+      });
       setPerformances(list);
 
       const futureIds = list.filter((p) => p.event_date >= todayStr).map((p) => p.id);
@@ -205,7 +215,7 @@ export default function PerformancesPage() {
   };
 
   if (loading) {
-    return <main className="p-4 text-sm text-gray-500">読み込み中…</main>;
+    return <main className="text-sm text-gray-500">読み込み中…</main>;
   }
 
   return (
@@ -233,38 +243,36 @@ export default function PerformancesPage() {
         {futurePerformances.length === 0 ? (
           <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">未来のライブはまだありません。</div>
         ) : (
-          <div className="space-y-3">
-   <div className="space-y-3">
+            <div className="space-y-3">
+              {[...futurePerformances].sort((a, b) => {
+                const r = rank(a.status) - rank(b.status);
+                if (r !== 0) return r;
+                return (b.event_date ?? "").localeCompare(a.event_date ?? "");
+              }).map((p) => {
+                const flyer = flyerByPerformanceId[p.id];
+                const d = detailsByPerformanceId[p.id];
+                const tasks = prepByPerformanceId[p.id] ?? {};
 
-              <div className="space-y-3">
-                {futurePerformances.map((p) => {
-                  const flyer = flyerByPerformanceId[p.id];
-                  const d = detailsByPerformanceId[p.id];
-                  const tasks = prepByPerformanceId[p.id] ?? {};
-
-                  return (
-                    <PerformanceCard
-                      key={p.id}
-                      p={p}
-                      flyer={flyer}
-                      details={d}
-                      tasks={tasks}
-                      prepDefs={PREP_DEFS}
-                      todayDate={todayDate}
-                      normalizeAct={normalizeAct}
-                      detailsSummary={detailsSummary}
-                      toYmdLocal={parseYmdLocal}
-                      addDays={addDays}
-                      fmtMMdd={fmtMMdd}
-                      statusText={statusText}
-                      onToggleDone={toggleDone}
-                    />
-                  );
-                })}
-              </div>
-
+                return (
+                  <PerformanceCard
+                    key={p.id}
+                    p={p}
+                    flyer={flyer}
+                    details={d}
+                    tasks={tasks}
+                    prepDefs={PREP_DEFS}
+                    todayDate={todayDate}
+                    normalizeAct={normalizeAct}
+                    detailsSummary={detailsSummary}
+                    toYmdLocal={parseYmdLocal}
+                    addDays={addDays}
+                    fmtMMdd={fmtMMdd}
+                    statusText={statusText}
+                    onToggleDone={toggleDone}
+                  />
+                );
+              })}
             </div>
-          </div>
         )}
       </section>
 
