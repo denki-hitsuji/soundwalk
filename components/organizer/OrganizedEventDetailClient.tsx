@@ -671,7 +671,12 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
           <p className="text-sm text-red-500">{bookingError}</p>
         )}
 
-        {bookings.length === 0 && !bookingError && (
+        { maxArtists != null && isFull && (
+          <p className="text-sm">
+            最大組数に達しました。
+          </p>
+        )}
+        { !isFull && bookings.length === 0 && !bookingError && (
           <p className="text-sm text-gray-500">
             まだ応募や招待はありません。
           </p>
@@ -746,6 +751,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
       </section>
 
       {/* ミュージシャンをお誘いする（既存） */}
+      {!isFull && (
       <section className="border rounded bg-white shadow-sm p-4 space-y-3">
         <h2 className="text-sm font-semibold mb-1">ミュージシャンをお誘いする</h2>
         <p className="text-xs text-gray-600">
@@ -812,61 +818,63 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
           </form>
         )}
       </section>
-
+      )}
       {/* アプリ未使用のゲストを追加する */}
-      <section className="border rounded bg-white shadow-sm p-4 space-y-3">
-        <h2 className="text-sm font-semibold mb-1">アプリ未使用のゲストを追加する</h2>
-        <p className="text-xs text-gray-600">
-          まだこのアプリを使っていないバンドや弾き語りを、ゲストとしてこのイベントに追加します。
-          後から本人がアカウントを作成したときに、この名義を引き継げる余地を残した形で登録されます。
-        </p>
+      {!isFull && (
+        <section className="border rounded bg-white shadow-sm p-4 space-y-3">
+          <h2 className="text-sm font-semibold mb-1">アプリ未使用のゲストを追加する</h2>
+          <p className="text-xs text-gray-600">
+            まだこのアプリを使っていないバンドや弾き語りを、ゲストとしてこのイベントに追加します。
+            後から本人がアカウントを作成したときに、この名義を引き継げる余地を残した形で登録されます。
+          </p>
 
-        {guestError && (
-          <p className="text-sm text-red-500">{guestError}</p>
-        )}
+          {guestError && (
+            <p className="text-sm text-red-500">{guestError}</p>
+          )}
 
-        <form
-          onSubmit={handleAddGuest}
-          className="space-y-3 text-sm"
-        >
-          <label className="block">
-            名義名
-            <input
-              type="text"
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              placeholder="例: 〇〇バンド / △△（弾き語り）"
-            />
-          </label>
+          <form
+            onSubmit={handleAddGuest}
+            className="space-y-3 text-sm"
+          >
+            <label className="block">
+              名義名
+              <input
+                type="text"
+                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                placeholder="例: 〇〇バンド / △△（弾き語り）"
+              />
+            </label>
 
-          <label className="block">
-            形態
-            <select
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-              value={guestActType}
-              onChange={(e) => setGuestActType(e.target.value)}
-            >
-              <option value="">選択してください</option>
-              <option value="solo">ソロ</option>
-              <option value="band">バンド</option>
-              <option value="duo">デュオ</option>
-              <option value="unit">ユニット</option>
-              <option value="other">その他</option>
-            </select>
-          </label>
+            <label className="block">
+              形態
+              <select
+                className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                value={guestActType}
+                onChange={(e) => setGuestActType(e.target.value)}
+              >
+                <option value="">選択してください</option>
+                <option value="solo">ソロ</option>
+                <option value="band">バンド</option>
+                <option value="duo">デュオ</option>
+                <option value="unit">ユニット</option>
+                <option value="other">その他</option>
+              </select>
+            </label>
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={addingGuest}
-              className="px-4 py-1.5 rounded bg-indigo-600 text-xs font-semibold text-white disabled:opacity-50"
-            >
-              {addingGuest ? "追加中..." : "ゲストとして追加する"}
-            </button>
-          </div>
-        </form>
-      </section>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={addingGuest}
+                className="px-4 py-1.5 rounded bg-indigo-600 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                {addingGuest ? "追加中..." : "ゲストとして追加する"}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
     </main>
   );
 }
