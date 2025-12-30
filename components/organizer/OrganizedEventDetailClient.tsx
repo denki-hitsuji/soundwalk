@@ -46,7 +46,6 @@ type BookingRow = {
 type Props = {
   eventId: string;
 };
-const user = await getCurrentUser();
 export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -213,7 +212,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
         );
       }
 
-      const bookingList: BookingRow[] = rawBookings.map((b: any) => {
+      const bookingList: BookingRow[] = rawBookings.filter(p => p.status !== "accepted").map((b: any) => {
         const act = actMapForBookings.get(b.act_id as string);
         return {
           id: b.id,
@@ -692,7 +691,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
                   status: b.status === "pending" ? "offered" : b.status === "accepted" ? "confirmed" : "canceled",
                   details: null,
                   flyer_url: null,
-                  profile_id: user ? user.id : "",
+                  profile_id: "",
                   act_name: b.act_name,
                   memo: b.message,
                   status_changed_at: null,
