@@ -31,7 +31,7 @@ type EventRow = {
   created_at: string;
   venues?: { id: string; name: string }[];
 };
-type BookingStatus = "pending" | "accepted" | "rejected";
+type BookingStatus = "offered" | "pending" | "accepted" | "rejected";
 
 type BookingRow = {
   id: string;
@@ -42,6 +42,7 @@ type BookingRow = {
   act_id: string;
   act_name: string;
   act_type: string;
+  owner_profile_id: string | null;
 };
 type Props = {
   eventId: string;
@@ -207,6 +208,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
               id: a.id,
               name: a.name,
               act_type: a.act_type,
+              owner_profile_id: a.owner_profile_id,
             } as ActRow,
           ]),
         );
@@ -223,6 +225,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
           act_id: b.act_id,
           act_name: act?.name ?? "(不明な名義)",
           act_type: act?.act_type ?? "",
+          owner_profile_id: act?.owner_profile_id ?? null,
         };
       });
 
@@ -682,7 +685,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
             >
               <PerformanceCard
                 p={{
-                  id: b.id,
+                  id: "",
                   event_id: b.event_id,
                   venue_id: event.venue_id,
                   event_date: event.event_date,
@@ -719,7 +722,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
                 onToggleDone={() => {}}
               />
 
-              {b.status === "pending" && (
+              {b.status === "offered" && (
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => void handleApprove(b)}

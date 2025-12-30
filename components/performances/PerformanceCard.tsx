@@ -21,7 +21,7 @@ export type PerformanceCardProps = {
 
   // 既存関数を流用（ページ側から渡す）
   normalizeAct: (p: PerformanceWithActs) => ActRow | null;
-  detailsSummary: (d?: DetailsRow ) => string;
+  detailsSummary: (d?: DetailsRow) => string;
 
   // 既存 util を流用（ページ側から渡す）
   parseYmdLocal: (s: string) => Date;
@@ -53,29 +53,26 @@ export function PerformanceCard({
   const actName = act?.name ?? "出演名義：なし";
   const summary = detailsSummary(details);
   const status = p.status ?? "confirmed";
-const statusStyleMap: Record<string, string> = {
-  offered: "bg-blue-100 text-blue-800",
-  pending_reconfirm: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-green-100 text-green-800",
-  canceled: "bg-gray-100 text-gray-500",
-};
+  const statusStyleMap: Record<string, string> = {
+    offered: "bg-blue-100 text-blue-800",
+    pending_reconfirm: "bg-yellow-100 text-yellow-800",
+    confirmed: "bg-green-100 text-green-800",
+    canceled: "bg-gray-100 text-gray-500",
+  };
 
-const statusLabelMap: Record<string, string> = {
-  offered: "🟡 オファー",
-  pending_reconfirm: "🟣 要再確認",
-  confirmed: "✅ 確定",
-  canceled: "⚪ 辞退",
-};
+  const statusLabelMap: Record<string, string> = {
+    offered: "🟡 オファー",
+    pending_reconfirm: "🟣 要再確認",
+    confirmed: "✅ 確定",
+    canceled: "⚪ 辞退",
+  };
 
-  return (
-    <Link
-      href={`/musician/performances/${p.id}`}
-      className={`block rounded-xl border shadow-sm hover:bg-gray-50 ${statusStyleMap[status]}`}
-    >
-      <div className="px-3 py-1">
+  const cardBody = (
+    <div>
+      {/* <div className="px-3 py-1">
         <p className="mr-2">{statusLabelMap[status]}</p>
-      </div>
-      <div className="px-3 py-2d flex gap-3">
+      </div> */}
+      <div className="px-2 py-2d flex gap-3">
         {flyer ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -91,32 +88,34 @@ const statusLabelMap: Record<string, string> = {
         )}
 
         <div className="flex-1 min-w-0">
-<div className="flex items-center justify-between gap-2">
-  <div className="text-sm font-semibold">
-    {p.event_date}
-    {p.venue_name && (
-      <span className="ml-1 text-gray-600 font-normal">
-        @ {p.venue_name}
-      </span>
-    )}
-  </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-semibold">
+              {p.event_date}
+              {p.venue_name && (
+                <span className="ml-1 text-gray-600 font-normal">
+                  @ {p.venue_name}
+                </span>
+              )}
+            </div>
 
-  {statusLabelMap[status] && (
-    <span
-      className={[
-        "shrink-0 rounded px-2 py-0.5 text-[11px] font-medium",
-        statusStyleMap[status] ?? "bg-gray-100 text-gray-700",
-      ].join(" ")}
-    >
-      {statusLabelMap[status]}
-    </span>
-  )}
-</div>
+            {statusLabelMap[status] && (
+              <span
+                className={[
+                  "shrink-0 rounded py-0.5 text-[11px] font-medium",
+                  statusStyleMap[status] ?? "bg-gray-100 text-gray-700",
+                ].join(" ")}
+              >
+                {statusLabelMap[status]}
+              </span>
+            )}
+          </div>
 
 
           <div className="text-base font-bold truncate">{actName}</div>
 
-          <div className="mt-2 text-xs text-gray-700 truncate">{summary}</div>
+          {p.id !== "" && (
+          <div className="mt-2 text-xs text-gray-700 ">{summary}</div>
+          )}
 
           {/* 段取り（永続化＆共有） */}
           <div className="mt-2 flex flex-wrap gap-2">
@@ -153,11 +152,25 @@ const statusLabelMap: Record<string, string> = {
             })}
           </div>
 
-          <div className="mt-1 text-[11px] text-gray-500">
-            タップで詳細（フライヤー/案内文/確認事項） / 段取りはここでチェック可
-          </div>
+          {
+            p.id !== "" && (
+              <div className="mt-1 text-[11px] text-gray-500">
+                タップで詳細（フライヤー/案内文/確認事項） / 段取りはここでチェック可
+              </div>
+            )
+          }
         </div>
       </div>
+    </div>
+  );
+if(p.id !== "") {
+  return (
+    <Link href={`/musician/performances/${p.id}`}
+      className={`block p-2 rounded-xl border shadow-sm hover:bg-gray-50 ${statusStyleMap[status]}`}>
+      {cardBody}
     </Link>
   );
+} else {
+  return <div className={`block py-2 rounded-xl border shadow-sm hover:bg-gray-50 ${statusStyleMap[status]}`}>{cardBody}</div>;
+} 
 }
