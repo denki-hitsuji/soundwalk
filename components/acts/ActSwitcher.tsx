@@ -15,6 +15,7 @@ export function ActSwitcher() {
     setLoading(true);
 
     const { data: u } = await supabase.auth.getUser();
+    console.log("ActSwitcher: load current user", u);
     const uid = u.user?.id ?? null;
 
     if (!uid) {
@@ -24,6 +25,8 @@ export function ActSwitcher() {
     }
 
     const list = await getMyActs();
+    console.log("ActSwitcher: loaded acts", list);
+    setActs(list);
 
     // もし currentAct が存在するのに、一覧の名前が更新されていたら追随させる（重要）
     if (currentAct) {

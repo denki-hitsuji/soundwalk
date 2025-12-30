@@ -42,15 +42,6 @@ export type MessageRow = {
     created_at: string;
 };
 
-export type MyAct = {
-  id: string;
-  name: string;
-  act_type: string;
-  owner_profile_id: string;
-  description: string | null;
-  icon_url: string | null;
-};
-
 // このユーザーの acts 一覧
 export async function getMyActs(): Promise<ActRow[]> {
   const user = await getCurrentUser();
