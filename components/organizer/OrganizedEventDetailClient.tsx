@@ -728,6 +728,13 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
                   >
                     {mutatingId === b.id ? "承認中..." : "承認する"}    
                   </button>
+                  <button
+                    onClick={() => void handleReject(b)}
+                    disabled={mutatingId === b.id}
+                    className="px-3 py-1.5 rounded bg-red-600 text-xs font-semibold text-white disabled:opacity-50"
+                  >
+                    {mutatingId === b.id ? "拒否中..." : "拒否する"}
+                  </button>
                 </div>
               )}
             </li> 
