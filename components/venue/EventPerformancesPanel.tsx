@@ -118,6 +118,5 @@ export function EventPerformancesPanel(props: {
 function labelName(p: PerformanceRow) {
   // ここは「名義（act）」優先の方が現場感が出る
   const act = p.act_name ? `【${p.act_name}】` : "";
-  const person = p.profile_name ?? p.profile_id;
-  return `${act} ${person}`.trim();
+  return `${act}`.trim();
 }

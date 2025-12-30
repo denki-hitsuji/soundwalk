@@ -1,5 +1,5 @@
 import EventCreateClient from "@/components/organizer/EventCreateClient";
 
-export default function VenueEventNewPage() {
+export default function OrganizerEventNewPage() {
   return <EventCreateClient />;
 }

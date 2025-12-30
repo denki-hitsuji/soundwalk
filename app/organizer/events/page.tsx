@@ -1,5 +1,5 @@
 import OrganizedEventsListClient from "@/components/organizer/OrganizedEventsListClient";
 
-export default function MusicianOrganizedEventsPage() {
+export default function OrganizerEventsPage() {
   return <OrganizedEventsListClient />;
 }

@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useCurrentAct } from "@/lib/useCurrentAct";
 import { ACTS_UPDATED_EVENT } from "@/lib/actEvents";
-
-type ActRow = { id: string; name: string; act_type: string | null };
+import { ActRow, getMyActs } from "@/lib/actQueries";
 
 export function ActSwitcher() {
   const { currentAct, setCurrentAct } = useCurrentAct();
@@ -24,20 +23,7 @@ export function ActSwitcher() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("acts")
-      .select("id, name, act_type")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("load acts error", error);
-      setActs([]);
-      setLoading(false);
-      return;
-    }
-
-    const list = (data ?? []) as ActRow[];
-    setActs(list);
+    const list = await getMyActs();
 
     // もし currentAct が存在するのに、一覧の名前が更新されていたら追随させる（重要）
     if (currentAct) {

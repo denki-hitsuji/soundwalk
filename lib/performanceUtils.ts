@@ -1,27 +1,24 @@
 // lib/performanceUtils.ts
 
+import { ActRow } from "./actQueries";
 import { diffDays } from "./dateUtils";
 
 export type PerformanceRow = {
   id: string;
   profile_id: string;
   act_id: string | null;
+  act_name: string | null;
   event_id: string | null;
   venue_id: string | null;
   event_date: string;
   venue_name: string | null;
   memo: string | null;
-  act_name: string | null;
-  profile_name: string | null;
+  details: DetailsRow | null;
+  flyer_url: string | null;
+
   status: string | null;             // ★追加
   status_reason: string | null;      // ★追加
   status_changed_at: string | null;  // ★追加
-};
-
-export type ActRow = {
-  id: string;
-  name: string;
-  act_type: string | null;
 };
 
 export type PerformanceWithActs = PerformanceRow & {

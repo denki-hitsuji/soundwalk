@@ -9,35 +9,8 @@ import { PerformanceMemoEditor } from "@/components/performances/PerformanceMemo
 import { CoreInfoEditor } from "@/components/CoreInfoEditor";
 import { PersonalPerformanceCoreEditor } from "@/components/PersonalPerformanceCoreEditor";
 import { PerformanceRow } from "@/lib/performanceUtils";
+import { ActRow, AttachmentRow, DetailsRow, MessageRow } from "@/lib/actQueries";
 
-type ActRow = { id: string; name: string; act_type: string | null };
-
-type DetailsRow = {
-    performance_id: string;
-    load_in_time: string | null;
-    set_start_time: string | null;
-    set_end_time: string | null;
-    set_minutes: number | null;
-    customer_charge_yen: number | null;
-    one_drink_required: boolean | null;
-    notes: string | null;
-};
-
-type AttachmentRow = {
-    id: string;
-    file_url: string;
-    file_path: string | null;
-    file_type: string;
-    caption: string | null;
-    created_at: string;
-};
-
-type MessageRow = {
-    id: string;
-    body: string;
-    source: string | null;
-    created_at: string;
-};
 
 type VenueRow = { id: string; name: string };
 

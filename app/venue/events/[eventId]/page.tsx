@@ -133,7 +133,9 @@ export default async function VenueEventPage({ params }: PageProps) {
           venue_id: p.venue_id,
           event_date: p.event_date,
           venue_name: p.venue_name,
-          memo: p.memo
+          memo: p.memo,
+          details: p.details,
+          flyer_url: p.flyer?.file_url ?? null,
         }))}
       />
     </div>

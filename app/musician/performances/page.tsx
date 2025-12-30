@@ -264,7 +264,7 @@ export default function PerformancesPage() {
                     todayDate={todayDate}
                     normalizeAct={normalizeAct}
                     detailsSummary={detailsSummary}
-                    toYmdLocal={parseYmdLocal}
+                    parseYmdLocal={parseYmdLocal}
                     addDays={addDays}
                     fmtMMdd={fmtMMdd}
                     statusText={statusText}

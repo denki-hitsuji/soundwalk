@@ -2,6 +2,45 @@
 import { supabase } from "@/lib/supabaseClient";
 import { getCurrentUser } from "@/lib/supabaseClient";
 import { toYmdLocal } from "./dateUtils";
+export type ActRow = {
+  id: string;
+  name: string;
+  act_type: string | null;
+  owner_profile_id: string;
+  is_temporary: boolean;
+  description: string | null;
+  icon_url: string | null;
+  photo_url: string | null;
+  profile_link_url: string | null;
+};
+
+export type DetailsRow = {
+  performance_id: string;
+  load_in_time: string | null;
+  set_start_time: string | null;
+  set_end_time: string | null;
+  set_minutes: number | null;
+  customer_charge_yen: number | null;
+  one_drink_required: boolean | null;
+  notes: string | null;
+};
+
+export type AttachmentRow = {
+  id: string;
+  file_url: string;
+  file_path: string | null;
+  file_type: string;
+  caption: string | null;
+  created_at: string;
+  performance_id: string;
+};
+
+export type MessageRow = {
+    id: string;
+    body: string;
+    source: string | null;
+    created_at: string;
+};
 
 export type MyAct = {
   id: string;
@@ -13,7 +52,7 @@ export type MyAct = {
 };
 
 // このユーザーの acts 一覧
-export async function getMyActs(): Promise<MyAct[]> {
+export async function getMyActs(): Promise<ActRow[]> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
@@ -24,11 +63,11 @@ export async function getMyActs(): Promise<MyAct[]> {
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as MyAct[];
+  return (data ?? []) as ActRow[];
 }
 
 // デフォルトActを保証：なければ作る
-export async function ensureMyDefaultAct(): Promise<MyAct> {
+export async function ensureMyDefaultAct(): Promise<ActRow> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
@@ -52,7 +91,7 @@ export async function ensureMyDefaultAct(): Promise<MyAct> {
     .single();
 
   if (error) throw error;
-  return data as MyAct;
+  return data as ActRow;
 }
 
 export async function getNextPerformance() {

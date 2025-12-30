@@ -28,7 +28,7 @@ export function DashboardPerformanceCard(props: {
       todayDate={props.todayDate}
       normalizeAct={normalizeAct}
       detailsSummary={detailsSummary}
-      toYmdLocal={parseYmdLocal}
+      parseYmdLocal={parseYmdLocal}
       addDays={addDays}
       fmtMMdd={fmtMMdd}
       statusText={statusText}

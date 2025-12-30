@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getCurrentUser, supabase } from "@/lib/supabaseClient";
+import { ActRow } from "./actQueries";
 
-export type ActRow = {
-  id: string;
-  name: string;
-  act_type: string | null;
-};
 type CurrentActContextValue = {
   currentAct: ActRow | null;
   currentActId: string | null;
@@ -24,8 +20,16 @@ function normalizeAct(value: unknown): ActRow | null {
     const v = value[0];
     if (v && typeof v === "object") {
       const o = v as Record<string, unknown>;
-      if (typeof o.id === "string" && typeof o.name === "string") {
-        return { id: o.id, name: o.name, act_type: (o.act_type as string | null) ?? null };
+      if (typeof o.id === "string" && typeof o.name === "string" && typeof o.owner_profile_id === "string" ) {
+        return {
+          id: o.id, owner_profile_id: o.owner_profile_id, name: o.name,
+          act_type: (o.act_type as string | null) ?? null,
+          is_temporary: (o.is_temporary as boolean | null) ?? false,
+          description: (o.description as string | null) ?? null,
+          icon_url: (o.icon_url as string | null) ?? null,
+          photo_url: (o.photo_url as string | null) ?? null,
+          profile_link_url: (o.profile_link_url as string | null) ?? null
+        };
       }
     }
     return null;
@@ -34,8 +38,16 @@ function normalizeAct(value: unknown): ActRow | null {
   // join が単体で返るケース
   if (typeof value === "object") {
     const o = value as Record<string, unknown>;
-    if (typeof o.id === "string" && typeof o.name === "string") {
-      return { id: o.id, name: o.name, act_type: (o.act_type as string | null) ?? null };
+    if (typeof o.id === "string" && typeof o.name === "string" && typeof o.owner_profile_id === "string" ) {
+      return {
+        id: o.id, name: o.name, owner_profile_id: o.owner_profile_id,
+        act_type: (o.act_type as string | null) ?? null,
+        is_temporary: (o.is_temporary as boolean | null) ?? false,
+        description: (o.description as string | null) ?? null,
+        icon_url: (o.icon_url as string | null) ?? null,
+        photo_url: (o.photo_url as string | null) ?? null,
+        profile_link_url: (o.profile_link_url as string | null) ?? null
+      };
     }
   }
 
@@ -66,7 +78,7 @@ export function useCurrentAct(): CurrentActContextValue {
       if (storedActId) {
         const { data, error } = await supabase
           .from("acts")
-          .select("id, name, act_type")
+          .select("id, name, act_type, owner_profile_id, is_temporary, description, icon_url, photo_url, profile_link_url")
           .eq("id", storedActId)
           .single();
 
@@ -75,6 +87,12 @@ export function useCurrentAct(): CurrentActContextValue {
             id: data.id,
             name: data.name,
             act_type: data.act_type ?? null,
+            owner_profile_id: data.owner_profile_id,
+            is_temporary: (data.is_temporary as boolean | null) ?? false,
+            description: (data.description as string | null) ?? null,
+            icon_url: (data.icon_url as string | null) ?? null,
+            photo_url: (data.photo_url as string | null) ?? null,
+            profile_link_url: (data.profile_link_url as string | null) ?? null
           });
           setLoading(false);
           return;

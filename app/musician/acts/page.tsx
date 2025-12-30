@@ -6,7 +6,9 @@ import { supabase } from "@/lib/supabaseClient";
 import { useCurrentAct } from "@/lib/useCurrentAct";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import { notifyActsUpdated } from "@/lib/actEvents";
-import { ActProfileEditor, ActRow } from "@/components/acts/ActProfileEditor";
+import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
+import { icon } from "leaflet";
+import { ActRow } from "@/lib/actQueries";
 
 type MemberRow = {
   act_id: string;
@@ -280,9 +282,12 @@ export default function ActsPage() {
           photo_url: null,
           profile_link_url: null,
           owner_profile_id: uid,
-          description: ""
+          description: "",
+          avatar_url: null,
+          is_temporary: false,
+          icon_url: null,
         })
-        .select("id, name, act_type, owner_profile_id, photo_url, profile_link_url, description")
+        .select("id, name, act_type, owner_profile_id, photo_url, profile_link_url, description, is_temporary, icon_url")
         .single();
 
       if (insErr) throw insErr;

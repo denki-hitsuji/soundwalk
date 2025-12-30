@@ -2,16 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-
-export type ActRow = {
-  id: string;
-  name: string;
-  act_type: string | null;
-  description: string | null;
-  photo_url: string | null;
-  profile_link_url: string | null;
-  owner_profile_id: string;
-};
+import { ActRow } from "@/lib/actQueries";
 
 type Props = {
   act: ActRow;

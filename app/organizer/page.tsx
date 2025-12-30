@@ -1,4 +1,3 @@
-// app/organizer/page.tsx
 import Link from "next/link";
 
 export default function OrganizerDashboardPage() {
@@ -20,7 +19,7 @@ export default function OrganizerDashboardPage() {
             出演者招待や応募の承認・拒否などを行えます。
           </p>
           <Link
-            href="/musician/organized-events"
+            href="/organizer/events"
             className="inline-flex items-center rounded bg-purple-600 px-3 py-1.5 text-xs font-medium text-white"
           >
             企画一覧を見る
@@ -34,7 +33,7 @@ export default function OrganizerDashboardPage() {
             日程・会場・料金・条件などを設定して、新しいイベント企画を立ち上げます。
           </p>
           <Link
-            href="/events/new"
+            href="/organizer/events/new"
             className="inline-flex items-center rounded bg-purple-700 px-3 py-1.5 text-xs font-medium text-white"
           >
             新しい企画を作成する

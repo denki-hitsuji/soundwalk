@@ -1,6 +1,7 @@
 "use client";
 
-import { PerformanceRow } from "@/lib/performanceUtils";
+import { ActRow } from "@/lib/actQueries";
+import { DetailsRow, PerformanceRow, PerformanceWithActs } from "@/lib/performanceUtils";
 import Link from "next/link";
 
 type PrepDef = { key: string; label: string; offsetDays: number };
@@ -9,21 +10,21 @@ type Flyer = { file_url: string } | null | undefined;
 
 // p はあなたの既存 shape をそのまま受ける（型で縛りすぎない）
 export type PerformanceCardProps = {
-  p: PerformanceRow;
+  p: PerformanceWithActs;
 
   flyer?: Flyer;
-  details?: any;
+  details?: DetailsRow;
   tasks?: Record<string, any>;
 
   prepDefs: readonly PrepDef[];
   todayDate: Date;
 
   // 既存関数を流用（ページ側から渡す）
-  normalizeAct: (p: any) => any | null;
-  detailsSummary: (d: any) => string;
+  normalizeAct: (p: PerformanceWithActs) => ActRow | null;
+  detailsSummary: (d?: DetailsRow ) => string;
 
   // 既存 util を流用（ページ側から渡す）
-  toYmdLocal: (s: string) => Date;
+  parseYmdLocal: (s: string) => Date;
   addDays: (d: Date, days: number) => Date;
   fmtMMdd: (d: Date) => string;
   statusText: (due: Date, today: Date) => string;
@@ -41,7 +42,7 @@ export function PerformanceCard({
   todayDate,
   normalizeAct,
   detailsSummary,
-  toYmdLocal,
+  parseYmdLocal,
   addDays,
   fmtMMdd,
   statusText,
@@ -51,25 +52,30 @@ export function PerformanceCard({
   const act = normalizeAct(p);
   const actName = act?.name ?? "出演名義：なし";
   const summary = detailsSummary(details);
-  const rankStyle: Record<string, string> = {
-    offered: "bg-blue-100 text-blue-800",
-    pending_reconfirm: "bg-yellow-100 text-yellow-800",
-    confirmed: "bg-green-100 text-green-800",
-  };
-    const rankBadges: Record<string, string> = {
-      offered: "🟡 オファー",
-      pending_reconfirm: "🟣 要再確認",
-      confirmed: "✅ 確定",
-    };
+  const status = p.status ?? "confirmed";
+const statusStyleMap: Record<string, string> = {
+  offered: "bg-blue-100 text-blue-800",
+  pending_reconfirm: "bg-yellow-100 text-yellow-800",
+  confirmed: "bg-green-100 text-green-800",
+  canceled: "bg-gray-100 text-gray-500",
+};
+
+const statusLabelMap: Record<string, string> = {
+  offered: "🟡 オファー",
+  pending_reconfirm: "🟣 要再確認",
+  confirmed: "✅ 確定",
+  canceled: "⚪ 辞退",
+};
+
   return (
     <Link
       href={`/musician/performances/${p.id}`}
-      className={`block rounded-xl border shadow-sm hover:bg-gray-50 ${rankStyle[p.status ?? "offered"]}`}
+      className={`block rounded-xl border shadow-sm hover:bg-gray-50 ${statusStyleMap[status]}`}
     >
       <div className="px-3 py-1">
-        <p className="mr-2">{rankBadges[p.status ?? "offered"]}</p>
+        <p className="mr-2">{statusLabelMap[status]}</p>
       </div>
-      <div className="px-3 py-2 flex gap-3">
+      <div className="px-3 py-2d flex gap-3">
         {flyer ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -85,10 +91,28 @@ export function PerformanceCard({
         )}
 
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold truncate">
-            {p.event_date}{" "}
-            <span className="text-gray-700 font-normal">{venue}</span>
-          </div>
+<div className="flex items-center justify-between gap-2">
+  <div className="text-sm font-semibold">
+    {p.event_date}
+    {p.venue_name && (
+      <span className="ml-1 text-gray-600 font-normal">
+        @ {p.venue_name}
+      </span>
+    )}
+  </div>
+
+  {statusLabelMap[status] && (
+    <span
+      className={[
+        "shrink-0 rounded px-2 py-0.5 text-[11px] font-medium",
+        statusStyleMap[status] ?? "bg-gray-100 text-gray-700",
+      ].join(" ")}
+    >
+      {statusLabelMap[status]}
+    </span>
+  )}
+</div>
+
 
           <div className="text-base font-bold truncate">{actName}</div>
 
@@ -99,8 +123,8 @@ export function PerformanceCard({
             {prepDefs.map((def) => {
               const row = tasks[def.key];
               const due = row?.due_date
-                ? toYmdLocal(row.due_date)
-                : addDays(toYmdLocal(p.event_date), def.offsetDays);
+                ? parseYmdLocal(row.due_date)
+                : addDays(parseYmdLocal(p.event_date), def.offsetDays);
 
               const dueLabel = fmtMMdd(due);
               const done = row?.is_done === true;
