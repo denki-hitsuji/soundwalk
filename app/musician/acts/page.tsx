@@ -285,7 +285,7 @@ export default function ActsPage() {
           owner_profile_id: uid,
           description: "",
           is_temporary: false,
-          icon_url: "",
+          icon_url: null,
         })
         .select("id, name, act_type, owner_profile_id, photo_url, profile_link_url, description, is_temporary, icon_url")
         .single();
@@ -328,7 +328,34 @@ export default function ActsPage() {
     // ★ これを追加：ActSwitcherへ「一覧が更新された」と通知
     notifyActsUpdated();
   };
+const deleteAct = async (actId: string, actName: string) => {
+  const ok = window.confirm(
+    `「${actName}」を削除しますか？\n\nこの名義に紐づく情報（曲・ライブ記録など）も参照できなくなります。`
+  );
+  if (!ok) return;
 
+  try {
+    const { error } = await supabase
+      .from("acts")
+      .delete()
+      .eq("id", actId);
+
+    if (error) throw error;
+
+    // currentAct が消えた場合は解除
+    setCurrentAct((prev) => {
+      if (!prev || prev.id !== actId) return prev;
+      return null;
+    });
+
+    notifyActsUpdated();
+    await load();
+    router.refresh();
+  } catch (e: any) {
+    console.error("delete act error", e);
+    alert(e?.message ?? "名義の削除に失敗しました");
+  }
+};
   const canInvite = (act: ActRow) => {
     if (!userId) return false;
     if (act.owner_profile_id === userId) return true;
@@ -410,6 +437,7 @@ export default function ActsPage() {
   subtitle={<Badge>owner</Badge>}
   canInvite={canInvite(act)}
   canDelete={true}
+  onDelete={() => deleteAct(act.id, act.name)}
   canEditName={canEditName(act)}
   onRename={(next) => renameAct(act.id, next)}
   onProfileUpdated={(patch) => applyActPatch(act.id, patch)}
