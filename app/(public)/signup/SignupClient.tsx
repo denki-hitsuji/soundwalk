@@ -47,14 +47,26 @@ export default function SignupClient() {
   if (sentTo) {
     return (
       <main className="space-y-3">
-        <h1 className="text-xl font-bold">確認メールを送信しました</h1>
-        <p className="text-sm text-gray-700">
-          <span className="font-semibold">{sentTo}</span> に確認メールを送りました。
-          メール内のリンクを開くと、登録が完了し、このまま招待ページに戻ります。
+      <div className="rounded-2xl border bg-white p-5 shadow-sm">
+        <h1 className="text-xl font-bold leading-tight">
+          メールが送信されました
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+            メールボックスをご確認の上、「メールを確認する」リンクからお進み下さい。
         </p>
-        <p className="text-xs text-gray-500">
-          数分待っても届かない場合は迷惑メールも確認してください。
+      </div>
+     <div className="rounded-2xl border bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-bold leading-tight">
+          注意事項
+        </h2>
+        <ul className="mt-2 text-sm text-gray-600 list-disc list-inside space-y-1">
+          <li>メールが届くまでに、たいてい数分かかります。</li>
+          <li>10分経ってもメールが届かない場合は、迷惑メールフォルダもご確認ください。</li>
+        </ul>
+        <p className="mt-2 text-sm text-gray-600 font-semibold">
+          このページは閉じて構いません。
         </p>
+     </div>
       </main>
     );
   }
