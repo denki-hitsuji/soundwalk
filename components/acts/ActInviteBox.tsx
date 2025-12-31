@@ -15,29 +15,33 @@ export function ActInviteBox({ actId }: { actId: string }) {
   const createInvite = async () => {
     setLoading(true);
     try {
-const { data: sess } = await supabase.auth.getSession();
-console.log("session?", !!sess.session, sess.session?.user?.id);
-
-const { data: userRes } = await supabase.auth.getUser();
-console.log("user?", !!userRes.user, userRes.user?.id);
-      const { data, error } = await supabase.rpc("create_act_invite", {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("ログインが必要です。");
+        return;
+      }
+      const args: any = {
         p_act_id: actId,
-        p_role: null,
         p_grant_admin: false,
         p_expires_in_days: 7,
         p_max_uses: 1,
-      });
+      };
 
+      // ★ null を渡さない：roleがあるときだけ渡す
+      // args.p_role = "member"; など
+      // if (role) args.p_role = role;
+
+      const { data, error } = await supabase.rpc("create_act_invite", args);
       if (error) throw error;
 
       const token = data?.[0]?.token as string | undefined;
       const exp = (data?.[0]?.expires_at as string | null | undefined) ?? null;
-
       if (!token) throw new Error("招待トークンの生成に失敗しました");
 
       setInviteUrl(`${baseUrl}/invites/${token}`);
       setExpiresAt(exp);
     } catch (e: any) {
+      console.error("create_act_invite error detail:", e); // ★重要
       alert(e?.message ?? "招待リンクの作成に失敗しました");
     } finally {
       setLoading(false);

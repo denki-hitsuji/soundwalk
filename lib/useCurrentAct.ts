@@ -80,7 +80,7 @@ export function useCurrentAct(): CurrentActContextValue {
           .from("acts")
           .select("id, name, act_type, owner_profile_id, is_temporary, description, icon_url, photo_url, profile_link_url")
           .eq("id", storedActId)
-          .single();
+          .maybeSingle();
 
         if (!error && data?.id) {
           setCurrentAct({
