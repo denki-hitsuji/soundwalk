@@ -1,0 +1,356 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+
+type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
+
+type VenueRow = { id: string; name: string };
+
+type EventRow = {
+  id: string;
+  organizer_profile_id: string;
+  venue_id: string;
+  title: string;
+  event_date: string; // YYYY-MM-DD
+  open_time: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  max_artists: number | null;
+  charge: number | null;
+  conditions: string | null;
+  status: EventStatus;
+};
+
+export default function OrganizedEventEditClient({ eventId }: { eventId: string }) {
+  const router = useRouter();
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [canceling, setCanceling] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const [event, setEvent] = useState<EventRow | null>(null);
+  const [venues, setVenues] = useState<VenueRow[]>([]);
+
+  // form state
+  const [title, setTitle] = useState("");
+  const [venueId, setVenueId] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [openTime, setOpenTime] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [maxArtists, setMaxArtists] = useState<string>("");
+  const [charge, setCharge] = useState<string>("");
+  const [conditions, setConditions] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // auth
+      const { data: auth, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !auth.user) throw new Error("ログインが必要です。");
+
+      // event
+      const { data: e, error: eErr } = await supabase
+        .from("events")
+        .select(
+          "id, organizer_profile_id, venue_id, title, event_date, open_time, start_time, end_time, max_artists, charge, conditions, status"
+        )
+        .eq("id", eventId)
+        .single();
+
+      if (eErr) throw new Error(eErr.message);
+      const row = e as EventRow;
+
+      // organizer check
+      if (row.organizer_profile_id !== auth.user.id) {
+        throw new Error("このイベントはあなたの企画ではありません。");
+      }
+
+      setEvent(row);
+
+      // venues（選択肢）
+      const { data: vs, error: vErr } = await supabase
+        .from("venues")
+        .select("id, name")
+        .order("name", { ascending: true });
+
+      if (vErr) throw new Error(vErr.message);
+      setVenues((vs ?? []) as VenueRow[]);
+
+      // init form
+      setTitle(row.title ?? "");
+      setVenueId(row.venue_id ?? "");
+      setEventDate(row.event_date ?? "");
+      setOpenTime(row.open_time ? row.open_time.slice(0, 5) : "");
+      setStartTime(row.start_time ? row.start_time.slice(0, 5) : "");
+      setEndTime(row.end_time ? row.end_time.slice(0, 5) : "");
+      setMaxArtists(row.max_artists == null ? "" : String(row.max_artists));
+      setCharge(row.charge == null ? "" : String(row.charge));
+      setConditions(row.conditions ?? "");
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message ?? "読み込みに失敗しました。");
+      setEvent(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventId]);
+
+  const canSave = useMemo(() => {
+    if (!event) return false;
+    if (!title.trim()) return false;
+    if (!venueId) return false;
+    if (!eventDate) return false;
+    return true;
+  }, [event, title, venueId, eventDate]);
+
+  const save = async () => {
+    if (!event) return;
+    if (!canSave) return;
+
+    const ok = window.confirm("基本情報を保存しますか？");
+    if (!ok) return;
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const payload = {
+        title: title.trim(),
+        venue_id: venueId,
+        event_date: eventDate,
+        open_time: openTime ? openTime : null,
+        start_time: startTime ? startTime : null,
+        end_time: endTime ? endTime : null,
+        max_artists: maxArtists === "" ? null : Number(maxArtists),
+        charge: charge === "" ? null : Number(charge),
+        conditions: conditions.trim() ? conditions.trim() : null,
+      };
+
+      const { error: upErr } = await supabase
+        .from("events")
+        .update(payload)
+        .eq("id", eventId);
+
+      if (upErr) throw new Error(upErr.message);
+
+      alert("保存しました。");
+      router.push(`/organizer/events/${eventId}`);
+      router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message ?? "保存に失敗しました。");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cancelEvent = async () => {
+    if (!event) return;
+
+    const ok = window.confirm("この企画を中止（cancelled）にしますか？\n※参加者がいる場合は別途連絡が必要です。");
+    if (!ok) return;
+
+    setCanceling(true);
+    setError(null);
+
+    try {
+      const { error: upErr } = await supabase
+        .from("events")
+        .update({ status: "cancelled" })
+        .eq("id", eventId);
+
+      if (upErr) throw new Error(upErr.message);
+
+      alert("中止にしました。");
+      router.push(`/organizer/events/${eventId}`);
+      router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message ?? "中止に失敗しました。");
+    } finally {
+      setCanceling(false);
+    }
+  };
+
+  if (loading) return <main className="text-sm text-gray-500">読み込み中…</main>;
+
+  if (!event) {
+    return (
+      <main className="space-y-2">
+        <p className="text-sm text-red-600">{error ?? "イベントが見つかりませんでした。"}</p>
+        <Link href="/organizer/events" className="text-sm text-blue-700 underline">
+          一覧へ
+        </Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="space-y-4 max-w-3xl">
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-xs text-gray-500">企画編集</div>
+          <h1 className="text-xl font-bold truncate">{event.title}</h1>
+          <div className="text-[11px] text-gray-500 mt-1">
+            status: <span className="font-mono">{event.status}</span>
+          </div>
+        </div>
+
+        <Link
+          href={`/organizer/events/${eventId}`}
+          className="text-xs text-blue-700 underline underline-offset-2"
+        >
+          詳細へ戻る
+        </Link>
+      </header>
+
+      {error && <div className="rounded border bg-white p-3 text-sm text-red-600">{error}</div>}
+
+      <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
+        <h2 className="text-sm font-semibold">基本情報</h2>
+
+        <label className="block text-sm">
+          タイトル
+          <input
+            className="mt-1 w-full rounded border px-3 py-2 text-sm"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </label>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm">
+            会場
+            <select
+              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              value={venueId}
+              onChange={(e) => setVenueId(e.target.value)}
+            >
+              <option value="">選択してください</option>
+              {venues.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block text-sm">
+            日程
+            <input
+              type="date"
+              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="block text-sm">
+            Open（任意）
+            <input
+              type="time"
+              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              value={openTime}
+              onChange={(e) => setOpenTime(e.target.value)}
+            />
+          </label>
+
+          <label className="block text-sm">
+            Start（任意）
+            <input
+              type="time"
+              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+          </label>
+
+          <label className="block text-sm">
+            End（任意）
+            <input
+              type="time"
+              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm">
+            最大組数（任意）
+            <input
+              type="number"
+              min={0}
+              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              value={maxArtists}
+              onChange={(e) => setMaxArtists(e.target.value)}
+            />
+          </label>
+
+          <label className="block text-sm">
+            チャージ（円・任意）
+            <input
+              type="number"
+              min={0}
+              className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              value={charge}
+              onChange={(e) => setCharge(e.target.value)}
+            />
+          </label>
+        </div>
+
+        <label className="block text-sm">
+          条件（任意）
+          <textarea
+            className="mt-1 w-full rounded border px-3 py-2 text-sm min-h-[80px]"
+            value={conditions}
+            onChange={(e) => setConditions(e.target.value)}
+          />
+        </label>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={save}
+            disabled={!canSave || saving}
+            className="rounded bg-gray-900 px-4 py-2 text-xs font-medium text-white disabled:opacity-40"
+          >
+            {saving ? "保存中…" : "保存"}
+          </button>
+        </div>
+      </section>
+
+      <section className="rounded-xl border bg-white p-4 shadow-sm space-y-2">
+        <h2 className="text-sm font-semibold text-rose-700">中止</h2>
+        <p className="text-xs text-gray-600">
+          企画を中止（cancelled）にします。出演者がいる場合の連絡は運用で行ってください（後で通知/RPC化できます）。
+        </p>
+
+        <button
+          type="button"
+          onClick={cancelEvent}
+          disabled={canceling || event.status === "cancelled"}
+          className="rounded border border-rose-600 px-4 py-2 text-xs font-semibold text-rose-700 disabled:opacity-40"
+        >
+          {event.status === "cancelled" ? "中止済み" : canceling ? "処理中…" : "この企画を中止する"}
+        </button>
+      </section>
+    </main>
+  );
+}

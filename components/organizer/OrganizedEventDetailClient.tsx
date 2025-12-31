@@ -576,6 +576,13 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
               </>
             )}
           </p>
+          <Link
+            href={`/organizer/events/${eventId}/edit`}
+            className="text-xs rounded border px-3 py-1.5 hover:bg-gray-50"
+          >
+            編集
+          </Link>
+
         </div>
 
         <div className="flex flex-col items-end gap-2">
