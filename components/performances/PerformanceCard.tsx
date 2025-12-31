@@ -103,6 +103,11 @@ const rootClass = [
                   @ {p.venue_name}
                 </span>
               )}
+              {p.event_title && (
+                <div className="ml-1 text-gray-600 font-normal">
+                  {p.event_title}
+                </div>
+              )}
             </div>
 
             {statusLabelMap[status] && (

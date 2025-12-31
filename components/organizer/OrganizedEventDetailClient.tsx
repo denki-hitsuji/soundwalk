@@ -711,6 +711,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
                   memo: b.message,
                   status_changed_at: null,
                   status_reason: null,
+                  event_title: event.title,
                   acts: {
                     id: b.act_id,
                     name: b.act_name,

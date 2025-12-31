@@ -15,6 +15,7 @@ import {
   type DetailsMap,
   type PrepTaskRow,
   type PrepMap,
+  getPerformances,
 } from "@/lib/performanceUtils";
 
 import { updatePrepTaskDone } from "@/lib/performanceActions";
@@ -54,23 +55,7 @@ export default function PerformancesPage() {
       }
 
       // 1) ライブ一覧（acts も一緒）
-      const { data, error } = await supabase
-        .from("musician_performances")
-        .select(
-          `
-          id,
-          event_date,
-          venue_name,
-          memo,
-          act_id,
-          status,
-          status_reason,
-          status_changed_at,
-          created_at,
-          acts:acts ( id, name, act_type )
-        `,
-        )
-        .order("event_date", { ascending: false });
+      const { data, error } = await getPerformances();
 
       if (error) {
         console.error("load performances error", error);

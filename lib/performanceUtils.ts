@@ -2,6 +2,7 @@
 
 import { ActRow } from "./actQueries";
 import { diffDays } from "./dateUtils";
+import { supabase } from "./supabaseClient";
 
 export type PerformanceRow = {
   id: string;
@@ -15,6 +16,7 @@ export type PerformanceRow = {
   memo: string | null;
   details: DetailsRow | null;
   flyer_url: string | null;
+  event_title: string | null;
 
   status: string | null;             // ★追加
   status_reason: string | null;      // ★追加
@@ -103,4 +105,99 @@ export function normalizeAct(p: PerformanceWithActs): ActRow | null {
   const a = p.acts;
   if (!a) return null;
   return Array.isArray(a) ? a[0] ?? null : a;
+}
+
+export async function getPerformances(): Promise<{ data: PerformanceWithActs[]; error: any }> {
+  // 1) ライブ一覧（acts も一緒）
+  const { data, error } = await supabase
+    .from("musician_performances")
+    .select(
+      `
+        id,
+        event_date,
+        venue_name,
+        memo,
+        act_id,
+        status,
+        status_reason,
+        status_changed_at,
+        created_at,
+        profile_id,
+        event_id,
+        venue_id,
+        details:performance_details (
+          performance_id,
+          load_in_time,
+          set_start_time,
+          set_end_time,
+          set_minutes,
+          customer_charge_yen,
+          one_drink_required
+        ),
+        attachments:performance_attachments (
+          performance_id,
+          file_url,
+          created_at
+        ),
+        acts:acts (
+          id,
+          name,
+          act_type,
+          owner_profile_id,
+          is_temporary,
+          description,
+          icon_url,
+          photo_url,
+          profile_link_url
+        ),
+        events:events (
+          title
+        )
+      `
+    )
+    .order("event_date", { ascending: false });
+  if (error) throw error;
+  const normalizedData = data.map((p) => {
+    // Normalize details: take the first element if it's an array, or null if missing
+    const details = Array.isArray(p.details) ? (p.details[0] ?? null) : (p.details ?? null);
+
+   const toActRow = (a: any): ActRow => ({
+  id: a.id,
+  name: a.name,
+  act_type: a.act_type,
+  owner_profile_id: a.owner_profile_id ?? null,
+  is_temporary: a.is_temporary ?? null,
+  description: a.description ?? null,
+  icon_url: a.icon_url ?? null,
+  photo_url: a.photo_url ?? null,
+  profile_link_url: a.profile_link_url ?? null,
+});
+
+// Normalize acts
+let acts: ActRow | ActRow[] | null = null;
+if (Array.isArray(p.acts)) {
+  acts = p.acts.map(toActRow);
+} else if (p.acts) {
+  acts = toActRow(p.acts); // ← 単体を捨てない
+}
+
+    // Normalize event_title: take the first event's title if present
+    const event_title = (p as any).events?.title ?? null;
+    const act_name = Array.isArray(acts) ? (acts[0]?.name ?? null) : (acts?.name ?? null);
+    const flyer_url =
+      Array.isArray((p as any).attachments)
+        ? ((p as any).attachments[0]?.file_url ?? null)
+        : ((p as any).attachments?.file_url ?? null);
+
+    // Return object matching PerformanceWithActs type
+    return {
+      ...p,
+      details,
+      acts,
+      event_title,
+      act_name,
+      flyer_url,
+    };
+  });
+  return { data: normalizedData, error };
 }

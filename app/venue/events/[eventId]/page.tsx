@@ -136,6 +136,7 @@ export default async function VenueEventPage({ params }: PageProps) {
           memo: p.memo,
           details: p.details,
           flyer_url: p.flyer?.file_url ?? null,
+          event_title: p.event_title,
         }))}
       />
     </div>
