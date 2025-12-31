@@ -15,6 +15,11 @@ export function ActInviteBox({ actId }: { actId: string }) {
   const createInvite = async () => {
     setLoading(true);
     try {
+const { data: sess } = await supabase.auth.getSession();
+console.log("session?", !!sess.session, sess.session?.user?.id);
+
+const { data: userRes } = await supabase.auth.getUser();
+console.log("user?", !!userRes.user, userRes.user?.id);
       const { data, error } = await supabase.rpc("create_act_invite", {
         p_act_id: actId,
         p_role: null,
