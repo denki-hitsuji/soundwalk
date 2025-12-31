@@ -24,10 +24,14 @@ export async function getNextPerformance(todayStr?: string) {
       venue_name,
       memo,
       act_id,
+      status,
+      status_reason,
+      status_changed_at,
       acts:acts ( id, name, act_type )
     `
     )
     .gte("event_date", t)
+    .neq("status", "canceled")   
     .order("event_date", { ascending: true })
     .limit(1);
 
