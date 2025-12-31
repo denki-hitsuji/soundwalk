@@ -284,7 +284,6 @@ export default function ActsPage() {
           profile_link_url: null,
           owner_profile_id: uid,
           description: "",
-          avatar_url: "",
           is_temporary: false,
           icon_url: "",
         })
