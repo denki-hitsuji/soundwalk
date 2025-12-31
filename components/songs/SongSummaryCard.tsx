@@ -105,19 +105,19 @@ function ActSongsCard({
       <div className="pt-2 border-t">
         {canEdit ? (
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center min-w-0">
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="曲名を追加"
-                className="flex-1 rounded border px-3 py-2 text-sm"
+                 className="w-full sm:flex-1 min-w-0 rounded border px-3 py-2 text-sm"
               />
               <button
                 type="button"
                 onClick={() => void submit()}
                 disabled={adding}
                 className={[
-                  "shrink-0 rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white",
+                  "w-full sm:w-auto sm:shrink-0 rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white",
                   adding ? "opacity-60" : "hover:bg-emerald-700",
                 ].join(" ")}
               >
