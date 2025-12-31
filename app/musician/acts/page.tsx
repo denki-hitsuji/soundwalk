@@ -284,9 +284,9 @@ export default function ActsPage() {
           profile_link_url: null,
           owner_profile_id: uid,
           description: "",
-          avatar_url: null,
+          avatar_url: "",
           is_temporary: false,
-          icon_url: null,
+          icon_url: "",
         })
         .select("id, name, act_type, owner_profile_id, photo_url, profile_link_url, description, is_temporary, icon_url")
         .single();
