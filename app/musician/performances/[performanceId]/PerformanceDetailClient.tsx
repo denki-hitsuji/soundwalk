@@ -392,8 +392,44 @@ export default function PerformanceDetailClient({ performanceId }: { performance
       if (error) throw new Error(error.message);
     }
 
-    // 5) （任意）events.status matched 判定は主催者画面と同じロジックが必要
-    // ここでは最小仕様として触らない。必要なら後でRPC化する。
+    // 5) 枠が埋まったら events.status を matched に（open → matched）
+    {
+    // max_artists を取る
+    const { data: ev, error: evErr } = await supabase
+        .from("events")
+        .select("id, status, max_artists")
+        .eq("id", performance.event_id)
+        .single();
+
+    if (evErr) throw new Error(evErr.message);
+
+    const max = ev.max_artists as number | null;
+    if (max != null && max > 0) {
+        // accepted数を数える（event_acts 기준）
+        const { count, error: cntErr } = await supabase
+        .from("event_acts")
+        .select("*", { count: "exact", head: true })
+        .eq("event_id", performance.event_id)
+        .eq("status", "accepted");
+
+        if (cntErr) throw new Error(cntErr.message);
+
+        const acceptedCount = count ?? 0;
+
+        // すでに matched/cancelled なら触らない（保守的）
+        const currentStatus = ev.status as string | null;
+
+        if (acceptedCount >= max && currentStatus === "open") {
+        const { error: upErr } = await supabase
+            .from("events")
+            .update({ status: "matched" })
+            .eq("id", performance.event_id)
+            .eq("status", "open"); // 競合対策（openのときだけ）
+
+        if (upErr) throw new Error(upErr.message);
+        }
+    }
+    }
 
     alert("受諾しました。");
     await reloadAll();

@@ -53,6 +53,8 @@ export function PerformanceCard({
   const actName = act?.name ?? "出演名義：なし";
   const summary = detailsSummary(details);
   const status = p.status ?? "confirmed";
+  const isMusician = p.id !== ""; // 仮の条件
+  const clickable = Boolean(isMusician);
   const statusStyleMap: Record<string, string> = {
     offered: "bg-blue-100 text-blue-800",
     pending_reconfirm: "bg-yellow-100 text-yellow-800",
@@ -66,14 +68,19 @@ export function PerformanceCard({
     confirmed: "✅ 確定",
     canceled: "⚪ 辞退",
   };
+const rootClass = [
+  "block p-2 rounded-xl border shadow-sm flex",
+  clickable ? "hover:bg-gray-50 cursor-pointer" : "",
+].join(" ");
 
   const cardBody = (
-    <div>
+    <div className="w-full">
       {/* <div className="px-3 py-1">
         <p className="mr-2">{statusLabelMap[status]}</p>
       </div> */}
       <div className="px-2 py-2d flex gap-3">
-        {flyer ? (
+        {isMusician && (
+          flyer ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={flyer.file_url}
@@ -85,9 +92,9 @@ export function PerformanceCard({
           <div className="h-24 w-24 rounded border bg-gray-50 flex items-center justify-center text-[11px] text-gray-400">
             flyerなし
           </div>
-        )}
+        ))}
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-10">
           <div className="flex items-center justify-between gap-2">
             <div className="text-sm font-semibold">
               {p.event_date}
@@ -101,7 +108,7 @@ export function PerformanceCard({
             {statusLabelMap[status] && (
               <span
                 className={[
-                  "shrink-0 rounded py-0.5 text-[11px] font-medium",
+                  "shrink-0 rounded px-1 py-0.5 text-[11px] font-medium",
                   statusStyleMap[status] ?? "bg-gray-100 text-gray-700",
                 ].join(" ")}
               >
@@ -113,47 +120,49 @@ export function PerformanceCard({
 
           <div className="text-base font-bold truncate">{actName}</div>
 
-          {p.id !== "" && (
+          {isMusician && (
           <div className="mt-2 text-xs text-gray-700 ">{summary}</div>
           )}
 
           {/* 段取り（永続化＆共有） */}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {prepDefs.map((def) => {
-              const row = tasks[def.key];
-              const due = row?.due_date
-                ? parseYmdLocal(row.due_date)
-                : addDays(parseYmdLocal(p.event_date), def.offsetDays);
+          {isMusician && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {prepDefs.map((def) => {
+                const row = tasks[def.key];
+                const due = row?.due_date
+                  ? parseYmdLocal(row.due_date)
+                  : addDays(parseYmdLocal(p.event_date), def.offsetDays);
 
-              const dueLabel = fmtMMdd(due);
-              const done = row?.is_done === true;
-              const stat = done ? "済" : statusText(due, todayDate);
+                const dueLabel = fmtMMdd(due);
+                const done = row?.is_done === true;
+                const stat = done ? "済" : statusText(due, todayDate);
 
-              return (
-                <button
-                  key={def.key}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    void onToggleDone(p.id, def.key);
-                  }}
-                  className={[
-                    "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px]",
-                    done ? "bg-gray-100 text-gray-600" : "bg-white text-gray-800",
-                  ].join(" ")}
-                  title="クリックで済/未済を切り替え"
-                >
-                  <span className="text-gray-500">{dueLabel}</span>
-                  <span className={done ? "line-through" : ""}>{def.label}</span>
-                  <span className="text-gray-500">({stat})</span>
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <button
+                    key={def.key}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      void onToggleDone(p.id, def.key);
+                    }}
+                    className={[
+                      "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px]",
+                      done ? "bg-gray-100 text-gray-600" : "bg-white text-gray-800",
+                    ].join(" ")}
+                    title="クリックで済/未済を切り替え"
+                  >
+                    <span className="text-gray-500">{dueLabel}</span>
+                    <span className={done ? "line-through" : ""}>{def.label}</span>
+                    <span className="text-gray-500">({stat})</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {
-            p.id !== "" && (
+            isMusician && (
               <div className="mt-1 text-[11px] text-gray-500">
                 タップで詳細（フライヤー/案内文/確認事項） / 段取りはここでチェック可
               </div>
@@ -163,14 +172,14 @@ export function PerformanceCard({
       </div>
     </div>
   );
-if(p.id !== "") {
+if(isMusician) {
   return (
     <Link href={`/musician/performances/${p.id}`}
-      className={`block p-2 rounded-xl border shadow-sm hover:bg-gray-50 ${statusStyleMap[status]}`}>
+      className={`${rootClass} ${statusStyleMap[status]}`}>
       {cardBody}
     </Link>
   );
 } else {
-  return <div className={`block py-2 rounded-xl border shadow-sm hover:bg-gray-50 ${statusStyleMap[status]}`}>{cardBody}</div>;
+  return <div className={`${rootClass} ${statusStyleMap[status]}`}>{cardBody}</div>;
 } 
 }

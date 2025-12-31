@@ -22,7 +22,30 @@ export default function InviteClient({ token }: { token: string }) {
   const [joining, setJoining] = useState(false);
 
   const nextPath = useMemo(() => `/invites/${token}`, [token]);
+  const [ready, setReady] = useState(false);
 
+  useEffect(() => {
+    if (!token) return;
+
+    const run = async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+
+      if (!user) {
+        // ★ 招待URLを next に入れてログイン/登録へ
+        const next = `/invites/${token}`;
+        router.replace(`/signup?next=${encodeURIComponent(next)}`);
+        return;
+      }
+
+      setReady(true);
+      // ここで招待内容をロードして表示…
+    };
+
+    void run();
+  }, [token, router]);
+
+  if (!ready) return <main className="text-sm text-gray-500">読み込み中…</main>;
   useEffect(() => {
     const boot = async () => {
       // 招待情報（未ログインでも取得できるRPC）
