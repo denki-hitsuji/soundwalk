@@ -9,6 +9,7 @@ import { notifyActsUpdated } from "@/lib/actEvents";
 import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { icon } from "leaflet";
 import { ActRow } from "@/lib/actQueries";
+import Link from "next/link";
 
 type MemberRow = {
   act_id: string;
