@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import TemplateAssist from "@/components/forms/TemplateAssist";
 import { makeSongMemoTemplate } from "@/lib/templates";
+import SongMemoEditor from "@/components/songs/SongMemoEditor";
 
 type SongRow = {
   id: string;
@@ -121,7 +122,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
   const changed = (song.memo ?? "") !== memo;
 
   return (
-    <main className="space-y-4 max-w-3xl">
+    <main className="flex flex-col gap-4 min-h-[calc(100vh-64px)]">
       <header className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs text-gray-500">{act ? `${act.name}${act.act_type ? `（${act.act_type}）` : ""}` : "名義"}</div>
@@ -134,29 +135,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
       </header>
 
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold">メモ</h2>
-          <TemplateAssist templateText={templateText} getValue={() => memo} setValue={setMemo} />
-        </div>
-
-        <textarea
-          className="w-full rounded border px-3 py-2 text-sm min-h-[260px]"
-          value={memo}
-          onChange={(e) => setMemo(e.target.value)}
-          placeholder="ここにメモを書きます"
-        />
-
-        <div className="flex items-center justify-end gap-2">
-          {changed && <span className="text-[11px] text-gray-500">未保存の変更があります</span>}
-          <button
-            type="button"
-            onClick={save}
-            disabled={!changed || saving}
-            className="rounded bg-gray-800 px-3 py-2 text-xs font-medium text-white disabled:opacity-40"
-          >
-            {saving ? "保存中…" : "保存"}
-          </button>
-        </div>
+        <SongMemoEditor initialText={memo} />
       </section>
     </main>
   );
