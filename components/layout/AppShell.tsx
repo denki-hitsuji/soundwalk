@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { MobileMenu } from "./MobileMenu";
-import { ActSwitcher } from "@/components/acts/ActSwitcher";
 
 // ===== nav 定義 =====
 type NavItem = {
@@ -97,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <div className="flex items-center gap-3">
-            <ActSwitcher />
+            {/* <ActSwitcher /> */}
             {/* 既存: ログアウトなど */}
           </div>
           <div className="flex items-center gap-2">
