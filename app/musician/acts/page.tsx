@@ -359,6 +359,14 @@ export default function ActsPage() {
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-gray-800">あなたの名義</h2>
           <span className="text-[11px] text-gray-500">{ownedActs.length}件</span>
+<div className="flex items-center justify-between">
+  <h2 className="text-sm font-semibold">名義</h2>
+  <Link
+    href="/musician/acts/new"
+    className="text-xs text-blue-600 hover:underline"
+  >
+    + 名義を追加
+  </Link>
         </div>
 
         {ownedActs.length === 0 ? (
