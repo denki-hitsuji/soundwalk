@@ -16,70 +16,76 @@ type InvitePublic = {
 
 export default function InviteClient({ token }: { token: string }) {
   const router = useRouter();
+
   const [userId, setUserId] = useState<string | null>(null);
   const [inv, setInv] = useState<InvitePublic | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const nextPath = useMemo(() => `/invites/${token}`, [token]);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!token) return;
 
-    const run = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
+    const boot = async () => {
+      setLoading(true);
+      setErr(null);
 
+      // 1) auth 確認
+      const { data: auth, error: authErr } = await supabase.auth.getUser();
+      if (authErr) {
+        // authErr は基本握りつぶしてもOK（セッション無し等）
+        console.warn("getUser error", authErr);
+      }
+
+      const user = auth.user;
       if (!user) {
-        // ★ 招待URLを next に入れてログイン/登録へ
-        const next = `/invites/${token}`;
-        router.replace(`/signup?next=${encodeURIComponent(next)}`);
+        // 未ログインなら signup に next 付きで誘導
+        router.replace(`/signup?next=${encodeURIComponent(nextPath)}`);
         return;
       }
 
-      setReady(true);
-      // ここで招待内容をロードして表示…
-    };
+      setUserId(user.id);
 
-    void run();
-  }, [token, router]);
-
-  if (!ready) return <main className="text-sm text-gray-500">読み込み中…</main>;
-  useEffect(() => {
-    const boot = async () => {
-      // 招待情報（未ログインでも取得できるRPC）
+      // 2) 招待情報取得（ログイン後に読む）
       try {
         const { data, error } = await supabase.rpc("get_act_invite_public", { p_token: token });
         if (error) throw error;
         setInv((data?.[0] ?? null) as InvitePublic | null);
       } catch (e: any) {
         setErr(e?.message ?? "招待リンクが無効です");
+        setInv(null);
+      } finally {
+        setLoading(false);
       }
-
-      const { data: u } = await supabase.auth.getUser();
-      setUserId(u.user?.id ?? null);
     };
 
     void boot();
-  }, [token]);
+  }, [token, nextPath, router]);
 
   const accept = async () => {
+    if (!inv) return;
+    if (inv.is_revoked) return;
+    if (inv.used_count >= inv.max_uses) return;
+
     setJoining(true);
     setErr(null);
+
     try {
-      const { data, error } = await supabase.rpc("accept_act_invite", { p_token: token });
-      console.log("accept_act_invite result", { data, error });
+      const { error } = await supabase.rpc("accept_act_invite", { p_token: token });
       if (error) throw error;
 
-      // 参加後はダッシュボードへ（必要なら act ページへ）
       router.replace("/musician");
+      router.refresh();
     } catch (e: any) {
       setErr(e?.message ?? "参加に失敗しました");
     } finally {
       setJoining(false);
     }
   };
+
+  if (loading) return <main className="text-sm text-gray-500">読み込み中…</main>;
 
   if (err) {
     return (
@@ -114,14 +120,12 @@ export default function InviteClient({ token }: { token: string }) {
           {exhausted && <div className="text-xs text-red-600 mt-1">この招待は使用回数の上限に達しました。</div>}
         </div>
       ) : (
-        <p className="text-sm text-gray-600">招待を読み込み中…</p>
+        <p className="text-sm text-gray-600">招待が見つかりません。</p>
       )}
 
       {!userId ? (
         <div className="space-y-2">
-          <p className="text-sm text-gray-600">
-            参加するにはログインが必要です。
-          </p>
+          <p className="text-sm text-gray-600">参加するにはログインが必要です。</p>
           <div className="flex gap-2">
             <Link
               href={`/login?next=${encodeURIComponent(nextPath)}`}
