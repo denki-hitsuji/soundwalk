@@ -55,7 +55,7 @@ export function ActInviteBox({ actId }: { actId: string }) {
   };
 
   return (
-    <div className="rounded-xl border bg-white p-4 space-y-3 shadow-sm">
+    <div className="bg-white p-2 space-y-3">
       <div>
         <div className="text-sm font-semibold">メンバー招待</div>
         <div className="text-xs text-gray-600 mt-1">
