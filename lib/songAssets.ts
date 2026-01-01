@@ -10,6 +10,7 @@ export type SongAssetRow = {
   original_filename: string;
   mime_type: string;
   size_bytes: number;
+  asset_kind: string;
   created_at: string;
 };
 
@@ -50,7 +51,7 @@ function sanitizeFilename(name: string) {
 export async function listSongAssets(actSongId: string) {
   const { data, error } = await supabase
     .from("act_song_assets")
-    .select("id, act_song_id, uploader_profile_id, bucket, object_path, original_filename, mime_type, size_bytes, created_at")
+    .select("id, act_song_id, uploader_profile_id, bucket, object_path, original_filename, mime_type, size_bytes, asset_kind, created_at")
     .eq("act_song_id", actSongId)
     .order("created_at", { ascending: false });
 
@@ -67,8 +68,9 @@ export async function getSignedUrl(objectPath: string, expiresInSec = 60 * 10) {
 export async function uploadSongAsset(params: {
   actSongId: string;
   file: File;
+  assetKind: string;
 }) {
-  const { actSongId, file } = params;
+  const { actSongId, file, assetKind } = params;
 
   const msg = validateSongAssetFile(file);
   if (msg) throw new Error(msg);
@@ -105,8 +107,9 @@ export async function uploadSongAsset(params: {
       original_filename: file.name,
       mime_type: file.type,
       size_bytes: file.size,
+      asset_kind: assetKind,
     })
-    .select("id, act_song_id, uploader_profile_id, bucket, object_path, original_filename, mime_type, size_bytes, created_at")
+    .select("id, act_song_id, uploader_profile_id, bucket, object_path, original_filename, mime_type, size_bytes, asset_kind, created_at")
     .single();
 
   if (error) {

@@ -26,6 +26,7 @@ export default function SongAssetsBox({ actSongId }: { actSongId: string }) {
 
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [kind, setKind] = useState<"score" | "lyrics" | "demo" | "guide" | "click" | "other">("score");
 
   // private bucketなので、表示用URLはsignedUrlを都度作る
   const [signedMap, setSignedMap] = useState<Record<string, string>>({});
@@ -41,6 +42,14 @@ export default function SongAssetsBox({ actSongId }: { actSongId: string }) {
     ].join(","),
     [],
   );
+const kindLabel: Record<string,string> = {
+  score: "譜面",
+  demo: "デモ",
+  guide: "ガイド",
+  click: "クリック",
+  lyrics: "歌詞",
+  other: "その他",
+};
 
   const reload = async () => {
     setLoading(true);
@@ -90,7 +99,7 @@ export default function SongAssetsBox({ actSongId }: { actSongId: string }) {
     setUploading(true);
     setErr(null);
     try {
-      const inserted = await uploadSongAsset({ actSongId, file });
+      const inserted = await uploadSongAsset({ actSongId, file, assetKind: kind });
       setFile(null);
 
       // 追加分だけ先に差し込む
@@ -140,11 +149,23 @@ export default function SongAssetsBox({ actSongId }: { actSongId: string }) {
       {/* uploader */}
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+           <select
+               className="rounded border px-2 py-1 text-sm"
+               value={kind}
+               onChange={(e) => setKind(e.target.value as any)}
+           >
+               <option value="score">譜面</option>
+               <option value="demo">デモ</option>
+               <option value="guide">ガイド</option>
+               <option value="click">クリック</option>
+               <option value="lyrics">歌詞</option>
+               <option value="other">その他</option>
+          </select>
           <input
             type="file"
             accept={accept}
             onChange={(e) => onPick(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm"
+            className="block w-full text-sm rounded border px-2 py-1"
           />
           <button
             type="button"
@@ -183,7 +204,12 @@ export default function SongAssetsBox({ actSongId }: { actSongId: string }) {
               <li key={a.id} className="rounded border px-3 py-2 text-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{a.original_filename}</div>
+                    <div className="font-medium truncate">
+                      {a.original_filename}
+                      <span className="inline-flex rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">
+                        {kindLabel[a.asset_kind] ?? a.asset_kind}
+                      </span>
+                    </div>
                     <div className="mt-0.5 text-[11px] text-gray-500">
                       {a.mime_type} / {fmtBytes(a.size_bytes)} / {new Date(a.created_at).toLocaleString()}
                     </div>
