@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useCurrentAct } from "@/lib/useCurrentAct";
-import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import { notifyActsUpdated } from "@/lib/actEvents";
-import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
-import { icon } from "leaflet";
 import { ActRow } from "@/lib/actQueries";
-import Link from "next/link";
 
 type MemberRow = {
   act_id: string;
@@ -27,133 +24,56 @@ function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{children}</span>;
 }
 
-function ActCard({
+function RoleBadges({
+  kind,
+  isAdmin,
+}: {
+  kind: "owner" | "member";
+  isAdmin?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {kind === "owner" ? <Badge>owner</Badge> : <Badge>member</Badge>}
+      {kind === "member" && isAdmin && (
+        <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-800">admin</span>
+      )}
+    </div>
+  );
+}
+
+function ActListCard({
   act,
-  subtitle,
-  canInvite,
-  canDelete,
-  onDelete,
-  canEditName,
-  onRename,
-  onProfileUpdated, // ★追加
+  kind,
+  isAdmin,
 }: {
   act: ActRow;
-  subtitle: React.ReactNode;
-  canInvite: boolean;
-  canDelete: boolean;
-  onDelete?: () => void;
-  canEditName: boolean;
-  onRename: (nextName: string) => Promise<void>;
-  onProfileUpdated?: (patch: Partial<ActRow>) => void;
+  kind: "owner" | "member";
+  isAdmin?: boolean;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(act.name);
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  // 外から name が更新された場合の追随
-  useEffect(() => {
-    if (!editing) setName(act.name);
-  }, [act.name, editing]);
-
-  const submit = async () => {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      setErr("名前を入力してください");
-      return;
-    }
-
-    setErr(null);
-    setSaving(true);
-    try {
-      await onRename(trimmed);
-      setEditing(false);
-    } catch (e: any) {
-      setErr(e?.message ?? "更新に失敗しました");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const desc = (act.description ?? "").trim();
 
   return (
-    <section className="rounded border bg-white px-3 py-3 text-sm space-y-2">
+    <Link
+      href={`/musician/acts/${act.id}`}
+      className="block rounded border bg-white px-3 py-3 text-sm hover:bg-gray-50"
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          {!editing ? (
-            <>
-              <div className="font-medium truncate">{act.name}</div>
-              <div className="mt-0.5 text-[11px] text-gray-500 flex items-center gap-2">{subtitle}</div>
-            </>
-          ) : (
-            <div className="space-y-1">
-              <div className="text-[11px] text-gray-500">アクト名</div>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded border px-2 py-1 text-sm"
-                placeholder="例：さとレックス / The Holidays"
-              />
-              {err && <div className="text-[11px] text-red-600">{err}</div>}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => void submit()}
-                  disabled={saving}
-                  className={[
-                    "inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white",
-                    saving ? "opacity-60" : "hover:bg-blue-700",
-                  ].join(" ")}
-                >
-                  {saving ? "保存中…" : "保存"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditing(false);
-                    setName(act.name);
-                    setErr(null);
-                  }}
-                  className="text-[11px] text-gray-600 hover:underline"
-                >
-                  キャンセル
-                </button>
-              </div>
+          <div className="font-medium truncate">{act.name}</div>
+          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
+            <RoleBadges kind={kind} isAdmin={isAdmin} />
+          </div>
+
+          {desc && (
+            <div className="mt-2 text-xs text-gray-600 whitespace-pre-wrap break-words line-clamp-3">
+              {desc}
             </div>
           )}
         </div>
-       <div className="shrink-0 flex items-center gap-3">
-          {!editing && canEditName && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(true);
-                setErr(null);
-              }}
-              className="text-[11px] text-blue-700 hover:underline"
-              title="名前を編集"
-            >
-              名前を編集
-            </button>
-          )}
 
-          {canDelete && (
-            <button
-              type="button"
-              onClick={onDelete}
-              className="text-[11px] text-red-600 hover:underline"
-            >
-              削除
-            </button>
-          )}
-        </div>
-
+        <span className="shrink-0 text-[11px] text-gray-400">詳細</span>
       </div>
-        <ActProfileEditor
-          act={act}
-          onUpdated={(patch) => onProfileUpdated?.(patch)}
-        />
- 
-      {canInvite && <ActInviteBox actId={act.id} />}
-    </section>
+    </Link>
   );
 }
 
@@ -168,21 +88,11 @@ export default function ActsPage() {
   const [memberActs, setMemberActs] = useState<ActRow[]>([]);
   const [memberMap, setMemberMap] = useState<Record<string, { is_admin: boolean }>>({});
 
-  // 初回作成フォーム用
+  // 初回作成フォーム（＝最初の1名義だけ）
   const [soloName, setSoloName] = useState("");
   const [creatingSolo, setCreatingSolo] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const applyActPatch = (actId: string, patch: Partial<ActRow>) => {
-    setOwnedActs((prev) => prev.map((a) => (a.id === actId ? { ...a, ...patch } : a)));
-    setMemberActs((prev) => prev.map((a) => (a.id === actId ? { ...a, ...patch } : a)));
-
-    setCurrentAct((prev) => {
-      if (!prev || prev.id !== actId) return prev;
-      return { ...prev, ...patch };
-    });
-    notifyActsUpdated();
-  };
   const load = async () => {
     setLoading(true);
     try {
@@ -207,7 +117,7 @@ export default function ActsPage() {
 
       const { data: mem, error: memErr } = await supabase
         .from("act_members")
-        .select("act_id, is_admin, status, acts:acts ( id, name, act_type, owner_profile_id )")
+        .select("act_id, is_admin, status, acts:acts ( id, name, act_type, owner_profile_id, description, photo_url, profile_link_url )")
         .eq("profile_id", uid)
         .eq("status", "active");
 
@@ -222,14 +132,16 @@ export default function ActsPage() {
         if (a) mActs.push(a);
       }
 
-      const ownedSet = new Set((owned ?? []).map((a: any) => a.id as string));
+      const ownedList = (owned ?? []) as unknown as ActRow[];
+      const ownedSet = new Set(ownedList.map((a) => a.id));
       const filteredMember = mActs.filter((a) => !ownedSet.has(a.id));
 
-      setOwnedActs((owned ?? []) as unknown as ActRow[]);
+      setOwnedActs(ownedList);
       setMemberActs(filteredMember);
       setMemberMap(mm);
 
-      if ((owned ?? []).length === 0 && soloName.trim() === "") {
+      // 初回フォームのデフォルト値
+      if (ownedList.length === 0 && soloName.trim() === "") {
         const { data: prof } = await supabase
           .from("profiles")
           .select("display_name")
@@ -245,20 +157,12 @@ export default function ActsPage() {
     }
   };
 
-
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    console.log("parent member acts", memberActs.map(a => ({ id: a.id, desc: a.description })));
-  }, [memberActs]);
-  useEffect(() => {
-        console.log("parent owned acts", ownedActs.map(a => ({ id: a.id, desc: a.description })));
-    }, [ownedActs]);
   const createSoloAct = async () => {
-    
     setCreateError(null);
 
     const name = soloName.trim();
@@ -280,24 +184,26 @@ export default function ActsPage() {
         .insert({
           name,
           act_type: "solo",
-          photo_url: null,
-          profile_link_url: null,
           owner_profile_id: uid,
           description: "",
           is_temporary: false,
+          photo_url: null,
+          profile_link_url: null,
           icon_url: null,
         })
-        .select("id, name, act_type, owner_profile_id, photo_url, profile_link_url, description, is_temporary, icon_url")
+        .select("id, name, act_type, owner_profile_id, description, photo_url, profile_link_url, is_temporary, icon_url")
         .single();
 
       if (insErr) throw insErr;
 
-      // currentAct に即セット
       setCurrentAct(inserted as ActRow);
       notifyActsUpdated();
-      // 再ロードで画面反映
+
       await load();
       router.refresh();
+
+      // すぐ詳細へ（＝編集・招待は詳細に集約）
+      router.push(`/musician/acts/${inserted.id}`);
     } catch (e: any) {
       console.error("create solo act error", e);
       setCreateError(e?.message ?? "作成に失敗しました");
@@ -306,85 +212,23 @@ export default function ActsPage() {
     }
   };
 
-  const renameAct = async (actId: string, nextName: string) => {
-    const { data, error } = await supabase
-      .from("acts")
-      .update({ name: nextName })
-      .eq("id", actId)
-      .select("id, name, act_type, owner_profile_id,photo_url, profile_link_url, description")
-      .single();
-
-    if (error) throw error;
-
-    // state反映
-    setOwnedActs((prev) => prev.map((a) => (a.id === actId ? (data as ActRow) : a)));
-    setMemberActs((prev) => prev.map((a) => (a.id === actId ? (data as ActRow) : a)));
-
-    // currentAct だったら追随
-    if (currentAct?.id === actId) {
-      setCurrentAct(data as ActRow);
-    }
-
-    // ★ これを追加：ActSwitcherへ「一覧が更新された」と通知
-    notifyActsUpdated();
-  };
-const deleteAct = async (actId: string, actName: string) => {
-  const ok = window.confirm(
-    `「${actName}」を削除しますか？\n\nこの名義に紐づく情報（曲・ライブ記録など）も参照できなくなります。`
-  );
-  if (!ok) return;
-
-  try {
-    const { error } = await supabase
-      .from("acts")
-      .delete()
-      .eq("id", actId);
-
-    if (error) throw error;
-
-    // currentAct が消えた場合は解除
-    setCurrentAct((prev) => {
-      if (!prev || prev.id !== actId) return prev;
-      return null;
-    });
-
-    notifyActsUpdated();
-    await load();
-    router.refresh();
-  } catch (e: any) {
-    console.error("delete act error", e);
-    alert(e?.message ?? "名義の削除に失敗しました");
-  }
-};
-  const canInvite = (act: ActRow) => {
-    if (!userId) return false;
-    if (act.owner_profile_id === userId) return true;
-    return memberMap[act.id]?.is_admin === true;
-  };
-
-  const canEditName = (act: ActRow) => {
-    // “編集できる” をどうするかは設計次第
-    // 今回は「owner と admin member は編集可」にしておく（安全）
-    if (!userId) return false;
-    if (act.owner_profile_id === userId) return true;
-    return memberMap[act.id]?.is_admin === true;
-  };
-
   if (loading) return <main className="p-4 text-sm text-gray-500">読み込み中…</main>;
+
+  const totalActs = ownedActs.length + memberActs.length;
 
   return (
     <main className="space-y-6">
       <header className="space-y-1">
         <h1 className="text-xl font-bold">出演名義（アクト）</h1>
         <p className="text-xs text-gray-600">
-          ソロ / バンド / デュオ などの「名義」を管理します。招待で参加した名義もここに出ます。
+          一覧では「見る・探す」に集中し、編集や招待は各名義の詳細ページで行います。
         </p>
       </header>
 
       {/* あなたの名義（owner） */}
       <section className="space-y-2">
         <div className="flex items-baseline justify-between">
-          <div className="flex items-center gap-3">
+                   <div className="flex items-center gap-3">
           <h2 className="text-sm font-semibold text-gray-800">あなたの名義</h2>
           <Link
             href="/musician/acts/new"
@@ -393,7 +237,7 @@ const deleteAct = async (actId: string, actName: string) => {
             + 名義を追加
           </Link>
           </div>  
-          <span className="text-[11px] text-gray-500 flex items-center gap-3">{ownedActs.length}件</span>
+          <span className="text-[11px] text-gray-500">{ownedActs.length}件</span>
         </div>
 
         {ownedActs.length === 0 ? (
@@ -431,23 +275,14 @@ const deleteAct = async (actId: string, actName: string) => {
             </button>
           </div>
         ) : (
-          <div className="space-y-2 ">
-              {ownedActs.map((act) => (
-              <ActCard
-  key={act.id}
-  act={act}
-  subtitle={<Badge>owner</Badge>}
-  canInvite={canInvite(act)}
-  canDelete={true}
-  onDelete={() => deleteAct(act.id, act.name)}
-  canEditName={canEditName(act)}
-  onRename={(next) => renameAct(act.id, next)}
-  onProfileUpdated={(patch) => applyActPatch(act.id, patch)}
-/>
-            
+          <div className="space-y-2">
+            {ownedActs.map((act) => (
+              <ActListCard key={act.id} act={act} kind="owner" />
             ))}
           </div>
         )}
+
+
       </section>
 
       {/* 参加中の名義（member） */}
@@ -462,35 +297,17 @@ const deleteAct = async (actId: string, actName: string) => {
             まだ招待で参加した名義がありません。招待リンクを受け取ったらここに増えていきます。
           </div>
         ) : (
-          <div className="space-y-2 ">
+          <div className="space-y-2">
             {memberActs.map((act) => {
               const isAdmin = memberMap[act.id]?.is_admin === true;
-
-              return (
-                <ActCard
-                  key={act.id}
-                  act={act}
-                  subtitle={
-                    <div className="flex items-center gap-2">
-                      <Badge>member</Badge>
-                      {isAdmin && <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-800">admin</span>}
-                    </div>
-                  }
-                  canInvite={isAdmin}
-                  canDelete={false}
-                  canEditName={isAdmin} // admin member は編集できる設計にしておく（安全）
-                  onRename={(next) => renameAct(act.id, next)}
-                  onProfileUpdated={(patch): void => applyActPatch(act.id, patch)}
-                />
-              );
+              return <ActListCard key={act.id} act={act} kind="member" isAdmin={isAdmin} />;
             })}
           </div>
         )}
       </section>
 
-      {/* 補助：currentAct が未選択なら軽く促す */}
-      {!currentAct && (ownedActs.length + memberActs.length) > 0 && (
-        <div className="rounded-lg border bg-white p-3 text-sm text-gray-600">
+      {!currentAct && totalActs > 0 && (
+        <div className="rounded border bg-white p-3 text-sm text-gray-600">
           どの名義で操作するかは、画面上部の「名義」から切り替えできます。
         </div>
       )}
