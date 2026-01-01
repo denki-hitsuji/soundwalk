@@ -75,7 +75,7 @@ function ActCard({
   };
 
   return (
-    <div className="rounded border bg-white px-3 py-3 text-sm space-y-2">
+    <section className="rounded border bg-white px-3 py-3 text-sm space-y-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           {!editing ? (
@@ -153,7 +153,7 @@ function ActCard({
         />
  
       {canInvite && <ActInviteBox actId={act.id} />}
-    </div>
+    </section>
   );
 }
 
@@ -397,7 +397,7 @@ const deleteAct = async (actId: string, actName: string) => {
         </div>
 
         {ownedActs.length === 0 ? (
-          <div className="rounded-lg border bg-white p-4 space-y-3">
+          <div className="rounded border bg-white p-4 space-y-3">
             <div className="text-sm font-medium">まずはソロ名義を作りましょう</div>
             <div className="text-sm text-gray-600">
               最初の名義があると、ライブ記録・曲・段取り共有がすぐ使えます。
@@ -431,7 +431,7 @@ const deleteAct = async (actId: string, actName: string) => {
             </button>
           </div>
         ) : (
-          <div className="space-y-2 max-w-md">
+          <div className="space-y-2 ">
               {ownedActs.map((act) => (
               <ActCard
   key={act.id}
@@ -458,11 +458,11 @@ const deleteAct = async (actId: string, actName: string) => {
         </div>
 
         {memberActs.length === 0 ? (
-          <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">
+          <div className="rounded border bg-white p-4 text-sm text-gray-600">
             まだ招待で参加した名義がありません。招待リンクを受け取ったらここに増えていきます。
           </div>
         ) : (
-          <div className="space-y-2 max-w-md">
+          <div className="space-y-2 ">
             {memberActs.map((act) => {
               const isAdmin = memberMap[act.id]?.is_admin === true;
 
