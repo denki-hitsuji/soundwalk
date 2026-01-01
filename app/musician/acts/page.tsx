@@ -383,12 +383,12 @@ const deleteAct = async (actId: string, actName: string) => {
 
       {/* あなたの名義（owner） */}
       <section className="space-y-2">
-        <div className="flex items-baseline justify-between">
+        <div className="flex items-center gap-3">
           <h2 className="text-sm font-semibold text-gray-800">あなたの名義</h2>
-          <span className="text-[11px] text-gray-500">{ownedActs.length}件</span>
+          <span className="text-[11px] text-gray-500 flex items-center gap-3">{ownedActs.length}件</span>
   <Link
     href="/musician/acts/new"
-    className="text-xs text-blue-600 hover:underline"
+    className="text-xs text-blue-600 hover:underline flex items-center gap-3"
   >
     + 名義を追加
   </Link>
