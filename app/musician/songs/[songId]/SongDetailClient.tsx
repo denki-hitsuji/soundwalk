@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import TemplateAssist from "@/components/forms/TemplateAssist";
 import { makeSongMemoTemplate } from "@/lib/templates";
 import SongMemoEditor from "@/components/songs/SongMemoEditor";
+import SongAssetsBox from "@/components/songs/SongAssetsBox";
 
 type SongRow = {
   id: string;
@@ -137,6 +138,8 @@ export default function SongDetailClient({ songId }: { songId: string }) {
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
         <SongMemoEditor initialText={memo} />
       </section>
+
+      <SongAssetsBox actSongId={songId} />
     </main>
   );
 }
