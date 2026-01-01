@@ -4,10 +4,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import TemplateAssist from "@/components/forms/TemplateAssist";
 import { makeSongMemoTemplate } from "@/lib/templates";
 import SongMemoEditor from "@/components/songs/SongMemoEditor";
 import SongAssetsBox from "@/components/songs/SongAssetsBox";
+import { useRouter } from "next/navigation";
 
 type SongRow = {
   id: string;
@@ -19,6 +19,7 @@ type SongRow = {
 type ActRow = { id: string; name: string; act_type: string | null };
 
 export default function SongDetailClient({ songId }: { songId: string }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -29,7 +30,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
   const didInit = useRef(false);
 
   const templateText = useMemo(() => makeSongMemoTemplate(), []);
-
+  const [deleting, setDeleting] = useState(false);
   const load = async () => {
     setLoading(true);
 
@@ -120,6 +121,47 @@ export default function SongDetailClient({ songId }: { songId: string }) {
     );
   }
 
+  const deleteSong = async () => {
+    // songId が act_songs.id である設計ならそのまま使える
+    // もし songId が別キーなら、ここは song?.id を使う
+    const targetId = songId;
+
+    const ok = window.confirm(
+      "この曲を削除します。\n譜面・音源などの添付（assets）がある場合、それも削除されます。\n本当に実行しますか？"
+    );
+    if (!ok) return;
+
+    setDeleting(true);
+    try {
+      // ✅ CASCADEが無い場合は先に assets を消す
+      // CASCADEがあるなら、このブロックは消してOK
+      // {
+      //   const { error: aErr } = await supabase
+      //     .from("act_song_assets")
+      //     .delete()
+      //     .eq("act_song_id", targetId);
+      //   if (aErr) throw new Error(aErr.message);
+      // }
+
+      // ✅ 曲本体を削除
+      {
+        const { error: sErr } = await supabase
+          .from("act_songs")
+          .delete()
+          .eq("id", targetId);
+        if (sErr) throw new Error(sErr.message);
+      }
+
+      alert("削除しました。");
+      router.push("/musician/songs");
+      router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      alert(e?.message ?? "削除に失敗しました");
+    } finally {
+      setDeleting(false);
+    }
+  };
   const changed = (song.memo ?? "") !== memo;
 
   return (
@@ -140,6 +182,29 @@ export default function SongDetailClient({ songId }: { songId: string }) {
       </section>
 
       <SongAssetsBox actSongId={songId} />
+
+            {/* 危険操作：ページ下部に置くのが無難 */}
+      <section className="rounded border bg-white p-4">
+        <div className="text-sm font-semibold text-gray-900">危険操作</div>
+        <p className="mt-1 text-xs text-gray-600">
+          この曲を削除すると元に戻せません。
+        </p>
+
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => void deleteSong()}
+            disabled={deleting}
+            className={[
+              "inline-flex items-center rounded px-3 py-2 text-xs font-semibold",
+              "border border-red-600 text-red-700 hover:bg-red-50",
+              deleting ? "opacity-60" : "",
+            ].join(" ")}
+          >
+            {deleting ? "削除中…" : "この曲を削除"}
+          </button>
+        </div>
+      </section>
     </main>
   );
 }
