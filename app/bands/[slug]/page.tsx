@@ -13,9 +13,8 @@ type Payload = {
       body: string | null;
       photo_url: string | null;
       profile_link_url: string | null;
-      act_description: string | null;
       performances: Array<{
-          id: string;
+          performance_id: string;
           event_date: string;
           venue_name: string;
           event_title: string | null;
@@ -67,8 +66,6 @@ export default async function BandPublicPage({ params }: { params: Promise<{ slu
 
                         {p.body ? (
                             <div className="whitespace-pre-wrap text-sm text-gray-700">{p.body}</div>
-                        ) : p.act_description ? (
-                            <div className="whitespace-pre-wrap text-sm text-gray-700">{p.act_description}</div>
                         ) : (
                             <div className="text-sm text-gray-500">プロフィールはまだありません。</div>
                         )}
@@ -87,7 +84,7 @@ export default async function BandPublicPage({ params }: { params: Promise<{ slu
                 {p.performances.length > 0 && (
                     <div className="bg-white divide-y">
                         {p.performances.map((x) => (
-                            <div key={x.id} className="rounded border p-3 gap-3 mt-3 text-sm">
+                            <div key={x.performance_id} className="rounded border p-3 gap-3 mt-3 text-sm">
                                 <div className="font-medium">
                                     {x.event_date}
                                     <span className="ml-2 font-normal text-gray-700">@ {x.venue_name || "（未設定）"}</span>

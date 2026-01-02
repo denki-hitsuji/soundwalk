@@ -245,12 +245,13 @@ export default function ActPublicPageEditor({
 
           {/* 公開ON/OFF */}
           <label className="flex items-center gap-2">
+            公開：
             <input
               type="checkbox"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
             />
-            <span className="text-sm">
+            <span className="text-[11px] text-gray-600">
               {isPublic ? "公開する（誰でも閲覧可）" : "非公開（URLを知っていても表示されない）"}
             </span>
           </label>
@@ -302,7 +303,7 @@ export default function ActPublicPageEditor({
           </div>
 
           <div className="text-[11px] text-gray-500">
-            ※ 公開ページは is_public=true のときだけ表示されます。offered は公開対象外。
+            ※ 公開ページは is_public=true のときだけ表示されます。
           </div>
         </div>
       )}
