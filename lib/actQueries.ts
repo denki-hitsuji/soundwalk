@@ -48,10 +48,8 @@ export async function getMyActs(): Promise<ActRow[]> {
   if (!user) throw new Error("ログインが必要です");
 
   const { data, error } = await supabase
-    .from("acts")
+    .from("v_my_acts")
     .select("*")
-    .eq("owner_profile_id", user.id)
-    .order("created_at", { ascending: true });
 
   if (error) throw error;
   return (data ?? []) as ActRow[];
@@ -70,7 +68,7 @@ export async function ensureMyDefaultAct(): Promise<ActRow> {
   const defaultName = "My Act"; // あとでユーザー名から決めてもいい
 
   const { data, error } = await supabase
-    .from("acts")
+    .from("v_my_acts")
     .insert({
       name: defaultName,
       act_type: "solo",
@@ -89,7 +87,7 @@ export async function getNextPerformance() {
   const today = toYmdLocal();
 
   const { data, error } = await supabase
-    .from("performances")
+    .from("v_my_performances")
     .select(`
       id,
       event_date,

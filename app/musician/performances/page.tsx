@@ -127,7 +127,7 @@ export default function PerformancesPage() {
       //    まず desired rows を作る → upsert → select して state に入れる
       {
         const desired = list
-          .filter((p) => p.event_date >= todayStr)
+          .filter((p) => p.event_date >= todayStr && p.act_id && p.status !== "cancelled")
           .flatMap((p) => {
             const eventDate = parseYmdLocal(p.event_date);
             return PREP_DEFS.map((def) => {

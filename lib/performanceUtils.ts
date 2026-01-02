@@ -110,7 +110,7 @@ export function normalizeAct(p: PerformanceWithActs): ActRow | null {
 export async function getPerformances(): Promise<{ data: PerformanceWithActs[]; error: any }> {
   // 1) ライブ一覧（acts も一緒）
   const { data, error } = await supabase
-    .from("musician_performances")
+    .from("v_my_performances")
     .select(
       `
         id,

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/dateUtils";
+import { getMyActs } from "@/lib/actQueries";
 
 type ActOption = {
   id: string;
@@ -49,22 +50,12 @@ export default function NewPerformanceClient() {
 
       setUserId(user.id);
 
-      const { data, error } = await supabase
-        .from("acts")
-        .select("id, name, act_type")
-        .eq("owner_profile_id", user.id)
-        .order("name", { ascending: true });
+      const data = await getMyActs();
 
-      if (error) {
-        console.error("load acts error", error);
-        setActs([]);
-      } else {
-        const list = (data ?? []) as ActOption[];
-        setActs(list);
-
-        // actId が空なら先頭を自動選択（クイックバー未使用時の体験UP）
-        if (!actId && list.length > 0) setActId(list[0].id);
-      }
+      const list = (data ?? []) as ActOption[];
+      setActs(list);
+      // actId が空なら先頭を自動選択（クイックバー未使用時の体験UP）
+      if (!actId && list.length > 0) setActId(list[0].id);
 
       setActsLoading(false);
     };
