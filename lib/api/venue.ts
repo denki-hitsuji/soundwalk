@@ -1,5 +1,5 @@
 // lib/api/venue.ts
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from "@/lib/supabase/client.legacy";
 
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 

@@ -1,5 +1,5 @@
 // app/events/[eventId]/page.tsx
-import { getPublicEventForBooking } from "@/lib/venueQueries";
+import { getPublicEventForBooking } from "@/lib/db/venues";
 import { BookingForm } from "./BookingForm";
 
 type Props = {

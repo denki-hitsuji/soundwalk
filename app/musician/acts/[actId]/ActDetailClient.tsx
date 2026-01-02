@@ -3,16 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
 
 // 既存で使ってるなら import して流用してください
 import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
-import { ActRow } from "@/lib/actQueries";
+import { ActRow } from "@/lib/db/acts";
 import { PerformanceRow } from "@/lib/performanceUtils";
-import { useCurrentAct } from "@/lib/useCurrentAct";
-import { notifyActsUpdated } from "@/lib/actEvents";
+import { notifyActsUpdated } from "@/lib/db/actEvents";
+import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
+import { supabase } from "@/lib/supabase/client.legacy";
 
 type SongRow = {
   id: string;

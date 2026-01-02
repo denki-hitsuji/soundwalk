@@ -1,5 +1,5 @@
 // app/musician/events/page.tsx
-import { getRecruitingEvents } from "@/lib/venueQueries";
+import { getRecruitingEvents } from "@/lib/db/venues";
 
 export default async function MusicianEventsPage() {
   const events = await getRecruitingEvents();

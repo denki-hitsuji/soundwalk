@@ -1,5 +1,5 @@
 // lib/performanceActions.ts
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client.legacy";;
 import type { PrepTaskRow } from "@/lib/performanceUtils";
 
 export async function updatePrepTaskDone(params: {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { ActRow } from "@/lib/actQueries";
+import { supabase } from "@/lib/supabase/client.legacy";;
+import { ActRow } from "@/lib/db/acts";
 
 type Props = {
   act: ActRow;

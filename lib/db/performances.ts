@@ -1,5 +1,5 @@
 // lib/performanceQueries.ts
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client.legacy";;
 import type {
   PerformanceWithActs,
   FlyerMap,
@@ -10,7 +10,7 @@ import type {
   FlyerRow,
 } from "@/lib/performanceUtils";
 import { PREP_DEFS } from "@/lib/performanceUtils";
-import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/dateUtils";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
 
 export async function getNextPerformance(todayStr?: string) {
   const t = todayStr ?? toYmdLocal();

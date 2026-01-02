@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/dateUtils";
+import { supabase } from "@/lib/supabase/client.legacy";;
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
 
 type ActOption = { id: string; name: string; act_type: string | null };
 

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useCurrentAct } from "@/lib/useCurrentAct";
-import { ACTS_UPDATED_EVENT } from "@/lib/actEvents";
-import { ActRow, getMyActs } from "@/lib/actQueries";
+import { supabase } from "@/lib/supabase/client.legacy";;
+import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
+import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
+import { ActRow, getMyActs } from "@/lib/db/acts";
 
 export function ActSwitcher() {
   const { currentAct, setCurrentAct } = useCurrentAct();

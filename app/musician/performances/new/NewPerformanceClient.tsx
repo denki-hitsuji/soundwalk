@@ -4,9 +4,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/dateUtils";
-import { getMyActs } from "@/lib/actQueries";
+import { supabase } from "@/lib/supabase/client.legacy";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
+import { getMyActs } from "@/lib/db/acts";
 
 type ActOption = {
   id: string;

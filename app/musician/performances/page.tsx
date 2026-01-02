@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client.legacy";
 import { PerformanceCard } from "@/components/performances/PerformanceCard";
 import {
   PREP_DEFS,
@@ -18,8 +18,8 @@ import {
   getPerformances,
 } from "@/lib/performanceUtils";
 
-import { updatePrepTaskDone } from "@/lib/performanceActions";
-import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays, fmtMMdd } from "@/lib/dateUtils";
+import { updatePrepTaskDone } from "@/lib/db/performanceWrites";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays, fmtMMdd } from "@/lib/utils/date";
 
 export default function PerformancesPage() {
   const [loading, setLoading] = useState(true);

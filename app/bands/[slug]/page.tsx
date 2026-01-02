@@ -1,6 +1,6 @@
 // app/bands/[slug]/page.tsx
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client.legacy";;
 
 export const revalidate = 300; // 5分
 

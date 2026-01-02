@@ -3,8 +3,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { ACTS_UPDATED_EVENT } from "@/lib/actEvents";
+import { supabase } from "@/lib/supabase/client.legacy";
+import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 
 type ActRow = {
   id: string;

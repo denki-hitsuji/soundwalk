@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addSong } from "@/lib/songQueries";
+import { addSong } from "@/lib/db/songs";
 
 export function QuickAddSong({
   actId,

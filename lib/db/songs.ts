@@ -1,5 +1,5 @@
 // lib/songQueries.ts
-import { supabase, getCurrentUser } from "@/lib/supabaseClient";
+import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
 
 export type ActOption = {
   id: string;

@@ -1,6 +1,5 @@
 // lib/api/musician.ts
-import { supabase } from '@/lib/supabaseClient';
-
+import { supabase } from "@/lib/supabase/client.legacy";
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 
 export type MusicianProfile = {

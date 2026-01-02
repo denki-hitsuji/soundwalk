@@ -1,8 +1,8 @@
 // lib/performanceUtils.ts
 
-import { ActRow } from "@/lib/db/acts";
+import { ActRow } from "@/lib/db/acts"
 import { diffDays } from "@/lib/utils/date";
-import { supabase } from "@/lib/supabase/client.legacy";
+import { supabase } from "@/lib/supabase/client.legacy";;
 
 export type PerformanceRow = {
   id: string;

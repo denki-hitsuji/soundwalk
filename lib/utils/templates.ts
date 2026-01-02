@@ -1,5 +1,5 @@
 // lib/templates.ts
-import { toYmdLocal } from "@/lib/dateUtils";
+import { toYmdLocal } from "@/lib/utils/date";
 
 export function makeSongMemoTemplate() {
   const today = toYmdLocal();

@@ -2,14 +2,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client.legacy";;
 import { PerformanceMemoEditor } from "@/components/performances/PerformanceMemoEditor";
 
 // ★追加：編集UI
 import { CoreInfoEditor } from "@/components/CoreInfoEditor";
 import { PersonalPerformanceCoreEditor } from "@/components/PersonalPerformanceCoreEditor";
 import { PerformanceRow } from "@/lib/performanceUtils";
-import { ActRow, AttachmentRow, DetailsRow, MessageRow } from "@/lib/actQueries";
+import { ActRow, AttachmentRow, DetailsRow, MessageRow } from "@/lib/db/acts";
 
 
 type VenueRow = { id: string; name: string };

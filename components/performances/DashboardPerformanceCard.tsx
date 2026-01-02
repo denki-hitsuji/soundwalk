@@ -2,7 +2,7 @@
 "use client";
 
 import { PerformanceCard } from "@/components/performances/PerformanceCard";
-import { toYmdLocal, parseYmdLocal, addDays, fmtMMdd } from "@/lib/dateUtils";
+import { toYmdLocal, parseYmdLocal, addDays, fmtMMdd } from "@/lib/utils/date";
 import {
   PREP_DEFS,
   normalizeAct,

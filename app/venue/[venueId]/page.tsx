@@ -1,5 +1,5 @@
 // app/venue/[venueId]/page.tsx
-import { getVenueEventsWithAcceptedCount } from "@/lib/venueQueries";
+import { getVenueEventsWithAcceptedCount } from "@/lib/db/venues";
 
 type Props = {
   params: { venueId: string };

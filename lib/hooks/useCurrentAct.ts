@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCurrentUser, supabase } from "@/lib/supabaseClient";
-import { ActRow } from "./actQueries";
+import { getCurrentUser, supabase } from "@/lib/supabase/client.legacy";;
+import { ActRow } from "@/lib/db/acts";
 
 type CurrentActContextValue = {
   currentAct: ActRow | null;

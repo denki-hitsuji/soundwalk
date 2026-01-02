@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCurrentAct } from "@/lib/useCurrentAct"; // ← あなたの実パスに合わせて
+import { useCurrentAct } from "@/lib/hooks/useCurrentAct"; // ← あなたの実パスに合わせて
 import { NextPerformanceSection } from "@/components/performances/NextPerformanceSection";
 import { SongSummaryCard } from "@/components/songs/SongSummaryCard";
 // import { QuickPerformanceBar } from "@/components/performances/QuickPerformanceBar"; // あるなら

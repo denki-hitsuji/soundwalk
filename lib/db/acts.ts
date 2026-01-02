@@ -1,7 +1,7 @@
 // lib/actQueries.ts
-import { supabase } from "@/lib/supabaseClient";
-import { getCurrentUser } from "@/lib/supabaseClient";
-import { toYmdLocal } from "./dateUtils";
+import { supabase } from "@/lib/supabase/client.legacy";;
+import { getCurrentUser } from "@/lib/supabase/client.legacy";;
+import { toYmdLocal } from "@/lib/utils/date";
 export type ActRow = {
   id: string;
   name: string;

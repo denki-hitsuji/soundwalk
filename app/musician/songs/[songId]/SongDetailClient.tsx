@@ -3,8 +3,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { makeSongMemoTemplate } from "@/lib/templates";
+import { supabase } from "@/lib/supabase/client.legacy";;
+import { makeSongMemoTemplate } from "@/lib/utils/templates";
 import SongMemoEditor from "@/components/songs/SongMemoEditor";
 import SongAssetsBox from "@/components/songs/SongAssetsBox";
 import { useRouter } from "next/navigation";

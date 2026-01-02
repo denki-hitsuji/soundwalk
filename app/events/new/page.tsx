@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase, getCurrentUser } from "@/lib/supabaseClient";
+import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
 import Link from "next/link";
 
 type VenueOption = {

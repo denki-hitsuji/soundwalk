@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import TemplateAssist from "@/components/forms/TemplateAssist";
-import { makeSongMemoTemplate } from "@/lib/templates";
+import { makeSongMemoTemplate } from "@/lib/utils/templates";
 
 type Props = {
   initialText: string | null;

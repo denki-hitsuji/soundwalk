@@ -2,17 +2,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client.legacy";;
 import { DashboardPerformanceCard } from "@/components/performances/DashboardPerformanceCard";
 import { type PrepMap } from "@/lib/performanceUtils";
-import { updatePrepTaskDone } from "@/lib/performanceActions";
+import { updatePrepTaskDone } from "@/lib/db/performanceWrites";
 import {
   getNextPerformance,
   getFlyerMapForPerformances,
   getDetailsMapForPerformances,
   ensureAndFetchPrepMap,
-} from "@/lib/performanceQueries";
-import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/dateUtils";
+} from "@/lib/db/performances";
+import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
 
 export function NextPerformanceSection() {
   const todayStr = useMemo(() => toYmdLocal(), []);

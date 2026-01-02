@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { toYmdLocal } from "@/lib/dateUtils";
+import { supabase } from "@/lib/supabase/client.legacy";;
+import { toYmdLocal } from "@/lib/utils/date";
 
 type Props = {
   performanceId: string;

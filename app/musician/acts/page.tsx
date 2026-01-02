@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import { useCurrentAct } from "@/lib/useCurrentAct";
-import { notifyActsUpdated } from "@/lib/actEvents";
-import { ActRow } from "@/lib/actQueries";
+import { supabase } from "@/lib/supabase/client.legacy";;
+import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
+import { notifyActsUpdated } from "@/lib/db/actEvents";
+import { ActRow } from "@/lib/db/acts";
 
 type MemberRow = {
   act_id: string;

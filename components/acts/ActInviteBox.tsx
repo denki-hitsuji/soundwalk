@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client.legacy";;
 
 export function ActInviteBox({ actId }: { actId: string }) {
   const [loading, setLoading] = useState(false);

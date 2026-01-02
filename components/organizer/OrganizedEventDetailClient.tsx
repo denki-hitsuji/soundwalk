@@ -4,10 +4,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase, getCurrentUser } from "@/lib/supabaseClient";
+import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
 import { PerformanceCard } from "../performances/PerformanceCard";
-import { ActRow } from "@/lib/actQueries";
-import { parseYmdLocal, addDays, fmtMMdd, toYmdLocal } from "@/lib/dateUtils";
+import { ActRow } from "@/lib/db/acts";
+import { parseYmdLocal, addDays, fmtMMdd, toYmdLocal } from "@/lib/utils/date";
 import {
   PREP_DEFS,
   normalizeAct,

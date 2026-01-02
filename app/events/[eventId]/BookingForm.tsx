@@ -3,7 +3,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase, getCurrentUser } from "@/lib/supabaseClient";
+import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
 
 type Props = {
   eventId: string;

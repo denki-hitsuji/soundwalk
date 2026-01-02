@@ -1,7 +1,7 @@
 // app/events/[eventId]/actions.ts
 "use server";
 
-import { supabase, getCurrentUser } from "@/lib/supabaseClient";
+import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
 
 export async function submitBooking(formData: FormData, eventId: string) {
   const user = await getCurrentUser();

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import { notifyActsUpdated } from "@/lib/actEvents";
+import { supabase } from "@/lib/supabase/client.legacy";;
+import { notifyActsUpdated } from "@/lib/db/actEvents";
 
 export default function ActNewClient() {
   const router = useRouter();

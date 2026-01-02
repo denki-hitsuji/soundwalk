@@ -9,7 +9,7 @@ import {
   validateSongAssetFile,
   type SongAssetRow,
   SONG_ASSET_MAX_BYTES,
-} from "@/lib/songAssets";
+} from "@/lib/db/songAssets";
 
 function fmtBytes(n: number) {
   if (n < 1024) return `${n}B`;
