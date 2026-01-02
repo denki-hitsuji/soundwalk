@@ -9,6 +9,7 @@ import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import { notifyActsUpdated } from "@/lib/actEvents";
 import { useCurrentAct } from "@/lib/useCurrentAct";
+import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
 
 type MemberRow = {
   act_id: string;
@@ -356,6 +357,12 @@ export default function ActDetailClient({ actId }: { actId: string }) {
       <section className="rounded border bg-white p-4 space-y-2 max-w-xl">
         <h2 className="text-sm font-semibold text-gray-800">プロフィール</h2>
         <ActProfileEditor act={act} onUpdated={(patch) => applyActPatch(patch)} />
+      </section>
+
+      {/* 公開ページ */}
+      <section className="rounded border bg-white p-4 space-y-2 max-w-xl">
+        <h2 className="text-sm font-semibold text-gray-800">公開ページ</h2>
+        <ActPublicPageEditor actId={actId} actName={act.name} />
       </section>
 
       {/* 招待 */}
