@@ -63,7 +63,6 @@ export default function ActDetailClient({ actId }: { actId: string }) {
   const isOwner = useMemo(() => !!(act && userId && act.owner_profile_id === userId), [act, userId]);
   const isAdminMember = useMemo(() => member?.is_admin === true, [member]);
   const canInvite = useMemo(() => isOwner || isAdminMember, [isOwner, isAdminMember]);
-  const canEditName = useMemo(() => isOwner || isAdminMember, [isOwner, isAdminMember]);
   const canDelete = useMemo(() => isOwner, [isOwner]);
 function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{children}</span>;
@@ -230,6 +229,22 @@ function Badge({ children }: { children: React.ReactNode }) {
           if (error) throw error;
           setSongs((data ?? []) as SongRow[]);
         }
+
+      // membership (owner でも取れるが、owner の場合は判定に使わないのでOK)
+      const { data: m, error: mErr } = await supabase
+        .from("act_members")
+        .select("act_id, profile_id, is_admin, status")
+        .eq("act_id", actId)
+        .eq("profile_id", uid)
+        .maybeSingle();
+
+      if (mErr) {
+        // member が無いケースもあるので fatal にはしない
+        console.warn("load act_members error", mErr);
+        setMember(null);
+      } else {
+        setMember((m as any) ?? null);
+      }
       } catch (e) {
         console.error("act detail load error", e);
         setAct(null);
