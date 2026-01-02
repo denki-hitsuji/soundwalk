@@ -147,7 +147,6 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
 
   return (
     <div className="mt-3 rounded-lg border bg-gray-50 p-3 space-y-3">
-      <div className="text-xs font-semibold text-gray-700">プロフィール</div>
 
       {/* 写真 */}
       <div className="flex items-start gap-3">
