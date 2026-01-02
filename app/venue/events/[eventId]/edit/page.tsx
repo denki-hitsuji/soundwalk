@@ -167,7 +167,7 @@ export default function EventEditPage() {
   }
 
   return (
-    <main className="p-4 space-y-4 max-w-xl">
+    <main className="p-4 space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold mb-1">イベントを編集</h1>

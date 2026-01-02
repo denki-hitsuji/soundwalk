@@ -41,7 +41,7 @@ export default function NewEventPage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto px-6 py-8">
+    <div className="mx-auto px-6 py-8">
       <h1 className="text-2xl font-bold mb-4">イベント作成</h1>
 
       {error && (

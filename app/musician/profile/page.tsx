@@ -149,7 +149,7 @@ export default function MusicianProfilePage() {
   }
 
   return (
-    <main className="p-4 space-y-4 max-w-xl">
+    <main className="p-4 space-y-4">
       <h1 className="text-xl font-bold mb-2">プロフィール（活動名義）</h1>
       <p className="text-sm text-gray-600">
         店舗側から見えるあなたの名義や紹介文をここで編集できます。
