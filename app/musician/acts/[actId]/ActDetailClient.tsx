@@ -65,6 +65,21 @@ export default function ActDetailClient({ actId }: { actId: string }) {
   const canInvite = useMemo(() => isOwner || isAdminMember, [isOwner, isAdminMember]);
   const canEditName = useMemo(() => isOwner || isAdminMember, [isOwner, isAdminMember]);
   const canDelete = useMemo(() => isOwner, [isOwner]);
+function Badge({ children }: { children: React.ReactNode }) {
+  return <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{children}</span>;
+}
+  const roleLabel = useMemo(() => {
+    if (isOwner) return <Badge>owner</Badge>;
+    if (member?.status === "active") {
+      return (
+        <div className="flex items-center gap-2">
+          <Badge>member</Badge>
+          {isAdminMember && <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-800">admin</span>}
+        </div>
+      );
+    }
+    return <Badge>閲覧</Badge>;
+  }, [isOwner, isAdminMember, member?.status]);
   const goEdit = () => {
     const params = new URLSearchParams(sp.toString());
     params.set("mode", "edit");
@@ -119,9 +134,10 @@ export default function ActDetailClient({ actId }: { actId: string }) {
       setLoading(true);
       try {
         // user
-        const { data: u } = await supabase.auth.getUser();
+        const { data: u, error: uErr } = await supabase.auth.getUser();
+        if (uErr) throw uErr;
         const uid = u.user?.id ?? null;
-
+        setUserId(uid);
         // act
         {
           const { data, error } = await supabase
@@ -339,15 +355,7 @@ export default function ActDetailClient({ actId }: { actId: string }) {
   // ==============
   const EditPanel = (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-white p-4 text-sm text-gray-700">
-        ここに「編集UI（プロフィール・メンバー・招待・削除）」を集約します。
-        <div className="mt-2 text-xs text-gray-500">
-          既存の ActProfileEditor / 招待 / メンバー管理部品があるなら、このブロック内に移植してください。
-        </div>
-      </div>
-
       {/* ↓ 例：既存部品をここに移す（あなたの現行実装に合わせて差し替え） */}
-      
 
       {/* プロフィール */}
       <section className="rounded border bg-white p-4 space-y-2">
@@ -388,11 +396,6 @@ export default function ActDetailClient({ actId }: { actId: string }) {
           </>
         )}
       </section>
-     
-
-      <div className="rounded-lg border bg-white p-4 text-sm text-gray-700">
-        名義の削除もここに置くのが安全です（誤操作防止）。
-      </div>
     </div>
   );
 
@@ -401,8 +404,9 @@ export default function ActDetailClient({ actId }: { actId: string }) {
       {/* ヘッダー：ページタイトルはバンド名 */}
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
+          <div className="flex gap-3 items-center">
           <h1 className="text-xl font-bold truncate">{act.name}</h1>
-
+          {roleLabel}</div>
           {/* プロフィールは畳む方針：リンク等だけ軽く */}
           <div className="mt-1 text-xs text-gray-600 flex flex-wrap items-center gap-2">
             {act.profile_link_url ? (
