@@ -8,13 +8,13 @@ import { MobileMenu } from "./MobileMenu";
 import { getCurrentUser, signOut } from "@/lib/auth/session";
 
 // ===== nav 定義 =====
-type NavItem = {
+export type NavItem = {
   label: string;
   href: string;
   requiresAuth?: boolean;
 };
 
-const NAV_ITEMS: NavItem[] = [
+export const NAV_ITEMS: NavItem[] = [
   { label: "トップ", href: "/musician" , requiresAuth: true },         // ダッシュボード
   { label: "演奏できる曲", href: "/musician/songs", requiresAuth: true },
   { label: "ライブ", href: "/musician/performances", requiresAuth: true },
@@ -22,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "企画管理", href: "/organizer", requiresAuth: true },
   { label: "会場管理", href: "/venue", requiresAuth: true },           // 将来ここを統合するなら置換
   { label: "マップ", href: "/map", requiresAuth: false },
+  { label: "プロフィール", href: "/musician/profile", requiresAuth: true },
 ];
 
 function classNames(...xs: Array<string | false | null | undefined>) {

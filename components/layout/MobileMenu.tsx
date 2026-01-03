@@ -4,22 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth/session";
+import { NAV_ITEMS } from "./AppShell";
 
 type NavItem = {
   label: string;
   href: string;
   requiresAuth?: boolean;
 };
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "トップ", href: "/musician", requiresAuth: true },
-  { label: "演奏できる曲", href: "/musician/songs", requiresAuth: true },
-  { label: "ライブ", href: "/musician/performances", requiresAuth: true },
-  { label: "出演名義（アクト）", href: "/musician/acts" },
-  { label: "企画管理", href: "/organizer", requiresAuth: true },
-  { label: "会場管理", href: "/venue", requiresAuth: true },
-  { label: "マップ", href: "/map" },
-];
 
 export function MobileMenu({ userId }: { userId: string | null }) {
   const [open, setOpen] = useState(false);
