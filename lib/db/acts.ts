@@ -230,3 +230,11 @@ export async function createActInvite(params: {
   return data;
   
 }
+export async function deleteActById(actId: string) {
+  const { error } = await supabase
+    .from("acts")
+    .delete()
+    .eq("id", actId);
+
+  if (error) throw error;
+}

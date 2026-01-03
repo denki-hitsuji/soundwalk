@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client.legacy";
 import { getEventById, updateEvent } from "@/lib/api/events";
 
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";

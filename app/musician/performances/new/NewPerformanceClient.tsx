@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client.legacy";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
 import { getMyActs } from "@/lib/db/acts";
+import { getCurrentUser } from "@/lib/auth/session";
 
 type ActOption = {
   id: string;
@@ -34,20 +35,8 @@ export default function NewPerformanceClient() {
   useEffect(() => {
     const load = async () => {
       setActsLoading(true);
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.error("getUser error or no user", userError);
-        setUserId(null);
-        setActs([]);
-        setActsLoading(false);
-        return;
-      }
-
+      const user = await getCurrentUser();
+      if (!user) return;
       setUserId(user.id);
 
       const data = await getMyActs();

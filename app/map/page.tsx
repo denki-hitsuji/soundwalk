@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client.legacy";import { getAllVenues, Venue } from "@/lib/db/venues";
+;
 
 // react-leaflet は SSR 不可なので dynamic import
 const MapContainer = dynamic(
@@ -40,15 +41,6 @@ if (typeof window !== "undefined") {
   });
 }
 
-type Venue = {
-  id: string;
-  name: string;
-  latitude: number | null;
-  longitude: number | null;
-  city: string | null;
-  prefecture: string | null;
-};
-
 export default function MapPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,16 +55,9 @@ export default function MapPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("venues")
-        .select("id, name, latitude, longitude, city, prefecture");
+      const venues = await getAllVenues();
+      setVenues(venues);
 
-      if (error) {
-        console.error(error);
-        setVenues([]);
-      } else {
-        setVenues((data ?? []) as Venue[]);
-      }
       setLoading(false);
     };
 

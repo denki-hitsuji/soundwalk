@@ -2,6 +2,14 @@
 import { supabase } from "@/lib/auth/session";;
 
 // ===== 型定義 =====
+export type Venue = {
+  id: string;
+  name: string;
+  latitude: number | null;
+  longitude: number | null;
+  city: string | null;
+  prefecture: string | null;
+};
 
 export type Act = {
   id: string;
@@ -48,6 +56,26 @@ export type VenueBooking = {
 // ==========================================================
 //   venueId → Event + acceptedCount
 // ==========================================================
+export async function getVenueById(venueId: string): Promise<Venue | null> {
+  const { data, error } = await supabase
+    .from("venues")
+    .select("*")
+    .eq("id", venueId)
+    .single();
+
+  if (error) throw error;
+  return (data ?? null) as Venue | null;
+} 
+
+export async function getAllVenues(): Promise<Venue[]> {
+  const { data, error } = await supabase
+    .from("venues")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as Venue[];
+}
 
 export async function getVenueEventsWithAcceptedCount(venueId: string) {
   // 1. 会場のイベント取得

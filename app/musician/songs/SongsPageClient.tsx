@@ -3,10 +3,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { ActRow, getMyActs, getMyMemberActs } from "@/lib/db/acts";
 import { addSong, getSongsByActIds, SongRow } from "@/lib/db/songs";
+import { getCurrentUser } from "@/lib/auth/session";
 
 type MemberRow = {
   act_id: string;
@@ -59,8 +59,8 @@ export default function SongsPageClient() {
   const loadAll = async () => {
     setLoading(true);
 
-    const { data: u } = await supabase.auth.getUser();
-    const uid = u.user?.id ?? null;
+    const user = await getCurrentUser();
+    const uid = user?.id ?? null;
     setUserId(uid);
 
     if (!uid) {

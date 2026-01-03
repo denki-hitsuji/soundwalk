@@ -8,11 +8,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
-import { ActRow } from "@/lib/db/acts";
+import { ActRow, deleteActById, getActById, getMyMemberActs } from "@/lib/db/acts";
 import { PerformanceRow } from "@/lib/performanceUtils";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
-import { supabase } from "@/lib/supabase/client.legacy";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getMyUpcomingPerformances } from "@/lib/db/performances";
+import { getEventById } from "@/lib/api/events";
+import { getMySongs } from "@/lib/db/songs";
 
 type SongRow = {
   id: string;
@@ -113,8 +116,7 @@ function Badge({ children }: { children: React.ReactNode }) {
     if (!ok) return;
 
     try {
-      const { error } = await supabase.from("acts").delete().eq("id", act.id);
-      if (error) throw error;
+      await deleteActById(act.id);
 
       // currentAct なら解除
       if (currentAct?.id === act.id) setCurrentAct(null);
@@ -133,23 +135,17 @@ function Badge({ children }: { children: React.ReactNode }) {
       setLoading(true);
       try {
         // user
-        const { data: u, error: uErr } = await supabase.auth.getUser();
-        if (uErr) throw uErr;
-        const uid = u.user?.id ?? null;
+        const user = await getCurrentUser();
+        if (!user) throw new Error("ログイン情報の取得に失敗しました。");
+        const uid = user?.id ?? null;
         setUserId(uid);
         // act
         {
-          const { data, error } = await supabase
-            .from("acts")
-            .select("id, name, act_type, owner_profile_id, description, photo_url, profile_link_url")
-            .eq("id", actId)
-            .maybeSingle();
-
-          if (error) throw error;
-          setAct((data as ActRow) ?? null);
+          const act = await getActById(actId);
+          setAct(act);
 
           // 編集権限：とりあえず owner のみ（あなたの is_act_admin があるならそれも足せる）
-          if (uid && data?.owner_profile_id === uid) setCanEdit(true);
+          if (uid && act?.owner_profile_id === uid) setCanEdit(true);
           else setCanEdit(false);
         }
 
@@ -159,20 +155,9 @@ function Badge({ children }: { children: React.ReactNode }) {
           // ここでは最小で「event_titleはnullでも可」にしておく
           const today = new Date();
           const todayYmd = today.toISOString().slice(0, 10);
+          const performances = await getMyUpcomingPerformances(todayYmd);
 
-          const { data, error } = await supabase
-            .from("musician_performances")
-            .select("id, event_date, venue_name, status, event_id, open_time, start_time")
-            .eq("act_id", actId)
-            .gte("event_date", todayYmd)
-            .in("status", ["offered", "pending_reconfirm", "confirmed"])
-            // まず日付昇順で候補を取る
-            .order("event_date", { ascending: true })
-            .limit(10);
-
-          if (error) throw error;
-
-          const list = (data ?? []) as any[];
+          const list = (performances ?? []) as any[];
           // ランク優先（offeredを一番上に出す）
           list.sort((a, b) => {
             const r = rank(a.status) - rank(b.status);
@@ -185,12 +170,8 @@ function Badge({ children }: { children: React.ReactNode }) {
           // event_title を表示したいなら events から引く（1件だけなので追加クエリでOK）
           let eventTitle: string | null = null;
           if (top?.event_id) {
-            const { data: e } = await supabase
-              .from("events")
-              .select("title")
-              .eq("id", top.event_id)
-              .maybeSingle();
-            eventTitle = (e?.title as string | null) ?? null;
+            const ev = await getEventById(top.event_id);
+            eventTitle = ev?.title ?? null;
           }
 
           setNextPerformance(
@@ -218,32 +199,18 @@ function Badge({ children }: { children: React.ReactNode }) {
 
         // songs (max 20) : act_songs の構造に合わせて調整
         {
-          // 例：act_songs に title がある前提
-          const { data, error } = await supabase
-            .from("act_songs")
-            .select("id, title")
-            .eq("act_id", actId)
-            .order("title", { ascending: true })
-            .limit(20);
-
-          if (error) throw error;
-          setSongs((data ?? []) as SongRow[]);
+          const songs = await getMySongs(actId);
+          setSongs((songs ?? []) as SongRow[]);
         }
 
       // membership (owner でも取れるが、owner の場合は判定に使わないのでOK)
-      const { data: m, error: mErr } = await supabase
-        .from("act_members")
-        .select("act_id, profile_id, is_admin, status")
-        .eq("act_id", actId)
-        .eq("profile_id", uid)
-        .maybeSingle();
-
-      if (mErr) {
+      const members = await getMyMemberActs();
+      if (!members) {
         // member が無いケースもあるので fatal にはしない
-        console.warn("load act_members error", mErr);
+        console.warn("load act_members error");
         setMember(null);
       } else {
-        setMember((m as any) ?? null);
+        setMember((members?.[0] as any) ?? null);
       }
       } catch (e) {
         console.error("act detail load error", e);

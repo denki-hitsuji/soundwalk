@@ -3,20 +3,23 @@ import { supabase } from "@/lib/auth/session";
 
 export type EventStatus = 'open' | 'pending' | 'draft' | 'matched' | 'cancelled';
 
-export type Event = {
+export type EventRow = {
   id: string;
+  organizer_profile_id: string;
   venue_id: string;
   title: string;
-  event_date: string;
-  start_time: string;
-  end_time: string;
+  event_date: string; // YYYY-MM-DD
+  open_time: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  max_artists: number | null;
+  charge: number | null;
+  conditions: string | null;
   status: EventStatus;
   created_at: string;
-  max_artists: number;  
-  organizer_profile_id: string;
 };
 
-export type EventWithVenue = Event & {
+export type EventWithVenue = EventRow & {
   venues: {
     id: string;
     name: string;
@@ -45,7 +48,7 @@ async function getCurrentUser() {
  * 店舗側：自分のイベントを 1件取得
  * EventOffersPage (/venue/events/[eventId]) から使用
  */
-export async function getEventById(eventId: string): Promise<Event | null> {
+export async function getEventById(eventId: string): Promise<EventRow | null> {
   const { data, error } = await supabase
         .from('events')
         .select(`
@@ -68,18 +71,21 @@ export async function getEventById(eventId: string): Promise<Event | null> {
     // 行が無い場合は null を返す（呼び出し側で「イベントが見つかりません」と表示）
     if (!data) return null;
 
-    return {
-        id: data.id,
-        venue_id: data.venue_id,
-        title: data.title,
-        event_date: data.event_date,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        status: data.status as EventStatus,
-        created_at: data.created_at,
-        max_artists: data.max_artists ?? 1,
-        organizer_profile_id: data.organizer_profile_id
-    };
+  return {
+    id: data.id,
+    venue_id: data.venue_id,
+    title: data.title,
+    event_date: data.event_date,
+    start_time: data.start_time,
+    open_time: null,
+    charge: null,
+    conditions: null,
+    end_time: data.end_time,
+    status: data.status as EventStatus,
+    created_at: data.created_at,
+    max_artists: data.max_artists ?? 1,
+    organizer_profile_id: data.organizer_profile_id
+  };
 }
 
 
@@ -87,12 +93,12 @@ export async function getEventById(eventId: string): Promise<Event | null> {
  * ミュージシャン側：応募可能なイベント一覧（会場情報付き）
  */
 export async function getOpenEventsForMusician(): Promise<EventWithVenue[]> {
-    const user = await getCurrentUser();
-    // user は今のところ使わないが、将来的に「自分のエリアだけ」とかに使える
+  const user = await getCurrentUser();
+  // user は今のところ使わないが、将来的に「自分のエリアだけ」とかに使える
 
-    const { data, error } = await supabase
-        .from('events')
-        .select(
+  const { data, error } = await supabase
+    .from('events')
+    .select(
             `
       id,
       venue_id,
@@ -102,6 +108,9 @@ export async function getOpenEventsForMusician(): Promise<EventWithVenue[]> {
       end_time,
       status,
       created_at,
+      open_time,
+      charge,
+      conditions, 
       max_artists,
       organizer_profile_id,
       venues (
@@ -136,6 +145,9 @@ export async function getOpenEventsForMusician(): Promise<EventWithVenue[]> {
             status: row.status as EventStatus,
             created_at: row.created_at,
             max_artists: row.max_artists,
+            open_time: row.open_time,
+            charge: row.charge,
+            conditions: row.conditions,
             venues: venueRaw
                 ? {
                     id: venueRaw.id,
@@ -186,9 +198,9 @@ export async function createEvent(input: {
 export async function updateEvent(eventId: string, input: {
   title: string;
   event_date: string;
-  start_time: string;
-  end_time: string;
-  max_artists: number;
+  start_time: string | null;
+  end_time: string | null;
+  max_artists: number | null;
 }): Promise<void> {
   const user = await getCurrentUser();
 

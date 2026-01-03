@@ -11,9 +11,43 @@ import type {
 } from "@/lib/performanceUtils";
 import { PREP_DEFS } from "@/lib/performanceUtils";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
+export async function getMyUpcomingPerformances(todayStr?: string) {
+  const t = todayStr ?? toYmdLocal();
+  const myActs = await supabase.rpc("get_my_act_ids").then(({ data, error }) => {
+    if (error) throw error;
+    return data as string[];
+  });
+  const { data, error } = await supabase
+    .from("musician_performances")
+    .select(
+      `
+      id,
+      event_date,
+      venue_name,
+      memo,
+      act_id,
+      status,
+      status_reason,
+      status_changed_at,
+      acts:acts ( id, name, act_type )
+    `
+    )
+    .in("act_id", myActs)
+    .gte("event_date", t)
+    .neq("status", "canceled")   
+    .order("event_date", { ascending: true })
+    .limit(1);
+
+  if (error) throw error;
+  return ((data?.[0] ?? null) as unknown as PerformanceWithActs | null);
+}
 
 export async function getNextPerformance(todayStr?: string) {
   const t = todayStr ?? toYmdLocal();
+  const myActs = await supabase.rpc("get_my_act_ids").then(({ data, error }) => {
+    if (error) throw error;
+    return data as string[];
+  });
 
   const { data, error } = await supabase
     .from("musician_performances")
@@ -30,6 +64,7 @@ export async function getNextPerformance(todayStr?: string) {
       acts:acts ( id, name, act_type )
     `
     )
+    .in("act_id", myActs)
     .gte("event_date", t)
     .neq("status", "canceled")   
     .order("event_date", { ascending: true })
@@ -122,4 +157,43 @@ export async function ensureAndFetchPrepMap(params: {
     pm[t.performance_id][t.task_key] = t;
   }
   return pm;
+}
+
+export async function upsertPerformance(params: {
+  id: string | null;
+  profile_id: string;
+  event_date: string;
+  venue_name: string | null;
+  memo: string | null;
+  act_id: string | null;
+}): Promise<string> {
+  const { id, profile_id, event_date, venue_name, memo, act_id } = params;
+
+  const payload = {
+    event_date,
+    venue_name: venue_name?.trim() ? venue_name.trim() : null,
+    memo: memo?.trim() ? memo.trim() : null,
+    act_id,
+    updated_at: new Date().toISOString(),
+  };
+
+  let perfId = id;
+  if (perfId) {
+    const { error } = await supabase
+      .from("musician_performances")
+      .update(payload)
+      .eq("id", perfId);
+
+    if (error) throw error;
+  } else {
+    const { data, error } = await supabase
+      .from("musician_performances")     
+      .insert(payload)
+      .select("id");
+
+    if (error) throw error;
+    perfId = data?.[0]?.id;
+  }
+
+  return perfId ?? "";
 }

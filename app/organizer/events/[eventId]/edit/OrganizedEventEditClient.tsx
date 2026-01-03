@@ -3,26 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { EventRow, getEventById, updateEvent, updateEventStatus } from "@/lib/api/events";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAllVenues, Venue } from "@/lib/db/venues";
 
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
-
-type VenueRow = { id: string; name: string };
-
-type EventRow = {
-  id: string;
-  organizer_profile_id: string;
-  venue_id: string;
-  title: string;
-  event_date: string; // YYYY-MM-DD
-  open_time: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  max_artists: number | null;
-  charge: number | null;
-  conditions: string | null;
-  status: EventStatus;
-};
 
 export default function OrganizedEventEditClient({ eventId }: { eventId: string }) {
   const router = useRouter();
@@ -34,7 +19,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
   const [error, setError] = useState<string | null>(null);
 
   const [event, setEvent] = useState<EventRow | null>(null);
-  const [venues, setVenues] = useState<VenueRow[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
 
   // form state
   const [title, setTitle] = useState("");
@@ -53,36 +38,24 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
 
     try {
       // auth
-      const { data: auth, error: authErr } = await supabase.auth.getUser();
-      if (authErr || !auth.user) throw new Error("ログインが必要です。");
+      const auth = await getCurrentUser();  
+      if (!auth) throw new Error("ログインしてください。");
 
       // event
-      const { data: e, error: eErr } = await supabase
-        .from("events")
-        .select(
-          "id, organizer_profile_id, venue_id, title, event_date, open_time, start_time, end_time, max_artists, charge, conditions, status"
-        )
-        .eq("id", eventId)
-        .single();
-
-      if (eErr) throw new Error(eErr.message);
-      const row = e as EventRow;
+      const event = await getEventById(eventId);
+      if (!event) throw new Error("イベントが見つかりませんでした。");
+      const row = event as EventRow;
 
       // organizer check
-      if (row.organizer_profile_id !== auth.user.id) {
+      if (row.organizer_profile_id !== auth.id) {
         throw new Error("このイベントはあなたの企画ではありません。");
       }
 
       setEvent(row);
 
       // venues（選択肢）
-      const { data: vs, error: vErr } = await supabase
-        .from("venues")
-        .select("id, name")
-        .order("name", { ascending: true });
-
-      if (vErr) throw new Error(vErr.message);
-      setVenues((vs ?? []) as VenueRow[]);
+      const venues = await getAllVenues();
+      setVenues(venues as Venue[]);
 
       // init form
       setTitle(row.title ?? "");
@@ -139,12 +112,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
         conditions: conditions.trim() ? conditions.trim() : null,
       };
 
-      const { error: upErr } = await supabase
-        .from("events")
-        .update(payload)
-        .eq("id", eventId);
-
-      if (upErr) throw new Error(upErr.message);
+      await updateEvent(eventId, { ...event, ...payload });
 
       alert("保存しました。");
       router.push(`/organizer/events/${eventId}`);
@@ -167,13 +135,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
     setError(null);
 
     try {
-      const { error: upErr } = await supabase
-        .from("events")
-        .update({ status: "cancelled" })
-        .eq("id", eventId);
-
-      if (upErr) throw new Error(upErr.message);
-
+      await updateEventStatus({ eventId, status: "cancelled" });
       alert("中止にしました。");
       router.push(`/organizer/events/${eventId}`);
       router.refresh();
