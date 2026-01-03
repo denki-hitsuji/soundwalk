@@ -1,5 +1,5 @@
 // lib/api/events.ts
-import { supabase } from "@/lib/supabase/client.legacy";
+import { supabase } from "@/lib/auth/session";
 
 export type EventStatus = 'open' | 'pending' | 'draft' | 'matched' | 'cancelled';
 

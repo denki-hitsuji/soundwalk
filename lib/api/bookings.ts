@@ -1,5 +1,5 @@
 // lib/api/bookings.ts
-import { supabase } from "@/lib/supabase/client.legacy";
+import { supabase } from "@/lib/auth/session";
 
 export type BookingStatus = 'upcoming' | 'accepted' | 'completed' | 'cancelled';
 

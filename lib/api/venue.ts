@@ -1,5 +1,6 @@
 // lib/api/venue.ts
-import { supabase } from "@/lib/supabase/client.legacy";
+import { supabase } from "@/lib/auth/session";
+import { getCurrentUser } from "../auth/session";
 
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 
@@ -14,24 +15,11 @@ export type VenueProfile = {
 };
 
 /**
- * 現在ログイン中ユーザーを取得
- */
-async function getCurrentUser() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) throw new Error('Not logged in');
-  return user;
-}
-
-/**
  * 自分の店舗（venues）プロフィールを取得
  */
 export async function getMyVenueProfile(): Promise<VenueProfile | null> {
   const user = await getCurrentUser();
+  if (!user) throw new Error("ログインが必要です");
 
   const { data, error } = await supabase
     .from('venues')
@@ -60,6 +48,7 @@ export async function upsertMyVenueProfile(input: {
   photoUrl: string;
 }): Promise<VenueProfile> {
   const user = await getCurrentUser();
+  if (!user) throw new Error("ログインが必要です");
 
   const payload = {
     id: user.id,

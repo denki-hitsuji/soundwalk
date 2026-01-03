@@ -1,5 +1,5 @@
 // lib/venueQueries.ts
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/auth/session";;
 
 // ===== 型定義 =====
 

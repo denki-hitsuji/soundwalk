@@ -1,5 +1,7 @@
 // lib/songQueries.ts
-import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
+
+import { getCurrentUser, supabase } from "../auth/session";
+import { getMyActs } from "./acts";
 
 export type ActOption = {
   id: string;
@@ -11,24 +13,10 @@ export async function getMyActsForSelect() {
   const user = await getCurrentUser();
   if (!user) return []; // ★ここが重要（uuid "" を投げない）
 
-  const { data, error } = await supabase
-    .from("act_members")
-    .select(
-      `
-      act:acts (
-        id,
-        name,
-        act_type
-      )
-    `
-    )
-    .eq("profile_id", user.id)
-    .eq("status", "active");
-
-  if (error) throw error;
+  const members = await getMyActs();
 
   const acts: ActOption[] = [];
-  for (const row of data ?? []) {
+  for (const row of members ?? []) {
     const a = (row as any).act;
     const act = Array.isArray(a) ? a[0] : a;
     if (act?.id && act?.name) acts.push(act);

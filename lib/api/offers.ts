@@ -1,5 +1,6 @@
 // lib/api/offers.ts
 import { supabase } from "@/lib/supabase/client.legacy"
+import { getCurrentUser } from "@/lib/auth/session";
 
 export type Offer = {
   id: string;
@@ -23,17 +24,6 @@ export type OfferWithMusician = Offer & {
     } | null;
   } | null;
 };
-
-async function getCurrentUser() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) throw new Error('Not logged in');
-  return user;
-}
 
 // イベントごとの応募一覧（店舗側で使用）
 export async function getOffersForEvent(
@@ -116,6 +106,9 @@ export type OfferStatus = 'pending' | 'accepted' | 'declined';
  */
 export async function applyToEvent(eventId: string, message?: string): Promise<Offer> {
   const user = await getCurrentUser();
+  if(!user) {
+    throw new Error('ログインが必要です');
+  }
 
   const payload = {
     event_id: eventId,
@@ -141,6 +134,9 @@ export async function applyToEvent(eventId: string, message?: string): Promise<O
  */
 export async function getMyOffers(): Promise<Offer[]> {
   const user = await getCurrentUser();
+  if(!user) {
+    throw new Error('ログインが必要です');
+  }
 
   const { data, error } = await supabase
     .from('offers')

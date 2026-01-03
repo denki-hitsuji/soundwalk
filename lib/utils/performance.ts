@@ -2,7 +2,7 @@
 
 import { ActRow } from "@/lib/db/acts"
 import { diffDays } from "@/lib/utils/date";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/auth/session";;
 
 export type PerformanceRow = {
   id: string;

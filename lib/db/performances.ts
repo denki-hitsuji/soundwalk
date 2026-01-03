@@ -1,5 +1,5 @@
 // lib/performanceQueries.ts
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/auth/session";
 import type {
   PerformanceWithActs,
   FlyerMap,

@@ -1,5 +1,5 @@
 // lib/actQueries.ts
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/auth/session";;
 import { getCurrentUser } from "@/lib/supabase/client.legacy";;
 import { toYmdLocal } from "@/lib/utils/date";
 export type ActRow = {
@@ -42,7 +42,7 @@ export type MessageRow = {
     created_at: string;
 };
 
-// このユーザーの acts 一覧
+// このユーザーの acts 一覧(オーナー・メンバー両方)
 export async function getMyActs(): Promise<ActRow[]> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
@@ -55,13 +55,27 @@ export async function getMyActs(): Promise<ActRow[]> {
   return (data ?? []) as ActRow[];
 }
 
+// このユーザーの acts 一覧(オーナーのみ)
+export async function getMyOwnerActs(): Promise<ActRow[]> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("ログインが必要です");
+
+  const { data, error } = await supabase
+    .from("v_my_acts")
+    .select("*")
+    .eq("owner_profile_id", user.id);
+
+  if (error) throw error;
+  return (data ?? []) as ActRow[];
+}
+
 // デフォルトActを保証：なければ作る
 export async function ensureMyDefaultAct(): Promise<ActRow> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
   // 既にあるか確認
-  const acts = await getMyActs();
+  const acts = (await getMyActs()).filter((a) => a.owner_profile_id === user.id);
   if (acts.length > 0) return acts[0];
 
   // なければ作る
@@ -83,6 +97,15 @@ export async function ensureMyDefaultAct(): Promise<ActRow> {
   return data as ActRow;
 }
 
+export async function updateAct(act : Partial<ActRow> & { id: string }) {
+  const { id, ...patch } = act;
+  const { error } = await supabase
+    .from("acts")
+    .update(patch)
+    .eq("id", id);
+
+  if (error) throw error;
+}
 export async function getNextPerformance() {
   const today = toYmdLocal();
 
