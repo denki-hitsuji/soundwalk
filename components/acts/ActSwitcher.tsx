@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { ActRow, getMyActs } from "@/lib/db/acts";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export function ActSwitcher() {
   const { currentAct, setCurrentAct } = useCurrentAct();
@@ -14,16 +14,13 @@ export function ActSwitcher() {
   const load = useCallback(async () => {
     setLoading(true);
 
-    const { data: u } = await supabase.auth.getUser();
-    console.log("ActSwitcher: load current user", u);
-    const uid = u.user?.id ?? null;
-
-    if (!uid) {
+    const user = await getCurrentUser();
+    if (!user) {
       setActs([]);
       setLoading(false);
       return;
     }
-
+    console.log("ActSwitcher: load current user", user);
     const list = await getMyActs();
     console.log("ActSwitcher: loaded acts", list);
     setActs(list);

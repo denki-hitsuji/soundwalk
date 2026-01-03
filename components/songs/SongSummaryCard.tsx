@@ -1,21 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { act, useEffect, useMemo, useState } from "react";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
+import { get } from "http";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getMyActs, getMyMemberActs } from "@/lib/db/acts";
+import { getMySongs, getRecentSongs, SongRow, updateSong } from "@/lib/db/songs";
 
 type ActRow = {
   id: string;
   name: string;
   act_type: string | null;
   owner_profile_id: string;
-};
-
-type SongRow = {
-  id: string;
-  act_id: string;
-  title: string; // ←違うならここをname等に
 };
 
 type MemberRow = {
@@ -155,8 +152,8 @@ export function SongSummaryCard() {
   const loadAll = async () => {
     setLoading(true);
 
-    const { data: u } = await supabase.auth.getUser();
-    const uid = u.user?.id ?? null;
+    const user = await getCurrentUser();
+    const uid = user?.id ?? null;
     setUserId(uid);
 
     if (!uid) {
@@ -168,22 +165,14 @@ export function SongSummaryCard() {
     }
 
     // 参加名義（権限判定用）
-    const { data: mem } = await supabase
-      .from("act_members")
-      .select("act_id, is_admin, status")
-      .eq("profile_id", uid)
-      .eq("status", "active");
-
+    const mem = await getMyMemberActs();
     setMemberActIds(new Set(((mem ?? []) as unknown as MemberRow[]).map((m) => m.act_id)));
 
     // 名義一覧（RLSで owner+member が見える前提）
-    const { data: actsData, error: aErr } = await supabase
-      .from("acts")
-      .select("id, name, act_type, owner_profile_id")
-      .order("created_at", { ascending: false });
+    const actsData = await getMyActs(); 
 
-    if (aErr) {
-      console.error("load acts error", aErr);
+    if (!actsData) {
+      console.error("load acts error");
       setActs([]);
       setSongs([]);
       setLoading(false);
@@ -202,20 +191,19 @@ export function SongSummaryCard() {
     // 曲一覧（全名義分まとめて）
     const actIds = actList.map((a) => a.id);
 
-    const { data: songsData, error: sErr } = await supabase
-      .from("act_songs")
-      .select("id, act_id, title") // ←曲名カラムが違うならここ
-      .in("act_id", actIds)
-      .order("title", { ascending: true });
-
-    if (sErr) {
-      console.error("load songs error", sErr);
+    const songs: SongRow[] = [];
+    for (const a of actIds) {
+      const s = await getMySongs(a);
+      songs.push(...s);
+    }
+    if (!songs) {
+      console.error("load songs error");
       setSongs([]);
       setLoading(false);
       return;
     }
 
-    setSongs((songsData ?? []) as SongRow[]);
+    setSongs((songs ?? []) as SongRow[]);
     setLoading(false);
   };
 
@@ -239,20 +227,14 @@ export function SongSummaryCard() {
 
   const addSong = async (actId: string, title: string) => {
     // insert → state反映（再取得でもいいが軽く即反映）
-    const { data, error } = await supabase
-      .from("act_songs")
-      .insert({ act_id: actId, title }) // ←曲名カラムが違うならここ
-      .select("id, act_id, title")
-      .single();
-
-    if (error) throw error;
+    const data = await updateSong({ act_id: actId, title } as SongRow);
 
     setSongs((prev) => [{ ...(data as SongRow) }, ...prev].sort((a, b) => a.title.localeCompare(b.title)));
   };
 
   if (loading) {
     return <main className="text-sm text-gray-500">読み込み中…</main>;
-  }
+  } 
 
   if (!userId) {
     return (

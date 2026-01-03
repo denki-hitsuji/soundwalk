@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";
 import { PerformanceCard } from "@/components/performances/PerformanceCard";
 import {
   PREP_DEFS,
@@ -20,6 +19,8 @@ import {
 
 import { updatePrepTaskDone } from "@/lib/db/performanceWrites";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays, fmtMMdd } from "@/lib/utils/date";
+import { get } from "http";
+import { getCurrentUser, supabase } from "@/lib/auth/session";
 
 export default function PerformancesPage() {
   const [loading, setLoading] = useState(true);
@@ -50,8 +51,8 @@ export default function PerformancesPage() {
 
       // user id を先に取る（done_by に使う）
       {
-        const { data } = await supabase.auth.getUser();
-        setUserId(data.user?.id ?? null);
+        const data = await getCurrentUser();
+        setUserId(data?.id ?? null);
       }
 
       // 1) ライブ一覧（acts も一緒）

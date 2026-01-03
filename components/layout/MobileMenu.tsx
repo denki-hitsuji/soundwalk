@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { signOut } from "@/lib/auth/session";
 
 type NavItem = {
   label: string;
@@ -28,7 +28,7 @@ export function MobileMenu({ userId }: { userId: string | null }) {
   const isAuthed = !!userId;
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     setOpen(false);
     router.push("/login");
     router.refresh();

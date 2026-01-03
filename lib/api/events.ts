@@ -37,6 +37,7 @@ async function getCurrentUser() {
   return user;
 }
 
+
 /**
  * 店舗側：自分のイベントを1件取得
  */
@@ -44,9 +45,7 @@ async function getCurrentUser() {
  * 店舗側：自分のイベントを 1件取得
  * EventOffersPage (/venue/events/[eventId]) から使用
  */
-export async function getMyEventById(eventId: string): Promise<Event | null> {
-  const user = await getCurrentUser();
-
+export async function getEventById(eventId: string): Promise<Event | null> {
   const { data, error } = await supabase
         .from('events')
         .select(`
@@ -62,7 +61,6 @@ export async function getMyEventById(eventId: string): Promise<Event | null> {
   organizer_profile_id
 `)
         .eq('id', eventId)
-        .eq('venue_id', user.id) // 自分の店のイベントだけ見えるようにする
         .maybeSingle(); // 行が無い場合は error ではなく data: null になる
 
     if (error) throw error;
@@ -258,3 +256,131 @@ export async function getMyEvents(): Promise<Event[]> {
     return (data ?? []) as Event[];
 }
 
+export async function getEventCountForVenue(venueId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('events')
+    .select('id', { count: 'exact', head: true })
+    .eq('venue_id', venueId);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function getEventCountForOrganizer(organizerProfileId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('events')
+    .select('id', { count: 'exact', head: true })
+    .eq('organizer_profile_id', organizerProfileId);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function getOpenEventCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from('events')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'open');
+
+  if (error) throw error;
+  return count ?? 0;
+} 
+
+export async function upsertEventAct(params: {
+  eventId: string;
+  actId: string;
+  status: 'pending' | 'accepted' | 'declined';
+}): Promise<void> {
+  const { eventId, actId, status } = params;
+
+  const { data, error } = await supabase
+    .from("event_acts")
+    .upsert(
+      {
+        event_id: eventId,
+        act_id: actId,
+        status: status,
+      },
+      { onConflict: "event_id, act_id" }
+    );
+
+  if (error) throw error;
+}
+
+export async function removeEventAct(params: {
+  eventId: string;
+  actId: string;
+}): Promise<void> {
+  const { eventId, actId } = params;
+
+  const { error } = await supabase
+    .from("event_acts")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("act_id", actId);
+
+  if (error) throw error;
+}
+
+export async function upsertAllEventActs(params: {
+  eventId: string;
+  actIds: string[];
+}): Promise<void> {
+  const { eventId, actIds } = params;
+
+  // 既存の actIds を取得
+  const { data: existingData, error: fetchError } = await supabase
+    .from("event_acts")
+    .select("act_id")
+    .eq("event_id", eventId);
+
+  if (fetchError) throw fetchError;
+
+  const existingActIds = existingData?.map((row) => row.act_id) || [];
+
+  // 挿入すべき actIds を決定
+  const toInsert = actIds.filter((id) => !existingActIds.includes(id));
+
+  // 削除すべき actIds を決定
+  const toDelete = existingActIds.filter((id) => !actIds.includes(id));
+
+  // 挿入
+  if (toInsert.length > 0) {
+    const { error: insertError } = await supabase
+      .from("event_acts")
+      .insert(
+        toInsert.map((actId) => ({
+          event_id: eventId,
+          act_id: actId,
+          status: "accepted",
+        })),
+      );
+
+    if (insertError) throw insertError;
+  }
+
+  // 削除
+  if (toDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from("event_acts")
+      .delete()
+      .eq("event_id", eventId)
+      .in("act_id", toDelete);
+
+    if (deleteError) throw deleteError;
+  }
+} 
+
+export async function updateEventStatus(params: {
+  eventId: string;
+  status: EventStatus;
+}): Promise<void> {
+  const { eventId, status } = params;
+
+  const { error } = await supabase
+    .from("events")
+    .update({ status: status })
+    .eq("id", eventId);
+
+  if (error) throw error;
+}

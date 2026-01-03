@@ -1,7 +1,10 @@
 // app/events/[eventId]/actions.ts
 "use server";
 
-import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
+import { createBooking } from "@/lib/api/bookings";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getMyOwnerActs } from "@/lib/db/acts";
+import { supabase } from "@/lib/supabase/client.legacy";;
 
 export async function submitBooking(formData: FormData, eventId: string) {
   const user = await getCurrentUser();
@@ -11,14 +14,8 @@ export async function submitBooking(formData: FormData, eventId: string) {
 
   const message = String(formData.get("message") ?? "");
 
-  // 1. このユーザーのデフォルトActを取る（現状は1ユーザー1名義想定）
-  const { data: acts, error: actsError } = await supabase
-    .from("acts")
-    .select("id")
-    .eq("owner_profile_id", user.id)
-    .limit(1);
-
-  if (actsError) throw actsError;
+  // 1. このユーザーのデフォルトActを取る
+  const acts = await getMyOwnerActs();
   const act = acts?.[0];
   if (!act) {
     throw new Error("このユーザーに紐づく活動名義(Act)がありません");
@@ -30,6 +27,12 @@ export async function submitBooking(formData: FormData, eventId: string) {
     act_id: act.id,
     message: message || null,
     status: "pending",
+  });
+  const booking = createBooking({
+    eventId,
+    musicianId: act.id,
+    venueId: user.id,
+    message: message || undefined,
   });
 
   if (insertError) throw insertError;

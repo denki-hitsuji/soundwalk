@@ -3,7 +3,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client.legacy";
+import { getCurrentUser } from "@/lib/auth/session";
 
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
 

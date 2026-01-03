@@ -1,6 +1,5 @@
 // lib/actQueries.ts
-import { supabase } from "@/lib/auth/session";;
-import { getCurrentUser } from "@/lib/supabase/client.legacy";;
+import { getCurrentUser, supabase } from "@/lib/auth/session";;
 import { toYmdLocal } from "@/lib/utils/date";
 export type ActRow = {
   id: string;
@@ -69,6 +68,20 @@ export async function getMyOwnerActs(): Promise<ActRow[]> {
   return (data ?? []) as ActRow[];
 }
 
+// このユーザーの acts 一覧(オーナーのみ)
+export async function getMyMemberActs(): Promise<ActRow[]> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("ログインが必要です");
+
+  const { data, error } = await supabase
+    .from("v_my_acts")
+    .select("*")
+    .neq("owner_profile_id", user.id);
+
+  if (error) throw error;
+  return (data ?? []) as ActRow[];
+}
+
 // デフォルトActを保証：なければ作る
 export async function ensureMyDefaultAct(): Promise<ActRow> {
   const user = await getCurrentUser();
@@ -105,6 +118,9 @@ export async function updateAct(act : Partial<ActRow> & { id: string }) {
     .eq("id", id);
 
   if (error) throw error;
+  const inserted = { id: id, ...patch } as ActRow;
+
+  return inserted;
 }
 export async function getNextPerformance() {
   const today = toYmdLocal();
@@ -131,4 +147,86 @@ export async function getNextPerformance() {
 
   // 0 or 1 件
   return data?.[0] ?? null;
+}
+  // “できる範囲で” storage から消す（photo_url しか無いので推測）
+  const tryRemoveFromStorageByUrl = async (url: string) => {
+    // 例: https://xxx.supabase.co/storage/v1/object/public/act-photos/<PATH>
+    const marker = "/storage/v1/object/public/act-photos/";
+    const idx = url.indexOf(marker);
+    if (idx < 0) return; // 形式が違うなら諦める
+    const path = url.slice(idx + marker.length).split("?")[0]; // クエリ除去
+    await supabase.storage.from("act-photos").remove([path]);
+  };
+
+export async function uploadActPhoto(actId: string, file: File): Promise<string> {
+  const ext = file.name.split(".").pop() || "png";
+  const filename = `${crypto.randomUUID()}.${ext}`;
+  const path = `${actId}/${filename}`;
+
+  const { error: upErr } = await supabase.storage
+    .from("act-photos")
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || "image/png",
+    });
+  if (upErr) throw upErr;
+
+  const { data } = supabase.storage.from("act-photos").getPublicUrl(path);
+  const publicUrl = data.publicUrl;
+
+  return publicUrl;
+}
+
+export async function deletePhotoDataAndStorage(act: ActRow) {
+    if (!act.photo_url ) return;
+
+    try {
+      // 先にDBを消す（表示＆共有が一発で揃う）
+      await updateAct({ id: act.id, photo_url: null });
+
+      // storage実ファイルは“ベスト努力”
+      if (act.photo_url) {
+        try {
+          await tryRemoveFromStorageByUrl(act.photo_url);
+        } catch (e) {
+          // 消せなくても致命ではないので握りつぶす
+          console.warn("remove storage file skipped:", e);
+        }
+      }
+
+    } catch (e: any) {
+      console.error(e);
+    } 
+}
+export async function getActById(actId: string): Promise<ActRow> {
+  const { data, error } = await supabase
+    .from("acts")
+    .select("*")
+    .eq("id", actId)
+    .single();
+
+  if (error) throw error;
+  return data as ActRow;
+}
+export async function getActsByIds(actIds: string[]) {
+  const { data, error } = await supabase
+    .from("acts")
+    .select("id, name, act_type")
+    .in("id", actIds);  
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createActInvite(params: {
+  p_act_id: string,
+  p_grant_admin: boolean,
+  p_expires_in_days: number,
+  p_max_uses: number,
+}) { 
+  const { data, error } = await supabase.rpc("create_act_invite", params);
+  if (error) throw error;
+  return data;
+  
 }

@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client.legacy";
 import { MobileMenu } from "./MobileMenu";
+import { getCurrentUser, signOut } from "@/lib/auth/session";
 
 // ===== nav 定義 =====
 type NavItem = {
@@ -53,9 +54,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     const init = async () => {
-      const { data } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!mounted) return;
-      setUserId(data.user?.id ?? null);
+      setUserId(user?.id ?? null);
     };
 
     init();
@@ -76,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     router.push("/login");
     router.refresh();
   };

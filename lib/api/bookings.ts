@@ -1,5 +1,5 @@
 // lib/api/bookings.ts
-import { supabase } from "@/lib/auth/session";
+import { getCurrentUser, supabase } from "@/lib/auth/session";
 
 export type BookingStatus = 'upcoming' | 'accepted' | 'completed' | 'cancelled';
 
@@ -50,25 +50,13 @@ export type VenueBookingWithDetails = {
     } | null;
   } | null;
 };
-
-
-async function getCurrentUser() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) throw new Error('Not logged in');
-  return user;
-}
-
 /**
  * ミュージシャン側：自分のブッキング一覧
  */
 
 export async function getMyBookingsWithDetails(): Promise<BookingWithDetails[]> {
   const user = await getCurrentUser();
+  if(!user) throw new Error("ログインが必要です");
 
   const { data, error } = await supabase
     .from('bookings')
@@ -139,6 +127,7 @@ export async function getMyBookingsWithDetails(): Promise<BookingWithDetails[]> 
  */
 export async function getVenueBookingsWithDetails(): Promise<VenueBookingWithDetails[]> {
   const user = await getCurrentUser();
+  if(!user) throw new Error("ログインが必要です");
 
   const { data, error } = await supabase
     .from('bookings')
@@ -228,3 +217,43 @@ export async function getVenueBookingsWithDetails(): Promise<VenueBookingWithDet
   return normalized;
 }
 
+export async function createBooking(params: {
+  eventId: string;
+  musicianId: string;
+  venueId: string;
+  message?: string;
+}) {
+  const user = await getCurrentUser();
+  if(!user) throw new Error("ログインが必要です");
+
+  const { data: booking, error: insertError } = await supabase
+    .from("venue_bookings")
+    .insert({
+      event_id: params.eventId,
+      musician_id: params.musicianId,
+      venue_id: params.venueId,
+      message: params.message || null,
+      status: "upcoming",
+    })
+    .select()
+    .single();
+
+  if (insertError) throw insertError;
+
+  return booking;
+}
+
+export async function updateBookingStatus(params: {
+  bookingId: string;
+  status: "accepted" | "rejected";
+}) {
+  const user = await getCurrentUser();
+  if(!user) throw new Error("ログインが必要です");
+
+  const { error } = await supabase
+    .from("venue_bookings")
+    .update({ status: params.status })
+    .eq("id", params.bookingId);
+
+  if (error) throw error;
+} 

@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
+import { getMyActs } from "@/lib/db/acts";
 
 type ActOption = { id: string; name: string; act_type: string | null };
 
@@ -22,34 +22,11 @@ export default function QuickPerformanceBar() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.error("getUser error or no user", userError);
-        setActs([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("acts")
-        .select("id, name, act_type")
-        .eq("owner_profile_id", user.id)
-        .order("name", { ascending: true });
-
-      if (error) {
-        console.error("load acts error", error);
-        setActs([]);
-      } else {
-        const list = (data ?? []) as ActOption[];
-        setActs(list);
-        // 初回は先頭を選んでおく（ワンクリック減）
-        if (!actId && list.length > 0) setActId(list[0].id);
-      }
+      const data = await getMyActs();
+      const list = (data ?? []) as ActOption[];
+      setActs(list);
+      // 初回は先頭を選んでおく（ワンクリック減）
+      if (!actId && list.length > 0) setActId(list[0].id);
 
       setLoading(false);
     };

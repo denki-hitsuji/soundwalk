@@ -3,8 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
+import { supabase  } from "@/lib/supabase/client.legacy";;
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth/session";
 
 type VenueOption = {
   id: string;

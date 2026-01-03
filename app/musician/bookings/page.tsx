@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client.legacy";import { getCurrentUser } from "@/lib/auth/session";
+;
 
 type MyAct = {
   id: string;

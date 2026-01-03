@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
-import { ActRow } from "@/lib/db/acts";
+import { ActRow, deletePhotoDataAndStorage, updateAct, uploadActPhoto } from "@/lib/db/acts";
 
 type Props = {
   act: ActRow;
@@ -46,24 +45,13 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
       const filename = `${crypto.randomUUID()}.${ext}`;
       const path = `${act.id}/${filename}`;
 
-      const { error: upErr } = await supabase.storage
-        .from("act-photos")
-        .upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type || "image/png",
-        });
-      if (upErr) throw upErr;
-
-      const { data } = supabase.storage.from("act-photos").getPublicUrl(path);
-      const publicUrl = data.publicUrl;
+      const publicUrl = await uploadActPhoto(act.id, file);
 
       // CDNキャッシュ避け（更新が反映しない時の定番原因）
       const busted = cacheBust(publicUrl);
 
       // ★ここが本命：DBにも即反映
-      const { error: dbErr } = await supabase.from("acts").update({ photo_url: publicUrl }).eq("id", act.id);
-      if (dbErr) throw dbErr;
+      await updateAct({ id: act.id, photo_url: publicUrl });
 
       // UIは bust 付きで表示、DBは素のURL（次回ロードで二重?が付かない）
       setPhotoUrl(busted);
@@ -82,15 +70,6 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
     }
   };
 
-  // “できる範囲で” storage から消す（photo_url しか無いので推測）
-  const tryRemoveFromStorageByUrl = async (url: string) => {
-    // 例: https://xxx.supabase.co/storage/v1/object/public/act-photos/<PATH>
-    const marker = "/storage/v1/object/public/act-photos/";
-    const idx = url.indexOf(marker);
-    if (idx < 0) return; // 形式が違うなら諦める
-    const path = url.slice(idx + marker.length).split("?")[0]; // クエリ除去
-    await supabase.storage.from("act-photos").remove([path]);
-  };
 
   const deletePhoto = async () => {
     if (!act.photo_url && !photoUrl) return;
@@ -98,19 +77,7 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
     setErr(null);
     setDeleting(true);
     try {
-      // 先にDBを消す（表示＆共有が一発で揃う）
-      const { error: dbErr } = await supabase.from("acts").update({ photo_url: null }).eq("id", act.id);
-      if (dbErr) throw dbErr;
-
-      // storage実ファイルは“ベスト努力”
-      if (act.photo_url) {
-        try {
-          await tryRemoveFromStorageByUrl(act.photo_url);
-        } catch (e) {
-          // 消せなくても致命ではないので握りつぶす
-          console.warn("remove storage file skipped:", e);
-        }
-      }
+      await deletePhotoDataAndStorage(act);
 
       setPhotoUrl("");
       onUpdated?.({ photo_url: null });
@@ -131,8 +98,7 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
         profile_link_url: link.trim() ? link.trim() : null,
       };
 
-      const { error } = await supabase.from("acts").update(patch).eq("id", act.id);
-      if (error) throw error;
+      await updateAct({ id: act.id, ...patch });
 
       setDesc(patch.description ?? "");
       setLink(patch.profile_link_url ?? "");

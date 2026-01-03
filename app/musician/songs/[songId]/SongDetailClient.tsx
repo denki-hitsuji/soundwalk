@@ -3,20 +3,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { makeSongMemoTemplate } from "@/lib/utils/templates";
 import SongMemoEditor from "@/components/songs/SongMemoEditor";
 import SongAssetsBox from "@/components/songs/SongAssetsBox";
 import { useRouter } from "next/navigation";
-
-type SongRow = {
-  id: string;
-  act_id: string;
-  title: string;
-  memo: string | null;
-};
-
-type ActRow = { id: string; name: string; act_type: string | null };
+import { deleteSong, getSongById, SongRow, updateSong } from "@/lib/db/songs";
+import { ActRow, getActById } from "@/lib/db/acts";
 
 export default function SongDetailClient({ songId }: { songId: string }) {
   const router = useRouter();
@@ -34,14 +26,8 @@ export default function SongDetailClient({ songId }: { songId: string }) {
   const load = async () => {
     setLoading(true);
 
-    const { data: s, error: sErr } = await supabase
-      .from("act_songs")
-      .select("id, act_id, title, memo")
-      .eq("id", songId)
-      .single();
-
-    if (sErr) {
-      console.error("load song error", sErr);
+    const song = await getSongById(songId);
+    if (!song) {
       setSong(null);
       setAct(null);
       setMemo("");
@@ -49,21 +35,16 @@ export default function SongDetailClient({ songId }: { songId: string }) {
       return;
     }
 
-    const row = s as SongRow;
-    setSong(row);
-    setMemo(row.memo ?? "");
+    setSong(song);
+    setMemo(song.memo ?? "");
 
-    const { data: a, error: aErr } = await supabase
-      .from("acts")
-      .select("id, name, act_type")
-      .eq("id", row.act_id)
-      .single();
+    const act = await getActById(song.act_id);
 
-    if (aErr) {
-      console.warn("load act error", aErr);
+    if (!act) {
+      console.warn("load act error", act);
       setAct(null);
     } else {
-      setAct(a as ActRow);
+      setAct(act as ActRow);
     }
 
     setLoading(false);
@@ -91,12 +72,8 @@ export default function SongDetailClient({ songId }: { songId: string }) {
     setSaving(true);
     try {
       const trimmed = memo.trim();
-      const { error } = await supabase
-        .from("act_songs")
-        .update({ memo: trimmed ? trimmed : null })
-        .eq("id", song.id);
-
-      if (error) throw error;
+      const updated = await updateSong({ ...song, memo: trimmed ? trimmed : null});
+      setSong(updated); 
 
       alert("保存しました。");
       await load();
@@ -121,7 +98,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
     );
   }
 
-  const deleteSong = async () => {
+  const deleteSongLocally = async () => {
     // songId が act_songs.id である設計ならそのまま使える
     // もし songId が別キーなら、ここは song?.id を使う
     const targetId = songId;
@@ -145,11 +122,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
 
       // ✅ 曲本体を削除
       {
-        const { error: sErr } = await supabase
-          .from("act_songs")
-          .delete()
-          .eq("id", targetId);
-        if (sErr) throw new Error(sErr.message);
+        deleteSong(songId);
       }
 
       alert("削除しました。");
@@ -193,7 +166,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
         <div className="mt-3">
           <button
             type="button"
-            onClick={() => void deleteSong()}
+            onClick={() => void deleteSongLocally()}
             disabled={deleting}
             className={[
               "inline-flex items-center rounded px-3 py-2 text-xs font-semibold",

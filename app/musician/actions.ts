@@ -1,8 +1,7 @@
 // app/musician/actions.ts
 "use server";
 
-import { supabase } from "@/lib/supabase/client.legacy";;
-import { getCurrentUser } from "@/lib/supabase/client.legacy";;
+import { getCurrentUser, supabase } from "@/lib/auth/session";
 
 export async function updateMyAct(formData: FormData) {
   const user = await getCurrentUser();

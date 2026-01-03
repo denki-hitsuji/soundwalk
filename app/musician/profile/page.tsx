@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";
+import { getCurrentUser } from "@/lib/auth/session";
+import { ensureMyDefaultAct, getMyActs, updateAct } from "@/lib/db/acts";
 
 type MyAct = {
   id: string;
@@ -34,31 +35,8 @@ export default function MusicianProfilePage() {
         }
 
         // 自分のactsを取得
-        const { data: acts, error: actsError } = await supabase
-          .from("acts")
-          .select("*")
-          .eq("owner_profile_id", user.id)
-          .order("created_at", { ascending: true });
-
-        if (actsError) throw actsError;
-
-        if (acts && acts.length > 0) {
-          setAct(acts[0] as MyAct);
-        } else {
-          // なければデフォルトActを作成
-          const { data: newAct, error: insertError } = await supabase
-            .from("acts")
-            .insert({
-              name: user.user_metadata?.name ?? "My Act",
-              act_type: "solo",
-              owner_profile_id: user.id,
-            })
-            .select("*")
-            .single();
-
-          if (insertError) throw insertError;
-          setAct(newAct as MyAct);
-        }
+        const myAct = await ensureMyDefaultAct();
+        setAct(myAct as MyAct);
       } catch (e: any) {
         console.error(e);
         setError(e.message ?? "エラーが発生しました");
@@ -90,16 +68,12 @@ export default function MusicianProfilePage() {
     setError(null);
     setMessage(null);
     try {
-      const { error: updateError } = await supabase
-        .from("acts")
-        .update({
-          name,
-          act_type,
-          description,
-        })
-        .eq("id", act.id);
-
-      if (updateError) throw updateError;
+      const patch: Partial<MyAct> = {
+        name,
+        act_type,
+        description,
+      };
+      await updateAct({ ...patch, id: act.id });
 
       setAct((prev) =>
         prev

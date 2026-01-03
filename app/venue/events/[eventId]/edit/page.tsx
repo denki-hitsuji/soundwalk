@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client.legacy";
+import { getEventById, updateEvent } from "@/lib/api/events";
 
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
 
@@ -50,13 +51,8 @@ export default function EventEditPage() {
       setLoading(true);
       setError(null);
       try {
-        const { data, error: eventsError } = await supabase
-          .from("events")
-          .select("*")
-          .eq("id", eventId)
-          .single();
+        const data = await getEventById(eventId);
 
-        if (eventsError) throw eventsError;
         if (!data) {
           setError("イベントが見つかりませんでした。");
           return;
@@ -112,19 +108,14 @@ export default function EventEditPage() {
     setSaving(true);
     setError(null);
     try {
-      const { error: updateError } = await supabase
-        .from("events")
-        .update({
-          title: title.trim(),
-          event_date: eventDate,
-          start_time: startTime + ":00",
-          end_time: endTime + ":00",
-          max_artists: parsedMax,
-          status,
-        })
-        .eq("id", eventId);
-
-      if (updateError) throw updateError;
+      await updateEvent(eventId, {
+        ...event,
+        title: title.trim(),
+        event_date: eventDate,
+        start_time: startTime + ":00",
+        end_time: endTime + ":00",
+        max_artists: parsedMax ?? 0,
+      });
 
       router.push(`/venue/events/${eventId}`);
       router.refresh();

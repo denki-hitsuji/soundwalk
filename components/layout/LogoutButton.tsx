@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { useState } from "react";
+import { signOut } from "@/lib/auth/session";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -10,15 +10,16 @@ export default function LogoutButton() {
 
   const onLogout = async () => {
     setBusy(true);
-    const { error } = await supabase.auth.signOut();
-    setBusy(false);
-
-    if (error) {
+    try {
+      await signOut();
+    } catch (error) {
       console.error("signOut error", error);
       alert("ログアウトに失敗しました。");
       return;
     }
-
+    finally { 
+      setBusy(false);
+    }
     // セッションが消えた状態でログインへ
     router.push("/login");
     router.refresh();

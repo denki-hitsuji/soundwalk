@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { toYmdLocal } from "@/lib/utils/date";
+import { updatePerformanceMemo, upsertPerformanceDetails } from "@/lib/db/performanceWrites";
 
 type Props = {
   performanceId: string;
@@ -38,18 +38,10 @@ export function PerformanceMemoEditor({
   const savePrep = async () => {
     setSavingPrep(true);
     try {
-      const payload = {
-        performance_id: performanceId,
+      upsertPerformanceDetails({
+        performanceId,
         notes: prepNotes.trim() ? prepNotes.trim() : null,
-        updated_at: new Date().toISOString(),
-      };
-
-      // details行が無い可能性に備えて upsert
-      const { error } = await supabase
-        .from("performance_details")
-        .upsert(payload, { onConflict: "performance_id" });
-
-      if (error) throw error;
+      });
       setPrepSavedAt(new Date().toLocaleTimeString());
       const normalized = prepNotes.trim();
       setSavedPrepNotes(normalized ? normalized : "");
@@ -65,12 +57,16 @@ export function PerformanceMemoEditor({
         memo: recordMemo.trim() ? recordMemo.trim() : null,
       };
 
-      const { error } = await supabase
-        .from("musician_performances")
-        .update(patch)
-        .eq("id", performanceId);
+      try {
+        await updatePerformanceMemo({
+          performanceId,
+          newMemo: recordMemo.trim() ? recordMemo.trim() : null,
+        });
+      } catch (error) {
+        console.error("updatePerformanceMemo error", error);
+        throw error;
+      }
 
-      if (error) throw error;
       setRecordSavedAt(new Date().toLocaleTimeString());
       const normalized = recordMemo.trim();
       setSavedRecordMemo(normalized ? normalized : "");

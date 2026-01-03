@@ -46,8 +46,6 @@ export default async function BandPublicPage({ params }: { params: Promise<{ slu
     console.log("Loaded public payload data:", p);
     console.log("headline:", p.headline);
     console.log("performances:", p.performances);
-    const upcoming_performances = p.performances;
-    const next_performance = p.performances?.[0] || null;
     return (
         <main className="mx-auto w-full max-w-2xl px-4 py-6 space-y-6">
             <header className="space-y-2">

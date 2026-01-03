@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
-import { ActRow } from "@/lib/db/acts";
+import { ActRow, getMyMemberActs, getMyOwnerActs, updateAct } from "@/lib/db/acts";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getMyProfile } from "@/lib/api/profiles";
 
 type MemberRow = {
   act_id: string;
@@ -96,8 +97,8 @@ export default function ActsPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data: u } = await supabase.auth.getUser();
-      const uid = u.user?.id ?? null;
+      const user = await getCurrentUser();
+      const uid = user?.id ?? null;
       setUserId(uid);
 
       if (!uid) {
@@ -107,21 +108,9 @@ export default function ActsPage() {
         return;
       }
 
-      const { data: owned, error: ownedErr } = await supabase
-        .from("acts")
-        .select("id, name, act_type, description, photo_url, profile_link_url, owner_profile_id, created_at")
-        .eq("owner_profile_id", uid)
-        .order("created_at", { ascending: false });
+      const owned = getMyOwnerActs();
 
-      if (ownedErr) console.error("load owned acts error", ownedErr);
-
-      const { data: mem, error: memErr } = await supabase
-        .from("act_members")
-        .select("act_id, is_admin, status, acts:acts ( id, name, act_type, owner_profile_id, description, photo_url, profile_link_url )")
-        .eq("profile_id", uid)
-        .eq("status", "active");
-
-      if (memErr) console.error("load member acts error", memErr);
+      const mem = getMyMemberActs();
 
       const mm: Record<string, { is_admin: boolean }> = {};
       const mActs: ActRow[] = [];
@@ -142,11 +131,7 @@ export default function ActsPage() {
 
       // 初回フォームのデフォルト値
       if (ownedList.length === 0 && soloName.trim() === "") {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", uid)
-          .single();
+        const prof = await getMyProfile();
         const dn = (prof?.display_name ?? "").trim();
         if (dn) setSoloName(dn);
       }
@@ -179,22 +164,17 @@ export default function ActsPage() {
         return;
       }
 
-      const { data: inserted, error: insErr } = await supabase
-        .from("acts")
-        .insert({
-          name,
-          act_type: "solo",
-          owner_profile_id: uid,
-          description: "",
-          is_temporary: false,
-          photo_url: null,
-          profile_link_url: null,
-          icon_url: null,
-        })
-        .select("id, name, act_type, owner_profile_id, description, photo_url, profile_link_url, is_temporary, icon_url")
-        .single();
-
-      if (insErr) throw insErr;
+      const inserted = await updateAct({
+        id: userId,
+        name,
+        act_type: "solo",
+        owner_profile_id: uid,
+        description: "",
+        is_temporary: false,
+        photo_url: null,
+        profile_link_url: null,
+        icon_url: null,
+      }); 
 
       setCurrentAct(inserted as ActRow);
       notifyActsUpdated();

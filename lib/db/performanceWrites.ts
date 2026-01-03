@@ -1,6 +1,23 @@
 // lib/performanceActions.ts
 import { supabase } from "@/lib/auth/session";
 import type { PrepTaskRow } from "@/lib/performanceUtils";
+export async function updatePerformanceMemo(params: {
+  performanceId: string;
+  newMemo: string | null;
+}): Promise<void> {
+  const { performanceId, newMemo } = params;
+
+  const patch = {
+    memo: newMemo?.trim() ? newMemo.trim() : null,
+  };
+
+  const { error } = await supabase
+    .from("musician_performances")
+    .update(patch)
+    .eq("id", performanceId);
+
+  if (error) throw error;
+} 
 
 export async function updatePrepTaskDone(params: {
   taskId: string;
@@ -22,4 +39,32 @@ export async function updatePrepTaskDone(params: {
 
   if (error) throw error;
   return data as PrepTaskRow;
+}
+
+export async function deletePerformanceMemo(performanceId: string): Promise<void> { 
+  const { error } = await supabase
+    .from("musician_performances")
+    .update({ memo: null })
+    .eq("id", performanceId);
+
+  if (error) throw error;
+}   
+
+export async function upsertPerformanceDetails(params: {
+  performanceId: string;
+  notes: string | null;
+}): Promise<void> {
+  const { performanceId, notes } = params;
+
+  const payload = {
+    performance_id: performanceId,
+    notes: notes?.trim() ? notes.trim() : null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from("performance_details")
+    .upsert(payload, { onConflict: "performance_id" });
+
+  if (error) throw error;
 }

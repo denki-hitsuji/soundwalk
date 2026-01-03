@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { getCurrentSession } from "@/lib/auth/session";
+import { createActInvite } from "@/lib/db/acts";
 
 export function ActInviteBox({ actId }: { actId: string }) {
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ export function ActInviteBox({ actId }: { actId: string }) {
   const createInvite = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCurrentSession();
       if (!session) {
         alert("ログインが必要です。");
         return;
@@ -31,8 +32,7 @@ export function ActInviteBox({ actId }: { actId: string }) {
       // args.p_role = "member"; など
       // if (role) args.p_role = role;
 
-      const { data, error } = await supabase.rpc("create_act_invite", args);
-      if (error) throw error;
+      const data = await createActInvite( args);
 
       const token = data?.[0]?.token as string | undefined;
       const exp = (data?.[0]?.expires_at as string | null | undefined) ?? null;

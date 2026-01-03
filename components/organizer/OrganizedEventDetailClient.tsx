@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase, getCurrentUser } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client.legacy";;
 import { PerformanceCard } from "../performances/PerformanceCard";
 import { ActRow } from "@/lib/db/acts";
 import { parseYmdLocal, addDays, fmtMMdd, toYmdLocal } from "@/lib/utils/date";
@@ -14,6 +14,7 @@ import {
   detailsSummary,
   statusText,
 } from "@/lib/performanceUtils";
+import { getCurrentUser } from "@/lib/auth/session";
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
 
 type EventRow = {

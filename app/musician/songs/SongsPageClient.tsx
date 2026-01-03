@@ -5,21 +5,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client.legacy";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
-
-type ActRow = {
-  id: string;
-  name: string;
-  act_type: string | null;
-  owner_profile_id: string;
-};
-
-type SongRow = {
-  id: string;
-  act_id: string;
-  title: string;
-  memo: string | null;
-  created_at: string;
-};
+import { ActRow, getMyActs, getMyMemberActs } from "@/lib/db/acts";
+import { addSong, getSongsByActIds, SongRow } from "@/lib/db/songs";
 
 type MemberRow = {
   act_id: string;
@@ -87,14 +74,9 @@ export default function SongsPageClient() {
 
     // member判定（編集可否用）
     {
-      const { data: mem, error: memErr } = await supabase
-        .from("act_members")
-        .select("act_id, is_admin, status")
-        .eq("profile_id", uid)
-        .eq("status", "active");
-
-      if (memErr) {
-        console.error("load act_members error", memErr);
+      const mem = await getMyMemberActs();
+      if (!mem) {
+        console.error("load act_members error");
         setMemberActIds(new Set());
       } else {
         setMemberActIds(new Set(((mem ?? []) as unknown as MemberRow[]).map((m) => m.act_id)));
@@ -102,13 +84,10 @@ export default function SongsPageClient() {
     }
 
     // acts（RLSで owner+member が見える前提）
-    const { data: actsData, error: aErr } = await supabase
-      .from("acts")
-      .select("id, name, act_type, owner_profile_id")
-      .order("name", { ascending: true });
+    const actsData = await getMyActs();
 
-    if (aErr) {
-      console.error("load acts error", aErr);
+    if (!actsData) {
+      console.error("load acts error");
       setActs([]);
       setSongs([]);
       setLoading(false);
@@ -128,14 +107,10 @@ export default function SongsPageClient() {
     const actIds = actList.map((a) => a.id);
 
     // act_songs（songsテーブルは無い前提）
-    const { data: songsData, error: sErr } = await supabase
-      .from("act_songs")
-      .select("id, act_id, title, memo, created_at")
-      .in("act_id", actIds)
-      .order("created_at", { ascending: false });
+    const songsData = await getSongsByActIds(actIds); 
 
-    if (sErr) {
-      console.error("load act_songs error", sErr);
+    if (!songsData) {
+      console.error("load act_songs error");
       setSongs([]);
       setOpenActIds(new Set());
       setLoading(false);
@@ -186,20 +161,13 @@ export default function SongsPageClient() {
   const expandAll = () => setOpenActIds(new Set(acts.map((a) => a.id)));
   const collapseAll = () => setOpenActIds(new Set());
 
-  const addSong = async (actId: string, title: string) => {
+  const addSongLocally = async (actId: string, title: string) => {
     const t = title.trim();
     if (!t) throw new Error("曲名を入力してください");
 
-    const { data, error } = await supabase
-      .from("act_songs")
-      .insert({ act_id: actId, title: t, memo: null })
-      .select("id, act_id, title, memo, created_at")
-      .single();
+    const data = await addSong(actId, title);
 
-    if (error) throw error;
-
-    const added = data as SongRow;
-    setSongs((prev) => [added, ...prev]);
+    setSongs((prev) => [data, ...prev]);
 
     // 追加した名義は自動で開く
     setOpenActIds((prev) => new Set(prev).add(actId));
@@ -350,7 +318,7 @@ export default function SongsPageClient() {
 
                     <div className="pt-3 border-t">
                       {editable ? (
-                        <InlineAdd onAdd={(title) => addSong(act.id, title)} />
+                        <InlineAdd onAdd={(title) => addSongLocally(act.id, title)} />
                       ) : (
                         <div className="text-[11px] text-gray-500">
                           この名義は閲覧のみです（編集権限なし）

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export default function PublicHomePage() {
   const router = useRouter();
@@ -11,8 +11,8 @@ export default function PublicHomePage() {
 
   useEffect(() => {
     const run = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
+      const user = await getCurrentUser();
+      if (user) {
         router.replace("/musician"); // ログイン済はダッシュボードへ
         return;
       }

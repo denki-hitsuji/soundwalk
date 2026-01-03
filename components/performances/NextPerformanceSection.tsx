@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { DashboardPerformanceCard } from "@/components/performances/DashboardPerformanceCard";
 import { type PrepMap } from "@/lib/performanceUtils";
 import { updatePrepTaskDone } from "@/lib/db/performanceWrites";
@@ -13,6 +12,8 @@ import {
   ensureAndFetchPrepMap,
 } from "@/lib/db/performances";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
+import { get } from "http";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export function NextPerformanceSection() {
   const todayStr = useMemo(() => toYmdLocal(), []);
@@ -26,8 +27,8 @@ export function NextPerformanceSection() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: u } = await supabase.auth.getUser();
-      setUserId(u.user?.id ?? null);
+      const user = await getCurrentUser();
+      setUserId(user?.id ?? null);
 
       const next = await getNextPerformance(todayStr);
       setP(next);

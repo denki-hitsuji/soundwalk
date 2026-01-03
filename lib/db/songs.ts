@@ -2,6 +2,13 @@
 
 import { getCurrentUser, supabase } from "../auth/session";
 import { getMyActs } from "./acts";
+export type SongRow = {
+  id: string;
+  act_id: string;
+  title: string;
+  created_at: string | null;
+  memo: string | null;
+};
 
 export type ActOption = {
   id: string;
@@ -27,8 +34,18 @@ export async function getMyActsForSelect() {
   return Array.from(uniq.values());
 }
 
+export async function  getMySongs(actId: string) {
+  const { data, error } = await supabase
+    .from("act_songs")
+    .select("id, title, act_id, created_at")
+    .eq("act_id", actId)
+    .order("created_at", { ascending: false })
 
-export async function getRecentSongs(actId: string, limit = 2) {
+  if (error) throw error;
+  return data as SongRow[] ?? [];
+}
+
+export async function   getRecentSongs(actId: string, limit = 2) {
   const { data, error } = await supabase
     .from("act_songs")
     .select("id, title, created_at")
@@ -37,7 +54,7 @@ export async function getRecentSongs(actId: string, limit = 2) {
     .limit(limit);
 
   if (error) throw error;
-  return data ?? [];
+  return data as SongRow[] ?? [];
 }
 
 export async function getSongCount(actId: string) {
@@ -50,6 +67,17 @@ export async function getSongCount(actId: string) {
   return count ?? 0;
 }
 
+export async function getSongById(songId: string) {
+  const { data, error } = await supabase
+    .from("act_songs")
+    .select("*")
+    .eq("id", songId)
+    .single();
+
+  if (error) throw error;
+  return data as SongRow;
+}
+
 export async function addSong(actId: string, title: string) {
   const { error } = await supabase.from("act_songs").insert({
     act_id: actId,
@@ -57,4 +85,39 @@ export async function addSong(actId: string, title: string) {
   });
 
   if (error) throw error;
+  const added = await supabase
+    .from("act_songs")
+    .select("*")
+    .eq("act_id", actId)
+    .eq("title", title)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+  return added.data as SongRow;
+}
+
+export async function updateSong(song: SongRow) {
+  const { id, title } = song;
+  const { error } = await supabase
+    .from("act_songs")
+    .update({ title })
+    .eq("id", id); 
+  if (error) throw error;
+  return song;
+} 
+
+export async function deleteSong(songId: string) {
+  const { error } = await supabase.from("act_songs").delete().eq("id", songId);
+  if (error) throw error;
+}   
+
+export async function getSongsByActIds(actIds: string[]) {
+  const { data, error } = await supabase
+    .from("act_songs")
+    .select("id, act_id, title, created_at")
+    .in("act_id", actIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data as SongRow[] ?? [];
 }

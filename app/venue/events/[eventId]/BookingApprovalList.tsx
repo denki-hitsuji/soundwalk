@@ -3,7 +3,11 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { getActsByIds } from "@/lib/db/acts";
+import { getEventById, removeEventAct, updateEventStatus, upsertEventAct } from "@/lib/api/events";
+import { getEventBookings } from "@/lib/db/venues";
+import { updateBookingStatus } from "@/lib/api/bookings";
+;
 
 type Props = {
   eventId: string;
@@ -36,23 +40,12 @@ export function BookingApprovalList({ eventId }: Props) {
     setError(null);
     try {
       // 0. イベントから max_artists を取得
-      const { data: eventRow, error: eventError } = await supabase
-        .from("events")
-        .select("id, max_artists")
-        .eq("id", eventId)
-        .single();
-
-      if (eventError) throw eventError;
+      const eventRow = await getEventById(eventId);
       setMaxArtists(eventRow?.max_artists ?? null);
 
       // 1. このイベントの booking を取得
-      const { data: bookingRows, error: bookingsError } = await supabase
-        .from("venue_bookings")
-        .select("id, status, message, created_at, event_id, act_id")
-        .eq("event_id", eventId)
-        .order("created_at", { ascending: false });
+      const bookingRows = await getEventBookings(eventId);
 
-      if (bookingsError) throw bookingsError;
       if (!bookingRows || bookingRows.length === 0) {
         setBookings([]);
         return;
@@ -63,12 +56,7 @@ export function BookingApprovalList({ eventId }: Props) {
       ) as string[];
 
       // 2. 対応する acts を取得
-      const { data: acts, error: actsError } = await supabase
-        .from("acts")
-        .select("id, name, act_type")
-        .in("id", actIds);
-
-      if (actsError) throw actsError;
+      const acts = await getActsByIds(actIds);
 
       const actMap = new Map(
         (acts ?? []).map((a) => [a.id, a]),
@@ -127,26 +115,15 @@ export function BookingApprovalList({ eventId }: Props) {
     setMutatingId(booking.id);
     try {
       // 1. venue_bookings を accepted に
-      const { error: bookingError } = await supabase
-        .from("venue_bookings")
-        .update({ status: "accepted" })
-        .eq("id", booking.id);
-
-      if (bookingError) throw bookingError;
+      await updateBookingStatus({ bookingId: booking.id, status: "accepted" });
 
       // 2. event_acts に accepted を upsert
-      const { error: eaError } = await supabase
-        .from("event_acts")
-        .upsert(
-          {
-            event_id: booking.event_id,
-            act_id: booking.act_id,
-            status: "accepted",
-          },
-          { onConflict: "event_id,act_id" },
-        );
-
-      if (eaError) throw eaError;
+      await upsertEventAct(
+        {
+          eventId: booking.event_id,
+          actId: booking.act_id,
+          status: "accepted",
+        });
 
       // 3. ★ 上限に達したら events.status を matched に更新
       if (maxArtists != null) {
@@ -154,12 +131,7 @@ export function BookingApprovalList({ eventId }: Props) {
           acceptedCount + (booking.status === "accepted" ? 0 : 1);
 
         if (newAcceptedCount >= maxArtists) {
-          const { error: statusError } = await supabase
-            .from("events")
-            .update({ status: "matched" })
-            .eq("id", booking.event_id);
-
-          if (statusError) throw statusError;
+          await updateEventStatus({ eventId: booking.event_id, status: "matched" });
         }
       }
 
@@ -179,21 +151,10 @@ export function BookingApprovalList({ eventId }: Props) {
     setError(null);
     try {
       // 1. venue_bookings を rejected に
-      const { error: bookingError } = await supabase
-        .from("venue_bookings")
-        .update({ status: "rejected" })
-        .eq("id", booking.id);
-
-      if (bookingError) throw bookingError;
+      updateBookingStatus({ bookingId: booking.id, status: "rejected" });
 
       // 2. event_acts に存在していれば削除
-      const { error: eaError } = await supabase
-        .from("event_acts")
-        .delete()
-        .eq("event_id", booking.event_id)
-        .eq("act_id", booking.act_id);
-
-      if (eaError) throw eaError;
+      await removeEventAct({ eventId: booking.event_id, actId: booking.act_id });
 
       await load();
       router.refresh();
