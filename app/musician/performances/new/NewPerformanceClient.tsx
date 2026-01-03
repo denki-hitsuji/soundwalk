@@ -4,10 +4,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
 import { getMyActs } from "@/lib/db/acts";
 import { getCurrentUser } from "@/lib/auth/session";
+import { upsertPerformance } from "@/lib/db/performances";
 
 type ActOption = {
   id: string;
@@ -72,21 +72,22 @@ export default function NewPerformanceClient() {
 
     setSaving(true);
 
-    const { error } = await supabase.from("musician_performances").insert({
-      profile_id: userId,
-      act_id: actId,
-      event_date: eventDate,
-      venue_name: venueName || null,
-      memo: memo || null,
-    });
-
-    setSaving(false);
-
-    if (error) {
+    try {
+      await upsertPerformance({
+        id: null,
+        profile_id: userId,
+        act_id: actId,
+        event_date: eventDate,
+        venue_name: venueName || null,
+        memo: memo || null,
+      });
+    }
+    catch (error) {
       console.error("insert performance error", error);
       alert("保存に失敗しました。コンソールを確認してください。");
       return;
     }
+    setSaving(false);
 
     router.push("/musician/performances");
   };

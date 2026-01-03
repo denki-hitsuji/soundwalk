@@ -3,8 +3,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { supabase } from "@/lib/supabase/client.legacy";import { getAllVenues, Venue } from "@/lib/db/venues";
-;
+import { getAllVenues, Venue } from "@/lib/db/venues";
 
 // react-leaflet は SSR 不可なので dynamic import
 const MapContainer = dynamic(

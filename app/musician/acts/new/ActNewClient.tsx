@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
 import { notifyActsUpdated } from "@/lib/db/actEvents";
+import { ensureMyDefaultAct } from "@/lib/db/acts";
 
 export default function ActNewClient() {
   const router = useRouter();
@@ -19,29 +19,15 @@ export default function ActNewClient() {
 
     setSaving(true);
     try {
-      const { data: u } = await supabase.auth.getUser();
-      const uid = u.user?.id;
-      if (!uid) throw new Error("未ログインです");
-
-      const { data, error } = await supabase
-        .from("acts")
-        .insert({
-          name: trimmed,
-          act_type: actType,
-          owner_profile_id: uid,
-          description: null,
-          photo_url: null,
-          profile_link_url: null,
-          is_temporary: false,
-          icon_url: null,
-        })
-        .select("id")
-        .single();
-
-      if (error) throw error;
+      const act = await ensureMyDefaultAct();
+      if (act && trimmed === act.name) {
+        // 既定名義と同じならそちらに遷移
+        router.push(`/musician/acts/${act.id}`);
+        return;
+      }
 
       notifyActsUpdated();
-      router.push(`/musician/acts/${data.id}`);
+      router.push(`/musician/acts/${act.id}`);
       router.refresh();
     } catch (e: any) {
       setErr(e?.message ?? "作成に失敗しました");
