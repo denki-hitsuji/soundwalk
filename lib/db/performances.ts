@@ -9,14 +9,12 @@ import type {
   PrepTaskRow,
   FlyerRow,
 } from "@/lib/performanceUtils";
-import { PREP_DEFS } from "@/lib/performanceUtils";
+import { getPerformances, PREP_DEFS } from "@/lib/performanceUtils";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
+import { getMyActs } from "./acts";
 export async function getMyUpcomingPerformances(todayStr?: string) {
   const t = todayStr ?? toYmdLocal();
-  const myActs = await supabase.rpc("get_my_act_ids").then(({ data, error }) => {
-    if (error) throw error;
-    return data as string[];
-  });
+  const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
   const { data, error } = await supabase
     .from("musician_performances")
     .select(
@@ -36,18 +34,14 @@ export async function getMyUpcomingPerformances(todayStr?: string) {
     .gte("event_date", t)
     .neq("status", "canceled")   
     .order("event_date", { ascending: true })
-    .limit(1);
 
   if (error) throw error;
-  return ((data?.[0] ?? null) as unknown as PerformanceWithActs | null);
+  return ((data ?? null) as unknown as PerformanceWithActs[] | null);
 }
 
 export async function getNextPerformance(todayStr?: string) {
   const t = todayStr ?? toYmdLocal();
-  const myActs = await supabase.rpc("get_my_act_ids").then(({ data, error }) => {
-    if (error) throw error;
-    return data as string[];
-  });
+  const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
 
   const { data, error } = await supabase
     .from("musician_performances")

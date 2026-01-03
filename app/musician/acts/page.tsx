@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
-import { ActRow, getMyMemberActs, getMyOwnerActs, updateAct } from "@/lib/db/acts";
+import { ActRow, getMyActs, getMyMemberActs, getMyOwnerActs, updateAct } from "@/lib/db/acts";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getMyProfile } from "@/lib/api/profiles";
 
@@ -108,29 +108,20 @@ export default function ActsPage() {
         return;
       }
 
-      const owned = getMyOwnerActs();
+      const acts = await getMyActs();
+      const owned = await getMyOwnerActs();
+      const mem = await getMyMemberActs();
 
-      const mem = getMyMemberActs();
+      const mm: Record<string, { is_admin: boolean }> = acts.reduce((acc, act) => {
+        return acc;
+      }, {} as Record<string, { is_admin: boolean }>);
 
-      const mm: Record<string, { is_admin: boolean }> = {};
-      const mActs: ActRow[] = [];
-
-      for (const r of (mem ?? []) as unknown as MemberRow[]) {
-        mm[r.act_id] = { is_admin: r.is_admin === true };
-        const a = normalizeAct(r.acts);
-        if (a) mActs.push(a);
-      }
-
-      const ownedList = (owned ?? []) as unknown as ActRow[];
-      const ownedSet = new Set(ownedList.map((a) => a.id));
-      const filteredMember = mActs.filter((a) => !ownedSet.has(a.id));
-
-      setOwnedActs(ownedList);
-      setMemberActs(filteredMember);
+      setOwnedActs(owned);
+      setMemberActs(mem);
       setMemberMap(mm);
 
       // 初回フォームのデフォルト値
-      if (ownedList.length === 0 && soloName.trim() === "") {
+      if (owned.length === 0 && soloName.trim() === "") {
         const prof = await getMyProfile();
         const dn = (prof?.display_name ?? "").trim();
         if (dn) setSoloName(dn);
