@@ -1,5 +1,5 @@
 // lib/venueQueries.ts
-import { supabase } from "@/lib/auth/session";;
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 // ===== 型定義 =====
 export type Venue = {
@@ -57,7 +57,7 @@ export type VenueBooking = {
 //   venueId → Event + acceptedCount
 // ==========================================================
 export async function getVenueById(venueId: string): Promise<Venue | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("venues")
     .select("*")
     .eq("id", venueId)
@@ -68,7 +68,7 @@ export async function getVenueById(venueId: string): Promise<Venue | null> {
 } 
 
 export async function getAllVenues(): Promise<Venue[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("venues")
     .select("*")
     .order("name", { ascending: true });
@@ -79,7 +79,7 @@ export async function getAllVenues(): Promise<Venue[]> {
 
 export async function getVenueEventsWithAcceptedCount(venueId: string) {
   // 1. 会場のイベント取得
-  const { data: events, error: eventsError } = await supabase
+  const { data: events, error: eventsError } = await (await createSupabaseServerClient())
     .from("events")
     .select("*")
     .eq("venue_id", venueId)
@@ -91,7 +91,7 @@ export async function getVenueEventsWithAcceptedCount(venueId: string) {
   const eventIds = events.map((e) => e.id);
 
   // 2. event_acts（accepted）取得
-  const { data: eventActs, error: actsError } = await supabase
+  const { data: eventActs, error: actsError } = await (await createSupabaseServerClient())
     .from("event_acts")
     .select("event_id")
     .eq("status", "accepted")
@@ -116,7 +116,7 @@ export async function getVenueEventsWithAcceptedCount(venueId: string) {
 
 export async function getVenueBookingsWithDetails(venueId: string) {
   // 1. この会場のイベントを全部取得
-  const { data: events, error: eventsError } = await supabase
+  const { data: events, error: eventsError } = await (await createSupabaseServerClient())
     .from("events")
     .select("id, title, start_time, end_time, max_artists, venue_id")
     .eq("venue_id", venueId);
@@ -128,7 +128,7 @@ export async function getVenueBookingsWithDetails(venueId: string) {
   const eventIds = events.map((e) => e.id);
 
   // 2. そのイベントの booking を取得
-  const { data: bookings, error: bookingsError } = await supabase
+  const { data: bookings, error: bookingsError } = await (await createSupabaseServerClient())
     .from("venue_bookings")
     .select("id, status, message, created_at, event_id, act_id")
     .in("event_id", eventIds)
@@ -140,7 +140,7 @@ export async function getVenueBookingsWithDetails(venueId: string) {
   const actIds = Array.from(new Set(bookings.map((b) => b.act_id)));
 
   // 3. act 情報を取得
-  const { data: acts, error: actsError } = await supabase
+  const { data: acts, error: actsError } = await (await createSupabaseServerClient())
     .from("acts")
     .select("id, name, act_type, owner_profile_id")
     .in("id", actIds);
@@ -163,7 +163,7 @@ export async function getVenueBookingsWithDetails(venueId: string) {
 
 export async function getEventBookings(eventId: string) {
   // 1. booking だけ取る
-  const { data: bookings, error: bookingsError } = await supabase
+  const { data: bookings, error: bookingsError } = await (await createSupabaseServerClient())
     .from("venue_bookings")
     .select("id, status, message, created_at, event_id, act_id")
     .eq("event_id", eventId)
@@ -175,7 +175,7 @@ export async function getEventBookings(eventId: string) {
   const actIds = Array.from(new Set(bookings.map((b) => b.act_id)));
 
   // 2. act 情報取得
-  const { data: acts, error: actsError } = await supabase
+  const { data: acts, error: actsError } = await (await createSupabaseServerClient())
     .from("acts")
     .select("id, name, act_type, owner_profile_id")
     .in("id", actIds);
@@ -196,7 +196,7 @@ export async function getEventBookings(eventId: string) {
 
 export async function getEventActs(eventId: string) {
   // 1. event_acts を取得
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("event_acts")
     .select("event_id, act_id, status, sort_order, created_at")
     .eq("event_id", eventId)
@@ -208,7 +208,7 @@ export async function getEventActs(eventId: string) {
   const actIds = data.map((ea) => ea.act_id);
 
   // 2. 対応する acts を取得
-  const { data: acts, error: actsError } = await supabase
+  const { data: acts, error: actsError } = await (await createSupabaseServerClient())
     .from("acts")
     .select("*")
     .in("id", actIds);
@@ -230,7 +230,7 @@ export async function getEventActs(eventId: string) {
 
 export async function getEventWithDetails(eventId: string) {
   // 1. イベント本体
-  const { data: event, error: eventError } = await supabase
+  const { data: event, error: eventError } = await (await createSupabaseServerClient())
     .from("events")
     .select("*")
     .eq("id", eventId)
@@ -256,7 +256,7 @@ export async function getEventWithDetails(eventId: string) {
 
 export async function getPublicEventForBooking(eventId: string) {
   // 1. イベント本体
-  const { data: event, error: eventError } = await supabase
+  const { data: event, error: eventError } = await (await createSupabaseServerClient())
     .from("events")
     .select("*")
     .eq("id", eventId)
@@ -266,7 +266,7 @@ export async function getPublicEventForBooking(eventId: string) {
   if (!event) throw new Error("event not found");
 
   // 2. event_acts から acceptedCount だけ数える
-  const { data: eventActs, error: actsError } = await supabase
+  const { data: eventActs, error: actsError } = await (await createSupabaseServerClient())
     .from("event_acts")
     .select("status")
     .eq("event_id", eventId);
@@ -285,7 +285,7 @@ export async function getPublicEventForBooking(eventId: string) {
 // すでにある関数はそのままにして、下の方に追加してください
 export async function getRecruitingEvents() {
   // 1. 公開中（published）のイベントを取得
-  const { data: events, error: eventsError } = await supabase
+  const { data: events, error: eventsError } = await (await createSupabaseServerClient())
     .from("events")
     .select("*")
     .eq("status", "open")
@@ -297,7 +297,7 @@ export async function getRecruitingEvents() {
   const eventIds = events.map((e) => e.id);
 
   // 2. event_acts から accepted 数をカウント
-  const { data: eventActs, error: actsError } = await supabase
+  const { data: eventActs, error: actsError } = await (await createSupabaseServerClient())
     .from("event_acts")
     .select("event_id, status")
     .in("event_id", eventIds);

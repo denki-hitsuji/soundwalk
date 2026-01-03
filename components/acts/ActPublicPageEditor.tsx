@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";
+import { supabase } from "@/lib/supabase/client";
 
 type ActPublicPageRow = {
   act_id: string;

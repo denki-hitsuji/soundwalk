@@ -1,5 +1,5 @@
 // lib/performanceQueries.ts
-import { supabase } from "@/lib/auth/session";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   PerformanceWithActs,
   FlyerMap,
@@ -8,14 +8,15 @@ import type {
   DetailsRow,
   PrepTaskRow,
   FlyerRow,
-} from "@/lib/performanceUtils";
-import { getPerformances, PREP_DEFS } from "@/lib/performanceUtils";
+} from "@/lib/utils/performance";
+import { getPerformances, PREP_DEFS } from "@/lib/utils/performance";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
 import { getMyActs } from "./acts";
+
 export async function getMyUpcomingPerformances(todayStr?: string) {
   const t = todayStr ?? toYmdLocal();
   const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("musician_performances")
     .select(
       `
@@ -43,7 +44,7 @@ export async function getNextPerformance(todayStr?: string) {
   const t = todayStr ?? toYmdLocal();
   const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("musician_performances")
     .select(
       `
@@ -71,7 +72,7 @@ export async function getNextPerformance(todayStr?: string) {
 export async function getFlyerMapForPerformances(performanceIds: string[]) {
   if (performanceIds.length === 0) return {} as FlyerMap;
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("performance_attachments")
     .select("performance_id, file_url, created_at")
     .eq("file_type", "flyer")
@@ -89,10 +90,10 @@ export async function getFlyerMapForPerformances(performanceIds: string[]) {
   return map;
 }
 
-export async function getDetailsMapForPerformances(performanceIds: string[]) {
+export async function getDetailsMapForPerformances(performanceIds: string[]) : Promise<DetailsMap> {
   if (performanceIds.length === 0) return {} as DetailsMap;
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("performance_details")
     .select(
       "performance_id, load_in_time, set_start_time, set_end_time, set_minutes, customer_charge_yen, one_drink_required"
@@ -131,14 +132,14 @@ export async function ensureAndFetchPrepMap(params: {
     });
   });
 
-  const { error: upErr } = await supabase
+  const { error: upErr } = await (await createSupabaseServerClient())
     .from("performance_prep_tasks")
     .upsert(desired, { onConflict: "performance_id,task_key" });
 
   if (upErr) throw upErr;
 
   const ids = performances.map((p) => p.id);
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("performance_prep_tasks")
     .select("id, performance_id, task_key, act_id, due_date, is_done, done_at, done_by_profile_id")
     .in("performance_id", ids);
@@ -173,14 +174,14 @@ export async function upsertPerformance(params: {
 
   let perfId = id;
   if (perfId) {
-    const { error } = await supabase
+    const { error } = await (await createSupabaseServerClient())
       .from("musician_performances")
       .update(payload)
       .eq("id", perfId);
 
     if (error) throw error;
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await (await createSupabaseServerClient())
       .from("musician_performances")     
       .insert(payload)
       .select("id");

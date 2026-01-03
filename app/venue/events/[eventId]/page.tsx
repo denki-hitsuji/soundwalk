@@ -14,7 +14,7 @@ export default async function VenueEventPage({ params }: PageProps) {
   // 認証（主催者判定に使う）
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await (await createSupabaseServerClient()).auth.getUser();
 
   if (!user) {
     // 未ログインの扱いはプロジェクトの方針に合わせて
@@ -22,7 +22,7 @@ export default async function VenueEventPage({ params }: PageProps) {
   }
 
   // event本体（必要カラムだけ）
-  const { data: event, error: eventErr } = await supabase
+  const { data: event, error: eventErr } = await (await createSupabaseServerClient())
     .from("events")
     .select(
       `
@@ -46,7 +46,7 @@ export default async function VenueEventPage({ params }: PageProps) {
 
   // venue（任意：表示用）
   const { data: venue } = event.venue_id
-    ? await supabase
+    ? await (await createSupabaseServerClient())
         .from("venues")
         .select("id,name")
         .eq("id", event.venue_id)
@@ -55,7 +55,7 @@ export default async function VenueEventPage({ params }: PageProps) {
 
   // 出演者一覧（event_id で紐付いているものだけ）
   // acts は name 等、profiles は display_name 等（あなたの実カラムに合わせて読み替え）
-  const { data: performances, error: perfErr } = await supabase
+  const { data: performances, error: perfErr } = await (await createSupabaseServerClient())
     .from("musician_performances")
     .select(
       `

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client";;
 
 type Venue = { id: string; name: string };
 

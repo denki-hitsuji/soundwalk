@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DashboardPerformanceCard } from "@/components/performances/DashboardPerformanceCard";
-import { type PrepMap } from "@/lib/performanceUtils";
+import { type PrepMap } from "@/lib/utils/performance";
 import { updatePrepTaskDone } from "@/lib/db/performanceWrites";
 import {
   getNextPerformance,
@@ -12,8 +12,7 @@ import {
   ensureAndFetchPrepMap,
 } from "@/lib/db/performances";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
-import { get } from "http";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 
 export function NextPerformanceSection() {
   const todayStr = useMemo(() => toYmdLocal(), []);
@@ -27,8 +26,8 @@ export function NextPerformanceSection() {
 
   useEffect(() => {
     const load = async () => {
-      const user = await getCurrentUser();
-      setUserId(user?.id ?? null);
+      const user = await useCurrentUser();
+      setUserId(user?.user?.id ?? null);
 
       const next = await getNextPerformance(todayStr);
       setP(next);

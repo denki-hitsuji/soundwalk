@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client";;
 
 export default function SignupClient() {
   const searchParams = useSearchParams();

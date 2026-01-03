@@ -1,5 +1,5 @@
 // lib/api/musician.ts
-import { supabase } from "@/lib/auth/session";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 
 export type MusicianProfile = {
@@ -19,7 +19,7 @@ async function getCurrentUser() {
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await (await createSupabaseServerClient()).auth.getUser();
 
   if (error) throw error;
   if (!user) throw new Error('Not logged in');
@@ -32,7 +32,7 @@ async function getCurrentUser() {
 export async function getMyMusicianProfile(): Promise<MusicianProfile | null> {
   const user = await getCurrentUser();
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from('musicians')
     .select('*')
     .eq('id', user.id)
@@ -70,7 +70,7 @@ export async function upsertMyMusicianProfile(input: {
     bio: input.bio || null,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from('musicians')
     .upsert(payload)
     .select()

@@ -8,7 +8,7 @@ import {
   normalizeAct,
   detailsSummary,
   statusText,
-} from "@/lib/performanceUtils";
+} from "@/lib/utils/performance";
 
 export function DashboardPerformanceCard(props: {
   p: any;

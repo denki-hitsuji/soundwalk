@@ -4,7 +4,7 @@ import Link from "next/link";
 import { act, useEffect, useMemo, useState } from "react";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { get } from "http";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 import { getMyActs, getMyMemberActs } from "@/lib/db/acts";
 import { getMySongs, getRecentSongs, SongRow, updateSong } from "@/lib/db/songs";
 
@@ -152,8 +152,8 @@ export function SongSummaryCard() {
   const loadAll = async () => {
     setLoading(true);
 
-    const user = await getCurrentUser();
-    const uid = user?.id ?? null;
+    const user = await useCurrentUser();
+    const uid = user?.user?.id ?? null;
     setUserId(uid);
 
     if (!uid) {

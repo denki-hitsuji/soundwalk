@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { ActRow, getMyActs } from "@/lib/db/acts";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 
 export function ActSwitcher() {
   const { currentAct, setCurrentAct } = useCurrentAct();
@@ -14,8 +14,8 @@ export function ActSwitcher() {
   const load = useCallback(async () => {
     setLoading(true);
 
-    const user = await getCurrentUser();
-    if (!user) {
+    const user = await useCurrentUser();
+    if (!user.user) {
       setActs([]);
       setLoading(false);
       return;

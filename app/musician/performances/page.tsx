@@ -15,12 +15,13 @@ import {
   type PrepTaskRow,
   type PrepMap,
   getPerformances,
-} from "@/lib/performanceUtils";
+} from "@/lib/utils/performance";
 
 import { updatePrepTaskDone } from "@/lib/db/performanceWrites";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays, fmtMMdd } from "@/lib/utils/date";
-import { get } from "http";
-import { getCurrentUser, supabase } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
+import { getFutureFlyers } from "@/lib/utils/performance";
+import { ensureAndFetchPrepMap, getDetailsMapForPerformances } from "@/lib/db/performances";
 
 export default function PerformancesPage() {
   const [loading, setLoading] = useState(true);
@@ -50,10 +51,8 @@ export default function PerformancesPage() {
       setLoading(true);
 
       // user id を先に取る（done_by に使う）
-      {
-        const data = await getCurrentUser();
-        setUserId(data?.id ?? null);
-      }
+      const user = await useCurrentUser();
+      setUserId(user?.user?.id ?? null);
 
       // 1) ライブ一覧（acts も一緒）
       const { data, error } = await getPerformances();
@@ -88,12 +87,7 @@ export default function PerformancesPage() {
 
       // 2) 未来分の代表フライヤー（最新1枚）
       {
-        const { data: atts, error: attErr } = await supabase
-          .from("performance_attachments")
-          .select("performance_id, file_url, created_at")
-          .eq("file_type", "flyer")
-          .in("performance_id", futureIds)
-          .order("created_at", { ascending: false });
+        const { data: atts, error: attErr } = await getFutureFlyers(futureIds);
 
         if (attErr) {
           console.error("load future flyers error", attErr);
@@ -109,17 +103,14 @@ export default function PerformancesPage() {
 
       // 3) 未来分の details
       {
-        const { data: dets, error: detErr } = await supabase
-          .from("performance_details")
-          .select("performance_id, load_in_time, set_start_time, set_end_time, set_minutes, customer_charge_yen, one_drink_required")
-          .in("performance_id", futureIds);
+        const { data: dets, error: detErr } = await getDetailsMapForPerformances(futureIds);
 
         if (detErr) {
           console.error("load future details error", detErr);
           setDetailsByPerformanceId({});
         } else {
           const dmap: DetailsMap = {};
-          for (const d of dets ?? []) dmap[d.performance_id] = d as DetailsRow;
+          for (const d of (dets ?? []) as unknown as DetailsRow[]) dmap[d.performance_id] = d;
           setDetailsByPerformanceId(dmap);
         }
       }
@@ -143,31 +134,21 @@ export default function PerformancesPage() {
             });
           });
 
-        const { error: upErr } = await supabase
-          .from("performance_prep_tasks")
-          .upsert(desired, { onConflict: "performance_id,task_key" });
+        const { data: prepMap, error: upErr } = await ensureAndFetchPrepMap({
+          performances: list.filter((p) => p.event_date >= todayStr && p.act_id && p.status !== "cancelled"),
+        });
 
         if (upErr) {
           console.error("prep upsert error", upErr);
           setPrepByPerformanceId({});
         } else {
-          const { data: tasks, error: tErr } = await supabase
-            .from("performance_prep_tasks")
-            .select("id, performance_id, task_key, act_id, due_date, is_done, done_at, done_by_profile_id")
-            .in("performance_id", futureIds);
-
-          if (tErr) {
-            console.error("prep select error", tErr);
-            setPrepByPerformanceId({});
-          } else {
-            const pm: PrepMap = {};
-            for (const t of tasks ?? []) {
-              const row = t as PrepTaskRow;
-              pm[row.performance_id] ??= {};
-              pm[row.performance_id][row.task_key] = row;
-            }
-            setPrepByPerformanceId(pm);
+          const pm: PrepMap = {};
+          for (const t of Object.values(prepMap ?? {})) {
+            const row = t as PrepTaskRow;
+            pm[row.performance_id] ??= {};
+            pm[row.performance_id][row.task_key] = row;
           }
+          setPrepByPerformanceId(pm);
         }
       }
 

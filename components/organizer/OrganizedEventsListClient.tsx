@@ -3,8 +3,9 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client.legacy";
-import { getCurrentUser } from "@/lib/auth/session";
+import { supabase } from "@/lib/supabase/client";
+import { useCurrentUser } from "@/lib/auth/session.client";
+import { getEventActs } from "@/lib/db/venues";
 
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
 
@@ -37,8 +38,8 @@ export default function MusicianOrganizedEventsPage() {
       setLoading(true);
       setError(null);
       try {
-        const user = await getCurrentUser();
-        if (!user) {
+        const user = await useCurrentUser();
+        if (!user.user) {
           setUserMissing(true);
           return;
         }
@@ -64,7 +65,7 @@ export default function MusicianOrganizedEventsPage() {
             )
           `,
           )
-          .eq("organizer_profile_id", user.id)
+          .eq("organizer_profile_id", user.user?.id)
           .order("event_date", { ascending: true })
           .order("start_time", { ascending: true });
 
@@ -79,19 +80,13 @@ export default function MusicianOrganizedEventsPage() {
         const eventIds = eventList.map((e) => e.id);
 
         // 2. event_acts から acceptedCount を集計
-        const { data: actsRows, error: actsError } = await supabase
-          .from("event_acts")
-          .select("event_id, status")
-          .eq("status", "accepted")
-          .in("event_id", eventIds);
-
-        if (actsError) throw actsError;
-
+        const eventActs = eventIds.map(e => getEventActs(e));
         const countMap = new Map<string, number>();
-        for (const row of actsRows ?? []) {
+        for (const row of eventActs ?? []) {
+          const r = await row;
           countMap.set(
-            row.event_id as string,
-            (countMap.get(row.event_id as string) ?? 0) + 1,
+            r[0].event_id as string,
+            (countMap.get(r[0].event_id as string) ?? 0) + 1,
           );
         }
 

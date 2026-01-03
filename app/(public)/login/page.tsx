@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client";;
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {

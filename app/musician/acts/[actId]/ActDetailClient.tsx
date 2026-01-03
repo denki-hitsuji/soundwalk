@@ -9,10 +9,10 @@ import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
 import { ActRow, deleteActById, getActById, getMyMemberActs } from "@/lib/db/acts";
-import { PerformanceRow } from "@/lib/performanceUtils";
+import { PerformanceRow } from "@/lib/utils/performance";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 import { getMyUpcomingPerformances } from "@/lib/db/performances";
 import { getEventById } from "@/lib/api/events";
 import { getMySongs } from "@/lib/db/songs";
@@ -135,9 +135,9 @@ function Badge({ children }: { children: React.ReactNode }) {
       setLoading(true);
       try {
         // user
-        const user = await getCurrentUser();
+        const user = await useCurrentUser();
         if (!user) throw new Error("ログイン情報の取得に失敗しました。");
-        const uid = user?.id ?? null;
+        const uid = user?.user?.id ?? null;
         setUserId(uid);
         // act
         {

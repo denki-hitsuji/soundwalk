@@ -4,8 +4,8 @@
 import { useEffect, useState } from 'react';
 import {
   getVenueBookingsWithDetails,
-  type VenueBookingWithDetails,
 } from '@/lib/api/bookings';
+import { VenueBookingWithDetails } from '@/lib/db/bookings';
 
 export default function VenueBookingsPage() {
   const [bookings, setBookings] = useState<VenueBookingWithDetails[]>([]);

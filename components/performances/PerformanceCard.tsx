@@ -1,7 +1,7 @@
 "use client";
 
 import { ActRow } from "@/lib/db/acts";
-import { DetailsRow, PerformanceRow, PerformanceWithActs } from "@/lib/performanceUtils";
+import { DetailsRow, PerformanceRow, PerformanceWithActs } from "@/lib/utils/performance";
 import Link from "next/link";
 
 type PrepDef = { key: string; label: string; offsetDays: number };

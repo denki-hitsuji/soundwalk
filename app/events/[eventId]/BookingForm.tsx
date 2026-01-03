@@ -3,7 +3,8 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client.legacy";import { getCurrentUser } from "@/lib/auth/session";
+import { supabase } from "@/lib/supabase/client";
+import { useCurrentUser } from "@/lib/auth/session.client";
 ;
 
 type Props = {
@@ -34,8 +35,8 @@ export function BookingForm({ eventId }: Props) {
       setLoadingAct(true);
       setError(null);
       try {
-        const user = await getCurrentUser();
-        if (!user) {
+        const user = await useCurrentUser();
+        if (!user.user) {
           setError("ログインが必要です。");
           return;
         }
@@ -43,7 +44,7 @@ export function BookingForm({ eventId }: Props) {
         const { data: acts, error: actsError } = await supabase
           .from("acts")
           .select("*")
-          .eq("owner_profile_id", user.id)
+          .eq("owner_profile_id", user.user.id)
           .order("created_at", { ascending: true });
 
         if (actsError) throw actsError;
@@ -55,9 +56,9 @@ export function BookingForm({ eventId }: Props) {
           const { data: newAct, error: insertActError } = await supabase
             .from("acts")
             .insert({
-              name: user.user_metadata?.name ?? "My Act",
+              name: user.user?.user_metadata?.name ?? "My Act",
               act_type: "solo",
-              owner_profile_id: user.id,
+              owner_profile_id: user.user.id,
             })
             .select("*")
             .single();

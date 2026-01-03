@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client";;
 
 type Status = "loading" | "success" | "error";
 

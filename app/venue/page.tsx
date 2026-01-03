@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client.legacy";import { getCurrentUser } from "@/lib/auth/session";
+import { supabase } from "@/lib/supabase/client";import { useCurrentUser } from "@/lib/auth/session.client";
 ;
 
 type VenueRow = {
@@ -25,7 +25,7 @@ export default function VenueDashboardPage() {
       setLoading(true);
       setError(null);
       try {
-        const user = await getCurrentUser();
+        const user = await useCurrentUser();
         if (!user) {
           setUserMissing(true);
           return;
@@ -45,7 +45,7 @@ export default function VenueDashboardPage() {
             )
           `,
           )
-          .eq("profile_id", user.id)
+          .eq("profile_id", user.user?.id)
           .order("created_at", { ascending: true });
 
         if (queryError) throw queryError;

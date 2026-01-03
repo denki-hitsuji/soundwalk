@@ -1,5 +1,7 @@
 // lib/api/events.ts
-import { supabase } from "@/lib/auth/session";
+"use server";
+import { getCurrentUser } from "@/lib/auth/session.server";
+import { createSupabaseServerClient } from "../supabase/server";
 
 export type EventStatus = 'open' | 'pending' | 'draft' | 'matched' | 'cancelled';
 
@@ -28,19 +30,6 @@ export type EventWithVenue = EventRow & {
   } | null;
 };
 
-
-async function getCurrentUser() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) throw new Error('Not logged in');
-  return user;
-}
-
-
 /**
  * 店舗側：自分のイベントを1件取得
  */
@@ -49,7 +38,7 @@ async function getCurrentUser() {
  * EventOffersPage (/venue/events/[eventId]) から使用
  */
 export async function getEventById(eventId: string): Promise<EventRow | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
         .from('events')
         .select(`
   id,
@@ -96,7 +85,7 @@ export async function getOpenEventsForMusician(): Promise<EventWithVenue[]> {
   const user = await getCurrentUser();
   // user は今のところ使わないが、将来的に「自分のエリアだけ」とかに使える
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from('events')
     .select(
             `
@@ -174,15 +163,15 @@ export async function createEvent(input: {
 }): Promise<void> {
   const user = await getCurrentUser();
 
-  const { error } = await supabase.from('events').insert({
-    venue_id: user.id,
+  const { error } = await (await createSupabaseServerClient()).from('events').insert({
+    venue_id: user?.id,
     title: input.title,
     event_date: input.event_date,
     start_time: input.start_time,
     end_time: input.end_time,
     status: 'open',                // 新規は募集中
     max_artists: input.max_artists, 
-    organizer_profile_id: user.id
+    organizer_profile_id: user?.id
   });
 
   if (error) {
@@ -204,7 +193,7 @@ export async function updateEvent(eventId: string, input: {
 }): Promise<void> {
   const user = await getCurrentUser();
 
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from('events')
     .update({
       title: input.title,
@@ -214,7 +203,7 @@ export async function updateEvent(eventId: string, input: {
       max_artists: input.max_artists,
     })
     .eq('id', eventId)
-    .eq('venue_id', user.id); // 自分のイベントだけ更新できるように制限
+    .eq('venue_id', user?.id); // 自分のイベントだけ更新できるように制限
 
   if (error) {
     throw error;
@@ -226,11 +215,11 @@ export async function deleteEvent(eventId: string): Promise<void> {
   const user = await getCurrentUser();
 
   // まず「自分のイベントか」を確認（任意だが安全）
-  const { data: ev, error: evError } = await supabase
+  const { data: ev, error: evError } = await (await createSupabaseServerClient())
     .from('events')
     .select('id')
     .eq('id', eventId)
-    .eq('venue_id', user.id)
+    .eq('venue_id', user?.id)
     .maybeSingle();
 
   if (evError) throw evError;
@@ -240,11 +229,11 @@ export async function deleteEvent(eventId: string): Promise<void> {
 //   await supabase.from('bookings').delete().eq('event_id', eventId);
 //   await supabase.from('offers').delete().eq('event_id', eventId);
 
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from('events')
     .delete()
     .eq('id', eventId)
-    .eq('venue_id', user.id);
+    .eq('venue_id', user?.id);
 
   if (error) {
     throw error;
@@ -254,22 +243,22 @@ export async function deleteEvent(eventId: string): Promise<void> {
 /**
  * 店舗として自分のイベント一覧
  */
-export async function getMyEvents(): Promise<Event[]> {
+export async function getMyEvents(): Promise<EventRow[]> {
     const user = await getCurrentUser();
 
-    const { data, error } = await supabase
+    const { data, error } = await (await createSupabaseServerClient())
         .from('events')
         .select('*')
-        .eq('venue_id', user.id)
+        .eq('venue_id', user?.id)
         .order('event_date', { ascending: true })
         .order('start_time', { ascending: true });
 
     if (error) throw error;
-    return (data ?? []) as Event[];
+    return (data ?? []) as EventRow[];
 }
 
 export async function getEventCountForVenue(venueId: string): Promise<number> {
-  const { count, error } = await supabase
+  const { count, error } = await (await createSupabaseServerClient())
     .from('events')
     .select('id', { count: 'exact', head: true })
     .eq('venue_id', venueId);
@@ -279,7 +268,7 @@ export async function getEventCountForVenue(venueId: string): Promise<number> {
 }
 
 export async function getEventCountForOrganizer(organizerProfileId: string): Promise<number> {
-  const { count, error } = await supabase
+  const { count, error } = await (await createSupabaseServerClient())
     .from('events')
     .select('id', { count: 'exact', head: true })
     .eq('organizer_profile_id', organizerProfileId);
@@ -289,7 +278,7 @@ export async function getEventCountForOrganizer(organizerProfileId: string): Pro
 }
 
 export async function getOpenEventCount(): Promise<number> {
-  const { count, error } = await supabase
+  const { count, error } = await (await createSupabaseServerClient())
     .from('events')
     .select('id', { count: 'exact', head: true })
     .eq('status', 'open');
@@ -305,7 +294,7 @@ export async function upsertEventAct(params: {
 }): Promise<void> {
   const { eventId, actId, status } = params;
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("event_acts")
     .upsert(
       {
@@ -325,7 +314,7 @@ export async function removeEventAct(params: {
 }): Promise<void> {
   const { eventId, actId } = params;
 
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from("event_acts")
     .delete()
     .eq("event_id", eventId)
@@ -341,24 +330,24 @@ export async function upsertAllEventActs(params: {
   const { eventId, actIds } = params;
 
   // 既存の actIds を取得
-  const { data: existingData, error: fetchError } = await supabase
+  const { data: existingData, error: fetchError } = await (await createSupabaseServerClient())
     .from("event_acts")
     .select("act_id")
     .eq("event_id", eventId);
 
   if (fetchError) throw fetchError;
 
-  const existingActIds = existingData?.map((row) => row.act_id) || [];
+  const existingActIds = existingData?.map((row: { act_id: any; }) => row.act_id) || [];
 
   // 挿入すべき actIds を決定
   const toInsert = actIds.filter((id) => !existingActIds.includes(id));
 
   // 削除すべき actIds を決定
-  const toDelete = existingActIds.filter((id) => !actIds.includes(id));
+  const toDelete = existingActIds.filter((id: string) => !actIds.includes(id));
 
   // 挿入
   if (toInsert.length > 0) {
-    const { error: insertError } = await supabase
+    const { error: insertError } = await (await createSupabaseServerClient())
       .from("event_acts")
       .insert(
         toInsert.map((actId) => ({
@@ -373,7 +362,7 @@ export async function upsertAllEventActs(params: {
 
   // 削除
   if (toDelete.length > 0) {
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await (await createSupabaseServerClient())
       .from("event_acts")
       .delete()
       .eq("event_id", eventId)
@@ -389,7 +378,7 @@ export async function updateEventStatus(params: {
 }): Promise<void> {
   const { eventId, status } = params;
 
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from("events")
     .update({ status: status })
     .eq("id", eventId);

@@ -4,7 +4,7 @@
 import { useTransition } from "react";
 import { organizerCancelPerformance } from "@/app/actions/organizerCancelPerformance";
 import { useRouter } from "next/navigation";
-import { PerformanceRow } from "@/lib/performanceUtils";
+import { PerformanceRow } from "@/lib/utils/performance";
 export function EventPerformancesPanel(props: {
   eventId: string;
   maxArtists: number | null;

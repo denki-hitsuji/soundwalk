@@ -2,7 +2,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
-import { ProfileRow } from "@/lib/api/profiles";
+import { ProfileRow } from "@/lib/db/profiles";
 
 type ActionState =
   | { ok: true; message: string; profile: ProfileRow }

@@ -1,6 +1,6 @@
 // app/bands/[slug]/page.tsx
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const revalidate = 300; // 5分
 
@@ -28,7 +28,7 @@ type Payload = {
 
 export default async function BandPublicPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const { data, error } = await supabase
+    const { data, error } = await (await createSupabaseServerClient())
         .from("v_act_public_page_payload")
         .select("*")
         .eq("slug", slug)

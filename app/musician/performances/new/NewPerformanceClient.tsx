@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
 import { getMyActs } from "@/lib/db/acts";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 import { upsertPerformance } from "@/lib/db/performances";
 
 type ActOption = {
@@ -35,9 +35,9 @@ export default function NewPerformanceClient() {
   useEffect(() => {
     const load = async () => {
       setActsLoading(true);
-      const user = await getCurrentUser();
+      const user = await useCurrentUser();
       if (!user) return;
-      setUserId(user.id);
+      setUserId(user?.user?.id ?? null);
 
       const data = await getMyActs();
 

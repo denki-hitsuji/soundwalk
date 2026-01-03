@@ -1,6 +1,7 @@
 // lib/actQueries.ts
-import { getCurrentUser, supabase } from "@/lib/auth/session";;
+import { getCurrentUser } from "@/lib/auth/session.server";;
 import { toYmdLocal } from "@/lib/utils/date";
+import { createSupabaseServerClient } from "../supabase/server";
 export type ActRow = {
   id: string;
   name: string;
@@ -46,7 +47,8 @@ export async function getMyActs(): Promise<ActRow[]> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
-  const { data, error } = await supabase
+  const { data, error } = await
+    (await createSupabaseServerClient())
     .from("v_my_acts")
     .select("*")
 
@@ -59,7 +61,7 @@ export async function getMyOwnerActs(): Promise<ActRow[]> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("v_my_acts")
     .select("*")
     .eq("owner_profile_id", user.id);
@@ -73,7 +75,7 @@ export async function getMyMemberActs(): Promise<ActRow[]> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("v_my_acts")
     .select("*")
     .neq("owner_profile_id", user.id);
@@ -94,7 +96,7 @@ export async function ensureMyDefaultAct(): Promise<ActRow> {
   // なければ作る
   const defaultName = "My Act"; // あとでユーザー名から決めてもいい
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("v_my_acts")
     .insert({
       name: defaultName,
@@ -112,7 +114,7 @@ export async function ensureMyDefaultAct(): Promise<ActRow> {
 
 export async function updateAct(act : Partial<ActRow> & { id: string }) {
   const { id, ...patch } = act;
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from("acts")
     .update(patch)
     .eq("id", id);
@@ -125,7 +127,7 @@ export async function updateAct(act : Partial<ActRow> & { id: string }) {
 export async function getNextPerformance() {
   const today = toYmdLocal();
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("v_my_performances")
     .select(`
       id,
@@ -150,12 +152,12 @@ export async function getNextPerformance() {
 }
   // “できる範囲で” storage から消す（photo_url しか無いので推測）
   const tryRemoveFromStorageByUrl = async (url: string) => {
-    // 例: https://xxx.supabase.co/storage/v1/object/public/act-photos/<PATH>
+    // 例: https://xxx.(await create(await createSupabaseServerClient())ServerClient())().co/storage/v1/object/public/act-photos/<PATH>
     const marker = "/storage/v1/object/public/act-photos/";
     const idx = url.indexOf(marker);
     if (idx < 0) return; // 形式が違うなら諦める
     const path = url.slice(idx + marker.length).split("?")[0]; // クエリ除去
-    await supabase.storage.from("act-photos").remove([path]);
+    await (await createSupabaseServerClient()).storage.from("act-photos").remove([path]);
   };
 
 export async function uploadActPhoto(actId: string, file: File): Promise<string> {
@@ -163,7 +165,7 @@ export async function uploadActPhoto(actId: string, file: File): Promise<string>
   const filename = `${crypto.randomUUID()}.${ext}`;
   const path = `${actId}/${filename}`;
 
-  const { error: upErr } = await supabase.storage
+  const { error: upErr } = await (await createSupabaseServerClient()).storage
     .from("act-photos")
     .upload(path, file, {
       cacheControl: "3600",
@@ -172,7 +174,7 @@ export async function uploadActPhoto(actId: string, file: File): Promise<string>
     });
   if (upErr) throw upErr;
 
-  const { data } = supabase.storage.from("act-photos").getPublicUrl(path);
+  const { data } = (await createSupabaseServerClient()).storage.from("act-photos").getPublicUrl(path);
   const publicUrl = data.publicUrl;
 
   return publicUrl;
@@ -200,7 +202,7 @@ export async function deletePhotoDataAndStorage(act: ActRow) {
     } 
 }
 export async function getActById(actId: string): Promise<ActRow> {
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("acts")
     .select("*")
     .eq("id", actId)
@@ -210,7 +212,7 @@ export async function getActById(actId: string): Promise<ActRow> {
   return data as ActRow;
 }
 export async function getActsByIds(actIds: string[]) {
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("acts")
     .select("id, name, act_type")
     .in("id", actIds);  
@@ -225,16 +227,46 @@ export async function createActInvite(params: {
   p_expires_in_days: number,
   p_max_uses: number,
 }) { 
-  const { data, error } = await supabase.rpc("create_act_invite", params);
+  const { data, error } = await (await createSupabaseServerClient()).rpc("create_act_invite", params);
   if (error) throw error;
   return data;
   
 }
 export async function deleteActById(actId: string) {
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from("acts")
     .delete()
     .eq("id", actId);
 
   if (error) throw error;
+}
+
+export async function getAllActs(): Promise<ActRow[]> {
+  const { data, error } = await (await createSupabaseServerClient())
+    .from("acts")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as ActRow[];
+}
+
+export async function insertAct(params: {
+  guestName: string;
+  guestActType: string;
+  ownerProfileId: string;
+}): Promise<{ id: string }> {
+  const { data, error } = await (await createSupabaseServerClient())
+      .from("acts")
+      .insert({
+        name: params.guestName.trim(),
+        act_type: params.guestActType,
+        owner_profile_id: params.ownerProfileId, 
+        is_temporary: true,
+      })
+      .select("id")
+      .single();
+  
+  if (error) throw error;
+  return data as { id: string };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { getCurrentSession } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 import { createActInvite } from "@/lib/db/acts";
 
 export function ActInviteBox({ actId }: { actId: string }) {
@@ -16,7 +16,7 @@ export function ActInviteBox({ actId }: { actId: string }) {
   const createInvite = async () => {
     setLoading(true);
     try {
-      const session = await getCurrentSession();
+      const session = useCurrentUser();
       if (!session) {
         alert("ログインが必要です。");
         return;

@@ -1,6 +1,7 @@
 // lib/api/venue.ts
-import { supabase } from "@/lib/auth/session";
-import { getCurrentUser } from "../auth/session";
+"use server"
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "../auth/session.server";
 
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 
@@ -21,7 +22,7 @@ export async function getMyVenueProfile(): Promise<VenueProfile | null> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from('venues')
     .select('*')
     .eq('id', user.id)
@@ -60,7 +61,7 @@ export async function upsertMyVenueProfile(input: {
     photo_url: input.photoUrl || null,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from('venues')
     .upsert(payload)
     .select()

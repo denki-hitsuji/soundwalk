@@ -1,55 +1,10 @@
 // lib/api/bookings.ts
-import { getCurrentUser, supabase } from "@/lib/auth/session";
-
-export type BookingStatus = 'upcoming' | 'accepted' | 'completed' | 'cancelled';
-
-export type BookingWithDetails = {
-  id: string;
-  event_id: string;
-  musician_id: string;
-  venue_id: string;
-  status: BookingStatus;
-  created_at: string;
-  events: {
-    id: string;
-    title: string;
-    event_date: string;
-    start_time: string;
-    end_time: string;
-  } | null;
-  venues: {
-    id: string;
-    name: string;
-  } | null;
-};
+"use server";
+import { getCurrentUser } from "@/lib/auth/session.server";
+import { get } from "http";
+import { BookingStatus, BookingWithDetails, getBookingsWithDetails, getVenueBookingsWithDetailsDB, updateBookingStatusDB, VenueBookingWithDetails } from "../db/bookings";
 
 
-// 店舗側で使う：ミュージシャン情報もほしい版
-export type VenueBookingWithDetails = {
-  id: string;
-  event_id: string;
-  musician_id: string;
-  venue_id: string;
-  status: BookingStatus;
-  created_at: string;
-  events: {
-    id: string;
-    title: string;
-    event_date: string;
-    start_time: string;
-    end_time: string;
-  } | null;
-  musicians: {
-    id: string;
-    genre: string | null;
-    area: string | null;
-    sample_video_url: string | null;
-    bio: string | null;
-    profiles: {
-      display_name: string;
-    } | null;
-  } | null;
-};
 /**
  * ミュージシャン側：自分のブッキング一覧
  */
@@ -58,39 +13,13 @@ export async function getMyBookingsWithDetails(): Promise<BookingWithDetails[]> 
   const user = await getCurrentUser();
   if(!user) throw new Error("ログインが必要です");
 
-  const { data, error } = await supabase
-    .from('bookings')
-    .select(
-      `
-      id,
-      event_id,
-      musician_id,
-      venue_id,
-      status,
-      created_at,
-      events (
-        id,
-        title,
-        event_date,
-        start_time,
-        end_time
-      ),
-      venues (
-        id,
-        name
-      )
-    `
-    )
-    .eq('musician_id', user.id)
-    .order('events(event_date)', { ascending: true })
-    .order('events(start_time)', { ascending: true });
+  const data = getBookingsWithDetails().then((bookings) => {
+    return bookings.filter((booking) => booking.musician_id === user.id);
+  });
 
-  if (error) throw error;
 
   // 👇 ここで「生の data:any[]」を正規化してから BookingWithDetails にする
-  const raw = (data ?? []) as any[];
-
-  const normalized: BookingWithDetails[] = raw.map((row) => {
+  const normalized: BookingWithDetails[] = (await data).map((row) => {
     const ev = Array.isArray(row.events) ? row.events[0] ?? null : row.events ?? null;
     const venue = Array.isArray(row.venues) ? row.venues[0] ?? null : row.venues ?? null;
 
@@ -129,41 +58,7 @@ export async function getVenueBookingsWithDetails(): Promise<VenueBookingWithDet
   const user = await getCurrentUser();
   if(!user) throw new Error("ログインが必要です");
 
-  const { data, error } = await supabase
-    .from('bookings')
-    .select(
-      `
-      id,
-      event_id,
-      musician_id,
-      venue_id,
-      status,
-      created_at,
-      events (
-        id,
-        title,
-        event_date,
-        start_time,
-        end_time
-      ),
-      musicians (
-        id,
-        genre,
-        area,
-        sample_video_url,
-        bio,
-        profiles (
-          display_name
-        )
-      )
-    `
-    )
-    .eq('venue_id', user.id)
-    .order('events(event_date)', { ascending: true })
-    .order('events(start_time)', { ascending: true });
-
-  if (error) throw error;
-
+  const data = await getVenueBookingsWithDetailsDB(user.id);
   const raw = (data ?? []) as any[];
 
   const normalized: VenueBookingWithDetails[] = raw.map((row) => {
@@ -221,24 +116,18 @@ export async function createBooking(params: {
   eventId: string;
   musicianId: string;
   venueId: string;
-  message?: string;
-}) {
+  message: string;
+}) : Promise<BookingWithDetails> {
   const user = await getCurrentUser();
   if(!user) throw new Error("ログインが必要です");
 
-  const { data: booking, error: insertError } = await supabase
-    .from("venue_bookings")
-    .insert({
-      event_id: params.eventId,
-      musician_id: params.musicianId,
-      venue_id: params.venueId,
-      message: params.message || null,
-      status: "upcoming",
-    })
-    .select()
-    .single();
-
-  if (insertError) throw insertError;
+  const booking = await createBooking({
+    eventId: params.eventId,
+    musicianId: params.musicianId,
+    venueId: params.venueId,
+    message: params.message
+  });
+  await updateBookingStatus({ bookingId: booking.id, status: "accepted" });
 
   return booking;
 }
@@ -250,10 +139,12 @@ export async function updateBookingStatus(params: {
   const user = await getCurrentUser();
   if(!user) throw new Error("ログインが必要です");
 
-  const { error } = await supabase
-    .from("venue_bookings")
-    .update({ status: params.status })
-    .eq("id", params.bookingId);
-
-  if (error) throw error;
+  try {
+    await updateBookingStatusDB({
+      bookingId: params.bookingId,
+      status: params.status
+    });
+  } catch (error) {
+    throw error;
+  }
 } 

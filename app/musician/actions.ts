@@ -1,7 +1,9 @@
 // app/musician/actions.ts
 "use server";
 
-import { getCurrentUser, supabase } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session.server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
 
 export async function updateMyAct(formData: FormData) {
   const user = await getCurrentUser();
@@ -18,7 +20,7 @@ export async function updateMyAct(formData: FormData) {
     throw new Error("act_id と name は必須です");
   }
 
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from("acts")
     .update({
       name,

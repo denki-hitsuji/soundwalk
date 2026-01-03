@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "@/lib/auth/session";
+import { signOut } from "@/lib/auth/session.client";
 import { NAV_ITEMS } from "./AppShell";
 
 type NavItem = {

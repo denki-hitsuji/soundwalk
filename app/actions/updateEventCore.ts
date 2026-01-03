@@ -12,11 +12,11 @@ export async function updateEventCore(input: {
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser();
+  } = await (await createSupabaseServerClient()).auth.getUser();
 
   if (authError || !user) throw new Error("Not authenticated");
 
-  const { error } = await supabase.rpc("update_event_core", {
+  const { error } = await (await createSupabaseServerClient()).rpc("update_event_core", {
     p_event_id: input.eventId,
     p_new_date: input.newDateISO,
     p_new_venue_id: input.newVenueId,

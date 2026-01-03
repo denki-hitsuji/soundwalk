@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 
 export default function PublicHomePage() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export default function PublicHomePage() {
 
   useEffect(() => {
     const run = async () => {
-      const user = await getCurrentUser();
+      const user = await useCurrentUser();
       if (user) {
         router.replace("/musician"); // ログイン済はダッシュボードへ
         return;

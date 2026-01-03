@@ -2,13 +2,12 @@
 "use server";
 
 import { createBooking } from "@/lib/api/bookings";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 import { getMyOwnerActs } from "@/lib/db/acts";
-import { supabase } from "@/lib/supabase/client.legacy";;
-
+import { supabase } from "@/lib/supabase/client";
 export async function submitBooking(formData: FormData, eventId: string) {
-  const user = await getCurrentUser();
-  if (!user) {
+  const data = await useCurrentUser();
+  if (!data.user) {
     throw new Error("ログインが必要です");
   }
 
@@ -31,8 +30,8 @@ export async function submitBooking(formData: FormData, eventId: string) {
   const booking = createBooking({
     eventId,
     musicianId: act.id,
-    venueId: user.id,
-    message: message || undefined,
+    venueId: data?.user?.id ?? "",
+    message: message ,
   });
 
   if (insertError) throw insertError;

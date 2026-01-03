@@ -3,9 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase  } from "@/lib/supabase/client.legacy";;
+import { supabase  } from "@/lib/supabase/client";;
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 
 type VenueOption = {
   id: string;
@@ -60,7 +60,7 @@ export default function NewEventPage() {
     setError(null);
 
     try {
-      const user = await getCurrentUser();
+      const user = await useCurrentUser();
       if (!user) {
         setError("ログインが必要です。");
         return;
@@ -118,7 +118,7 @@ export default function NewEventPage() {
           charge: parsedCharge,
           conditions: conditions.trim() || null,
           status: "open", // まずは募集中として作る
-          organizer_profile_id: user.id,
+          organizer_profile_id: user?.user?.id,
         })
         .select("id")
         .single();

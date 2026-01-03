@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EventRow, getEventById, updateEvent, updateEventStatus } from "@/lib/api/events";
-import { getCurrentUser } from "@/lib/auth/session";
+import { useCurrentUser } from "@/lib/auth/session.client";
 import { getAllVenues, Venue } from "@/lib/db/venues";
 
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
@@ -38,7 +38,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
 
     try {
       // auth
-      const auth = await getCurrentUser();  
+      const auth = await useCurrentUser();  
       if (!auth) throw new Error("ログインしてください。");
 
       // event
@@ -47,7 +47,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
       const row = event as EventRow;
 
       // organizer check
-      if (row.organizer_profile_id !== auth.id) {
+      if (row.organizer_profile_id !== auth.user?.id) {
         throw new Error("このイベントはあなたの企画ではありません。");
       }
 

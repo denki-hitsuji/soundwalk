@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { signOut } from "@/lib/auth/session";
+import { signOut } from "@/lib/auth/session.client";
 
 export default function LogoutButton() {
   const router = useRouter();

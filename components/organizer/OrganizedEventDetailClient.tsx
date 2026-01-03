@@ -4,17 +4,20 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client.legacy";;
+import { supabase } from "@/lib/supabase/client";;
 import { PerformanceCard } from "../performances/PerformanceCard";
-import { ActRow } from "@/lib/db/acts";
+import { ActRow, getActsByIds, getAllActs, insertAct } from "@/lib/db/acts";
 import { parseYmdLocal, addDays, fmtMMdd, toYmdLocal } from "@/lib/utils/date";
 import {
   PREP_DEFS,
   normalizeAct,
   detailsSummary,
   statusText,
-} from "@/lib/performanceUtils";
-import { getCurrentUser } from "@/lib/auth/session";
+} from "@/lib/utils/performance";
+import { useCurrentUser } from "@/lib/auth/session.client";
+import { getMyEvents, updateEventStatus, upsertAllEventActs, upsertEventAct } from "@/lib/api/events";
+import { getEventActs, getEventBookings } from "@/lib/db/venues";
+import { createBooking, getBookingsWithDetails } from "@/lib/db/bookings";
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
 
 type EventRow = {
@@ -101,40 +104,15 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
     setActsLoading(true);
 
     try {
-      const user = await getCurrentUser();
+      const user = await useCurrentUser();
       if (!user) {
         setUserMissing(true);
         return;
       }
 
       // 1. 自分が企画したイベントかつ指定IDのものを取得
-      const { data: eventRow, error: eventError } = await supabase
-        .from("events")
-        .select(
-          `
-          id,
-          venue_id,
-          title,
-          event_date,
-          open_time,
-          start_time,
-          end_time,
-          max_artists,
-          status,
-          charge,
-          conditions,
-          created_at,
-          venues (
-            id,
-            name
-          )
-        `,
-        )
-        .eq("id", eventId)
-        .eq("organizer_profile_id", user.id)
-        .single();
-
-      if (eventError) throw eventError;
+      const data = await getMyEvents();
+      const eventRow = data.find((e) => e.id === eventId);
       if (!eventRow) {
         setError("このイベントは見つからないか、あなたの企画ではありません。");
         return;
@@ -144,26 +122,11 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
       setEvent(e);
 
       // 2. event_acts から accepted の出演名義を取得
-      const { data: eaRows, error: eaError } = await supabase
-        .from("event_acts")
-        .select(
-          `
-          act_id,
-          status,
-          acts (
-            id,
-            name,
-            act_type
-          )
-        `,
-        )
-        .eq("event_id", eventId)
-        .eq("status", "accepted");
-
-      if (eaError) throw eaError;
+      const eventActs = await getEventActs(eventId);
+      const acceptedActs = eventActs.filter((ea) => ea.status === "accepted");
 
       const actList: ActRow[] =
-        (eaRows ?? []).map((row: any) => ({
+        (eventActs ?? []).map((row: any) => ({
           id: row.acts?.id ?? row.act_id,
           name: row.acts?.name ?? "(不明な名義)",
           act_type: row.acts?.act_type ?? "",
@@ -179,28 +142,16 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
       setActs(actList);
 
       // 3. venue_bookings から応募・招待一覧を取得
-      const { data: bookingRows, error: bookingsError } = await supabase
-        .from("venue_bookings")
-        .select("id, status, message, created_at, event_id, act_id")
-        .eq("event_id", eventId)
-        .order("created_at", { ascending: false });
+      const bookings = await getEventBookings(eventId);
 
-      if (bookingsError) throw bookingsError;
-
-      const rawBookings = bookingRows ?? [];
       const actIds = Array.from(
-        new Set(rawBookings.map((b: any) => b.act_id)),
+        new Set(bookings.map((b: any) => b.act_id)),
       ) as string[];
 
       let actMapForBookings = new Map<string, ActRow>();
 
       if (actIds.length > 0) {
-        const { data: actsForBookings, error: actsError } = await supabase
-          .from("acts")
-          .select("id, name, act_type, owner_profile_id, is_temporary, description, icon_url, photo_url, profile_link_url")
-          .in("id", actIds);
-
-        if (actsError) throw actsError;
+        const actsForBookings = await getActsByIds(actIds);
 
         actMapForBookings = new Map(
           (actsForBookings ?? []).map((a: any) => [
@@ -215,7 +166,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
         );
       }
 
-      const bookingList: BookingRow[] = rawBookings.filter(p => p.status !== "accepted").map((b: any) => {
+      const bookingList: BookingRow[] = bookings.filter(p => p.status !== "accepted").map((b: any) => {
         const act = actMapForBookings.get(b.act_id as string);
         return {
           id: b.id,
@@ -237,8 +188,9 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
         .from("acts")
         .select("id, name, act_type")
         .order("name", { ascending: true });
-
+        
       if (allActsError) throw allActsError;
+      const allActs = getAllActs();
 
       setAllActs((allActsRows ?? []) as ActRow[]);
     } catch (e: any) {
@@ -269,31 +221,21 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
     setInviting(true);
     try {
       // すでにこのイベントに紐づく booking がないか簡易チェック
-      const { data: existing, error: existingError } = await supabase
-        .from("venue_bookings")
-        .select("id")
-        .eq("event_id", event.id)
-        .eq("act_id", inviteActId)
-        .limit(1);
+      const existing = (await getEventBookings(event.id)).find(b => b.act_id === inviteActId);
 
-      if (existingError) throw existingError;
-      if (existing && existing.length > 0) {
+      if (existing ) {
         setInviteError("このミュージシャンはすでにこのイベントに紐づいています。");
         return;
       }
 
       // 招待も応募もひとまず pending として venue に流す
-      const { error: insertError } = await supabase
-        .from("venue_bookings")
-        .insert({
-          event_id: event.id,
-          act_id: inviteActId,
-          status: "pending",
-          message: inviteMessage.trim() || null,
-        });
+      const bookings = await createBooking({
+        eventId: event.id,
+        musicianId: inviteActId,
+        venueId: event.venue_id,
+        message: inviteMessage.trim(),
+      });
 
-      if (insertError) throw insertError;
-      
       const { data, error } = await supabase.rpc("create_offer_and_inbox_performance", {
         p_event_id: event.id,
         p_act_id: inviteActId,
@@ -413,7 +355,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
   setGuestError(null);
 
   // ★ まず現在のユーザーを取得しておく
-  const user = await getCurrentUser();
+  const user = await useCurrentUser();
   if (!user) {
     setGuestError("ログインが必要です。");
     return;
@@ -439,31 +381,20 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
   setAddingGuest(true);
   try {
     // ★ owner_profile_id を必ず渡す
-    const { data: newAct, error: actError } = await supabase
-      .from("acts")
-      .insert({
-        name: guestName.trim(),
-        act_type: guestActType,
-        owner_profile_id: user.id,  // ← ここを追加
-        is_temporary: true,
-      })
-      .select("id")
-      .single();
-
-    if (actError) throw actError;
+    const newAct = await insertAct({
+      guestName: guestName.trim(),
+      guestActType: guestActType,
+      ownerProfileId: user?.user?.id || "",
+    });
 
     const actId = (newAct as { id: string }).id;
 
     // 2. event_acts に accepted として紐づけ
-    const { error: eaError } = await supabase
-      .from("event_acts")
-      .insert({
-        event_id: event.id,
-        act_id: actId,
-        status: "accepted",
-      });
-
-    if (eaError) throw eaError;
+    await upsertEventAct({ 
+      eventId: event.id,
+      actId: actId,
+      status: "accepted",
+    });
 
     // 3. venue_bookings にも accepted として登録
     const { error: bookingError } = await supabase
@@ -474,6 +405,12 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
         status: "accepted",
         message: "主催によるゲスト枠として追加",
       });
+    await createBooking({
+      eventId: event.id,
+      musicianId: actId,
+      venueId: event.venue_id,
+      message: ""
+    });
 
     if (bookingError) throw bookingError;
 
@@ -481,12 +418,8 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
     if (maxArtists != null) {
       const newAcceptedCount = acceptedCount + 1;
       if (newAcceptedCount >= maxArtists) {
-        const { error: statusError } = await supabase
-          .from("events")
-          .update({ status: "matched" })
-          .eq("id", event.id);
+        updateEventStatus({ eventId: event.id, status: "matched" });
 
-        if (statusError) throw statusError;
       }
     }
 

@@ -2,7 +2,7 @@
 
 import { ActRow } from "@/lib/db/acts"
 import { diffDays } from "@/lib/utils/date";
-import { supabase } from "@/lib/auth/session";;
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type PerformanceRow = {
   id: string;
@@ -109,7 +109,7 @@ export function normalizeAct(p: PerformanceWithActs): ActRow | null {
 
 export async function getPerformances(): Promise<{ data: PerformanceWithActs[]; error: any }> {
   // 1) ライブ一覧（acts も一緒）
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("v_my_performances")
     .select(
       `
@@ -201,4 +201,16 @@ if (Array.isArray(p.acts)) {
     };
   });
   return { data: normalizedData, error };
+}
+
+export async function getFutureFlyers(flyerIds: string[]): Promise<{ data: FlyerRow[]; error: any }> {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const { data, error } = await (await createSupabaseServerClient())
+    .from("performance_attachments")
+    .select("performance_id, file_url, created_at")
+    .gt("event_date", todayStr)
+    .order("event_date", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return { data: data as FlyerRow[], error };
 }

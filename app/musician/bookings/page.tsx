@@ -2,7 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client.legacy";import { getCurrentUser } from "@/lib/auth/session";
+import { supabase } from "@/lib/supabase/client";
+import { useCurrentUser } from "@/lib/auth/session.client";
+import { EventRow } from "@/lib/api/events";
 ;
 
 type MyAct = {
@@ -37,8 +39,8 @@ export default function MusicianBookingsPage() {
       setLoading(true);
       setError(null);
       try {
-        const user = await getCurrentUser();
-        if (!user) {
+        const user = await useCurrentUser();
+        if (!user.user) {
           setUserMissing(true);
           return;
         }
@@ -47,7 +49,7 @@ export default function MusicianBookingsPage() {
         const { data: acts, error: actsError } = await supabase
           .from("acts")
           .select("id, name, act_type, owner_profile_id")
-          .eq("owner_profile_id", user.id);
+          .eq("owner_profile_id", user?.user?.id);
 
         if (actsError) throw actsError;
         if (!acts || acts.length === 0) {
@@ -75,7 +77,7 @@ export default function MusicianBookingsPage() {
 
         // 3. 関連イベントを取得
         const eventIds = Array.from(
-          new Set(bookingRows.map((b) => b.event_id)),
+          new Set(bookingRows.map((b: BookingWithDetails) => b.event_id)),
         );
 
         const { data: events, error: eventsError } = await supabase
@@ -86,14 +88,14 @@ export default function MusicianBookingsPage() {
         if (eventsError) throw eventsError;
 
         const eventMap = new Map(
-          (events ?? []).map((e) => [e.id, e]),
+          (events ?? []).map((e : EventRow) => [e.id, e]),
         );
 
         // 4. 結合して BookingWithDetails に整形
         const result: BookingWithDetails[] = (bookingRows ?? []).map(
           (b: any) => {
-            const event = eventMap.get(b.event_id);
-            const act = actMap.get(b.act_id);
+            const event = eventMap.get(b.event_id) as EventRow;
+            const act = actMap.get(b.act_id) as MyAct;
 
             return {
               id: b.id,

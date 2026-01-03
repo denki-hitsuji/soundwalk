@@ -5,10 +5,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function reconfirmPerformance(performanceId: string) {
   const supabase = await createSupabaseServerClient();
 
-  const { data: auth, error: authError } = await supabase.auth.getUser();
+  const { data: auth, error: authError } = await (await createSupabaseServerClient()).auth.getUser();
   if (authError || !auth.user) throw new Error("Not authenticated");
 
-  const { error } = await supabase.rpc("reconfirm_performance", {
+  const { error } = await (await createSupabaseServerClient()).rpc("reconfirm_performance", {
     p_performance_id: performanceId,
     p_user_id: auth.user.id,
   });
@@ -20,10 +20,10 @@ export async function reconfirmPerformance(performanceId: string) {
 export async function declineReconfirmPerformance(performanceId: string) {
   const supabase = await createSupabaseServerClient();
 
-  const { data: auth, error: authError } = await supabase.auth.getUser();
+  const { data: auth, error: authError } = await (await createSupabaseServerClient()).auth.getUser();
   if (authError || !auth.user) throw new Error("Not authenticated");
 
-  const { error } = await supabase.rpc("decline_reconfirm_performance", {
+  const { error } = await (await createSupabaseServerClient()).rpc("decline_reconfirm_performance", {
     p_performance_id: performanceId,
     p_user_id: auth.user.id,
   });

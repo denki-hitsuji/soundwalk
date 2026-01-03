@@ -1,6 +1,7 @@
 // lib/performanceActions.ts
-import { supabase } from "@/lib/auth/session";
-import type { PrepTaskRow } from "@/lib/performanceUtils";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { PrepTaskRow } from "@/lib/utils/performance";
+import { PerformanceRow } from "../utils/performance";
 export async function updatePerformanceMemo(params: {
   performanceId: string;
   newMemo: string | null;
@@ -11,14 +12,14 @@ export async function updatePerformanceMemo(params: {
     memo: newMemo?.trim() ? newMemo.trim() : null,
   };
 
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from("musician_performances")
     .update(patch)
     .eq("id", performanceId);
 
   if (error) throw error;
 } 
-
+  
 export async function updatePrepTaskDone(params: {
   taskId: string;
   nextDone: boolean;
@@ -30,7 +31,7 @@ export async function updatePrepTaskDone(params: {
     ? { is_done: true, done_at: new Date().toISOString(), done_by_profile_id: userId }
     : { is_done: false, done_at: null, done_by_profile_id: null };
 
-  const { data, error } = await supabase
+  const { data, error } = await (await createSupabaseServerClient())
     .from("performance_prep_tasks")
     .update(payload)
     .eq("id", taskId)
@@ -42,7 +43,7 @@ export async function updatePrepTaskDone(params: {
 }
 
 export async function deletePerformanceMemo(performanceId: string): Promise<void> { 
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from("musician_performances")
     .update({ memo: null })
     .eq("id", performanceId);
@@ -62,7 +63,7 @@ export async function upsertPerformanceDetails(params: {
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase
+  const { error } = await (await createSupabaseServerClient())
     .from("performance_details")
     .upsert(payload, { onConflict: "performance_id" });
 

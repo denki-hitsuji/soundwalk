@@ -1,10 +1,11 @@
 // app/musician/profile/page.tsx
+import "server-only";
 import { redirect } from "next/navigation";
 import ProfileEditorClient from "./ProfileEditorClient";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session.server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMyProfile } from "@/lib/api/profiles";
-import { ProfileRow } from "@/lib/api/profiles";
+import { ProfileRow } from "@/lib/db/profiles";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ async function saveProfile(_prev: ActionState | null, formData: FormData): Promi
 
   // RLS 前提：自分の id 以外は upsert できない/できると危険
   const payload = {
-    id: user.id,
+    id: user?.id,
     display_name,
     updated_at: new Date().toISOString(),
   };
