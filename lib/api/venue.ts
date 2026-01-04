@@ -2,7 +2,7 @@
 "use server"
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "../auth/session.server";
-
+const supabase = await createSupabaseServerClient();
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 
 export type VenueProfile = {
@@ -22,7 +22,7 @@ export async function getMyVenueProfile(): Promise<VenueProfile | null> {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from('venues')
     .select('*')
     .eq('id', user.id)
@@ -61,7 +61,7 @@ export async function upsertMyVenueProfile(input: {
     photo_url: input.photoUrl || null,
   };
 
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from('venues')
     .upsert(payload)
     .select()

@@ -12,11 +12,11 @@ import type {
 import { getPerformances, PREP_DEFS } from "@/lib/utils/performance";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
 import { getMyActs } from "./acts";
-
 export async function getMyUpcomingPerformances(todayStr?: string) {
+  const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();
   const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from("musician_performances")
     .select(
       `
@@ -41,10 +41,11 @@ export async function getMyUpcomingPerformances(todayStr?: string) {
 }
 
 export async function getNextPerformance(todayStr?: string) {
+  const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();
   const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
-
-  const { data, error } = await (await createSupabaseServerClient())
+  console.log(`my acts: ${myActs}`);
+  const { data, error } = await supabase
     .from("musician_performances")
     .select(
       `
@@ -65,14 +66,18 @@ export async function getNextPerformance(todayStr?: string) {
     .order("event_date", { ascending: true })
     .limit(1);
 
+  console.log("typeof error", error && Object.getPrototypeOf(error)?.constructor?.name);
+  console.log("row proto", data?.[0] && Object.getPrototypeOf(data[0])?.constructor?.name);
+
   if (error) throw error;
   return ((data?.[0] ?? null) as unknown as PerformanceWithActs | null);
 }
 
 export async function getFlyerMapForPerformances(performanceIds: string[]) {
+  const supabase = await createSupabaseServerClient();
   if (performanceIds.length === 0) return {} as FlyerMap;
 
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from("performance_attachments")
     .select("performance_id, file_url, created_at")
     .eq("file_type", "flyer")
@@ -91,9 +96,10 @@ export async function getFlyerMapForPerformances(performanceIds: string[]) {
 }
 
 export async function getDetailsMapForPerformances(performanceIds: string[]) : Promise<DetailsMap> {
+  const supabase = await createSupabaseServerClient();
   if (performanceIds.length === 0) return {} as DetailsMap;
 
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from("performance_details")
     .select(
       "performance_id, load_in_time, set_start_time, set_end_time, set_minutes, customer_charge_yen, one_drink_required"
@@ -115,6 +121,7 @@ export async function getDetailsMapForPerformances(performanceIds: string[]) : P
 export async function ensureAndFetchPrepMap(params: {
   performances: Array<{ id: string; event_date: string; act_id: string | null }>;
 }) {
+  const supabase = await createSupabaseServerClient();
   const { performances } = params;
   if (performances.length === 0) return {} as PrepMap;
 
@@ -132,14 +139,14 @@ export async function ensureAndFetchPrepMap(params: {
     });
   });
 
-  const { error: upErr } = await (await createSupabaseServerClient())
+  const { error: upErr } = await supabase
     .from("performance_prep_tasks")
     .upsert(desired, { onConflict: "performance_id,task_key" });
 
   if (upErr) throw upErr;
 
   const ids = performances.map((p) => p.id);
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from("performance_prep_tasks")
     .select("id, performance_id, task_key, act_id, due_date, is_done, done_at, done_by_profile_id")
     .in("performance_id", ids);
@@ -162,6 +169,7 @@ export async function upsertPerformance(params: {
   memo: string | null;
   act_id: string | null;
 }): Promise<string> {
+  const supabase = await createSupabaseServerClient();
   const { id, profile_id, event_date, venue_name, memo, act_id } = params;
 
   const payload = {
@@ -174,14 +182,14 @@ export async function upsertPerformance(params: {
 
   let perfId = id;
   if (perfId) {
-    const { error } = await (await createSupabaseServerClient())
+    const { error } = await supabase
       .from("musician_performances")
       .update(payload)
       .eq("id", perfId);
 
     if (error) throw error;
   } else {
-    const { data, error } = await (await createSupabaseServerClient())
+    const { data, error } = await supabase
       .from("musician_performances")     
       .insert(payload)
       .select("id");

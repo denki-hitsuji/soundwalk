@@ -17,7 +17,7 @@ import {
   getPerformances,
 } from "@/lib/utils/performance";
 
-import { updatePrepTaskDone } from "@/lib/db/performanceWrites";
+import { updatePrepTaskDone } from "@/lib/db/performanceActions";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays, fmtMMdd } from "@/lib/utils/date";
 import { useCurrentUser } from "@/lib/auth/session.client";
 import { getFutureFlyers } from "@/lib/utils/performance";

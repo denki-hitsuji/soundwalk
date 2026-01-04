@@ -4,7 +4,7 @@
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-
+const supabase = await createSupabaseServerClient();
 export async function updateMyAct(formData: FormData) {
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
@@ -20,7 +20,7 @@ export async function updateMyAct(formData: FormData) {
     throw new Error("act_id と name は必須です");
   }
 
-  const { error } = await (await createSupabaseServerClient())
+  const { error } = await supabase
     .from("acts")
     .update({
       name,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct"; // ← あなたの実パスに合わせて
-import { NextPerformanceSection } from "@/components/performances/NextPerformanceSection";
+import { NextPerformanceSectionClient } from "@/components/performances/NextPerformanceSectionClient";
 import { SongSummaryCard } from "@/components/songs/SongSummaryCard";
 // import { QuickPerformanceBar } from "@/components/performances/QuickPerformanceBar"; // あるなら
 
@@ -14,7 +14,7 @@ export default function DashboardClient() {
   return (
     <div className="">
       {/* ★最上部：次回ライブ */}
-      <NextPerformanceSection />
+      {/* <NextPerformanceSectionClient /> */}
 
       {/* 例：クイック入力 */}
       {/* <QuickPerformanceBar /> */}

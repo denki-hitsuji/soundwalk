@@ -1,6 +1,5 @@
 "use server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
 export type ProfileRow = {
   id: string;
   display_name: string;
@@ -8,7 +7,8 @@ export type ProfileRow = {
 };
 
 export async function getProfileByUserId(userId: string) {
-  const { data, error } = await (await createSupabaseServerClient())
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("user_id", userId)
@@ -22,13 +22,14 @@ export async function updatePerformanceMemo(params: {
   performanceId: string;
   newMemo: string | null;
 }): Promise<void> {
+  const supabase = await createSupabaseServerClient();
   const { performanceId, newMemo } = params;
 
   const patch = {
     memo: newMemo?.trim() ? newMemo.trim() : null,
   };
 
-  const { error } = await (await createSupabaseServerClient())
+  const { error } = await supabase
     .from("musician_performances")
     .update(patch)
     .eq("id", performanceId);
@@ -41,7 +42,8 @@ export async function upsertProfile(profile: {
   display_name: string;
   avatar_url: string | null;
 }): Promise<ProfileRow> {
-  const { data, error } = await (await createSupabaseServerClient())
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("profiles")
     .upsert(profile)
     .select()
@@ -52,7 +54,7 @@ export async function upsertProfile(profile: {
 }
 
 // export async function getOtherActs(userId: string): Promise<ActRow[]> {
-//     const { data, error } = await (await createSupabaseServerClient())
+//     const { data, error } = supabase
 //         .from("v_my_acts")
 //         .select("*")
 //         .neq("owner_profile_id", userId);

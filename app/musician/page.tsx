@@ -1,9 +1,9 @@
-import DashboardClient from "./DashboardClient";
+import { NextPerformanceSectionServer } from "@/components/performances/NextPerformanceSection.server";
 
 export default function MusicianDashboardPage() {
   return (
     <main className="w-full mx-auto">
-      <DashboardClient />
+      <NextPerformanceSectionServer />
     </main>
   );
 }

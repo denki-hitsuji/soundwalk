@@ -1,6 +1,5 @@
 // lib/songAssets.ts
 import { createSupabaseServerClient } from "@/lib/supabase/server"; 
-
 export type SongAssetRow = {
   id: string;
   act_song_id: string;
@@ -49,7 +48,8 @@ function sanitizeFilename(name: string) {
 }
 
 export async function listSongAssets(actSongId: string) {
-  const { data, error } = await (await createSupabaseServerClient())
+const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("act_song_assets")
     .select("id, act_song_id, uploader_profile_id, bucket, object_path, original_filename, mime_type, size_bytes, asset_kind, created_at")
     .eq("act_song_id", actSongId)
@@ -60,7 +60,8 @@ export async function listSongAssets(actSongId: string) {
 }
 
 export async function getSignedUrl(objectPath: string, expiresInSec = 60 * 10) {
-  const { data, error } = await (await createSupabaseServerClient()).storage.from(BUCKET).createSignedUrl(objectPath, expiresInSec);
+const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(objectPath, expiresInSec);
   if (error) throw error;
   return data.signedUrl;
 }
@@ -70,12 +71,13 @@ export async function uploadSongAsset(params: {
   file: File;
   assetKind: string;
 }) {
+const supabase = await createSupabaseServerClient();
   const { actSongId, file, assetKind } = params;
 
   const msg = validateSongAssetFile(file);
   if (msg) throw new Error(msg);
 
-  const { data: u } = await (await createSupabaseServerClient()).auth.getUser();
+  const { data: u } = await supabase.auth.getUser();
   const uid = u.user?.id;
   if (!uid) throw new Error("ログインが必要です。");
 
@@ -86,7 +88,7 @@ export async function uploadSongAsset(params: {
   const objectPath = `songs/${actSongId}/${assetId}_${safeName}`;
 
   // 2) Storage upload
-  const { error: upErr } = await (await createSupabaseServerClient()).storage
+  const { error: upErr } = await supabase.storage
     .from(BUCKET)
     .upload(objectPath, file, {
       contentType: file.type,
@@ -96,7 +98,7 @@ export async function uploadSongAsset(params: {
   if (upErr) throw upErr;
 
   // 3) DB insert
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from("act_song_assets")
     .insert({
       id: assetId,
@@ -114,7 +116,7 @@ export async function uploadSongAsset(params: {
 
   if (error) {
     // DB insertに失敗したら、Storageを掃除（できる範囲で）
-    await (await createSupabaseServerClient()).storage.from(BUCKET).remove([objectPath]);
+    await supabase.storage.from(BUCKET).remove([objectPath]);
     throw error;
   }
 
@@ -122,8 +124,9 @@ export async function uploadSongAsset(params: {
 }
 
 export async function deleteSongAsset(asset: SongAssetRow) {
+const supabase = await createSupabaseServerClient();
   // 1) DB delete (RLSで弾けるはず)
-  const { error: dbErr } = await (await createSupabaseServerClient())
+  const { error: dbErr } = await supabase
     .from("act_song_assets")
     .delete()
     .eq("id", asset.id);
@@ -131,6 +134,6 @@ export async function deleteSongAsset(asset: SongAssetRow) {
   if (dbErr) throw dbErr;
 
   // 2) Storage delete（ここもRLS）
-  const { error: stErr } = await (await createSupabaseServerClient()).storage.from(BUCKET).remove([asset.object_path]);
+  const { error: stErr } = await supabase.storage.from(BUCKET).remove([asset.object_path]);
   if (stErr) throw stErr;
 }

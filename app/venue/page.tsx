@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";import { useCurrentUser } from "@/lib/auth/session.client";
+import { supabase } from "@/lib/supabase/client";
+import { useCurrentUser } from "@/lib/auth/session.client";
 ;
 
 type VenueRow = {

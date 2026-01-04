@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toYmdLocal } from "@/lib/utils/date";
-import { updatePerformanceMemo, upsertPerformanceDetails } from "@/lib/db/performanceWrites";
+import { updatePerformanceMemo, upsertPerformanceDetails } from "@/lib/db/performanceActions";
 
 type Props = {
   performanceId: string;

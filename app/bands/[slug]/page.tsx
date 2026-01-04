@@ -1,34 +1,34 @@
 // app/bands/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
 export const revalidate = 300; // 5分
 
 type Payload = {
-  act_id: string;
-  slug: string;
-  payload: {
-      act_name: string;
-      headline: string | null;
-      body: string | null;
-      photo_url: string | null;
-      profile_link_url: string | null;
-      performances: Array<{
-          performance_id: string;
-          event_date: string;
-          venue_name: string;
-          event_title: string | null;
-          status: string;
-          open_time: string | null;
-          start_time: string | null;
-          charge: number | null;
-      }>;
-  };
+    act_id: string;
+    slug: string;
+    payload: {
+        act_name: string;
+        headline: string | null;
+        body: string | null;
+        photo_url: string | null;
+        profile_link_url: string | null;
+        performances: Array<{
+            performance_id: string;
+            event_date: string;
+            venue_name: string;
+            event_title: string | null;
+            status: string;
+            open_time: string | null;
+            start_time: string | null;
+            charge: number | null;
+        }>;
+    };
 };
 
 export default async function BandPublicPage({ params }: { params: Promise<{ slug: string }> }) {
+    const supabase = await createSupabaseServerClient();
     const { slug } = await params;
-    const { data, error } = await (await createSupabaseServerClient())
+    const { data, error } = await supabase
         .from("v_act_public_page_payload")
         .select("*")
         .eq("slug", slug)
@@ -89,8 +89,8 @@ export default async function BandPublicPage({ params }: { params: Promise<{ slu
                                 </div>
                                 {x.event_title && <div className="text-gray-700 mt-1">{x.event_title}</div>}
                                 <div className="flex justify-between text-gray-500">
-                                    open: {x.open_time || "未定"} / start: {x.start_time || "未定"} / charge: {x.charge || "未定"} 
-                                </div>    
+                                    open: {x.open_time || "未定"} / start: {x.start_time || "未定"} / charge: {x.charge || "未定"}
+                                </div>
                             </div>
                         ))}
                     </div>

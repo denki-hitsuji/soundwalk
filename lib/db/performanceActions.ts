@@ -6,13 +6,14 @@ export async function updatePerformanceMemo(params: {
   performanceId: string;
   newMemo: string | null;
 }): Promise<void> {
+  const supabase = await createSupabaseServerClient();
   const { performanceId, newMemo } = params;
 
   const patch = {
     memo: newMemo?.trim() ? newMemo.trim() : null,
   };
 
-  const { error } = await (await createSupabaseServerClient())
+  const { error } = await supabase
     .from("musician_performances")
     .update(patch)
     .eq("id", performanceId);
@@ -26,12 +27,12 @@ export async function updatePrepTaskDone(params: {
   userId: string | null;
 }): Promise<PrepTaskRow> {
   const { taskId, nextDone, userId } = params;
-
+  const supabase = await createSupabaseServerClient();
   const payload = nextDone
     ? { is_done: true, done_at: new Date().toISOString(), done_by_profile_id: userId }
     : { is_done: false, done_at: null, done_by_profile_id: null };
 
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from("performance_prep_tasks")
     .update(payload)
     .eq("id", taskId)
@@ -43,7 +44,8 @@ export async function updatePrepTaskDone(params: {
 }
 
 export async function deletePerformanceMemo(performanceId: string): Promise<void> { 
-  const { error } = await (await createSupabaseServerClient())
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
     .from("musician_performances")
     .update({ memo: null })
     .eq("id", performanceId);
@@ -56,14 +58,14 @@ export async function upsertPerformanceDetails(params: {
   notes: string | null;
 }): Promise<void> {
   const { performanceId, notes } = params;
-
+  const supabase = await createSupabaseServerClient();
   const payload = {
     performance_id: performanceId,
     notes: notes?.trim() ? notes.trim() : null,
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await (await createSupabaseServerClient())
+  const { error } = await supabase
     .from("performance_details")
     .upsert(payload, { onConflict: "performance_id" });
 

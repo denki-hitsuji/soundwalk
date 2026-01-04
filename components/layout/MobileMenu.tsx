@@ -4,13 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth/session.client";
-import { NAV_ITEMS } from "./AppShell";
-
-type NavItem = {
-  label: string;
-  href: string;
-  requiresAuth?: boolean;
-};
+import { NAV_ITEMS } from "./NavItems";
 
 export function MobileMenu({ userId }: { userId: string | null }) {
   const [open, setOpen] = useState(false);

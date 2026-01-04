@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
 import { ActRow, getMyActs, getMyMemberActs, getMyOwnerActs, updateAct } from "@/lib/db/acts";
-import { useCurrentUser } from "@/lib/auth/session.client";
+import { getCurrentUserClient, useCurrentUser } from "@/lib/auth/session.client";
 import { getMyProfile } from "@/lib/api/profiles";
 
 type MemberRow = {
@@ -97,7 +97,7 @@ export default function ActsPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const user = await useCurrentUser();
+      const user = await getCurrentUserClient();
       const uid = user?.user?.id ?? null;
       setUserId(uid);
 

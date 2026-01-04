@@ -2,7 +2,7 @@
 "use server"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/auth/session.server";
-
+const supabase = await createSupabaseServerClient();
 export type Offer = {
   id: string;
   event_id: string;
@@ -32,7 +32,7 @@ export async function getOffersForEvent(
 ): Promise<OfferWithMusician[]> {
   const user = await getCurrentUser();
 
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from('offers')
     .select(
       `
@@ -117,7 +117,7 @@ export async function applyToEvent(eventId: string, message?: string): Promise<O
     message: message ?? null,
   };
 
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from('offers')
     .insert(payload)
     .select()
@@ -139,7 +139,7 @@ export async function getMyOffers(): Promise<Offer[]> {
     throw new Error('ログインが必要です');
   }
 
-  const { data, error } = await (await createSupabaseServerClient())
+  const { data, error } = await supabase
     .from('offers')
     .select('*')
     .eq('musician_id', user.id);
@@ -153,7 +153,7 @@ export async function getMyOffers(): Promise<Offer[]> {
  */
 export async function acceptOffer(offerId: string) {
   // 1. オファーを取得して event_id, musician_id を知る
-  const { data: offer, error: offerError } = await (await createSupabaseServerClient())
+  const { data: offer, error: offerError } = await supabase
     .from('offers')
     .select('id, event_id, musician_id, status')
     .eq('id', offerId)
@@ -163,7 +163,7 @@ export async function acceptOffer(offerId: string) {
   if (!offer) throw new Error('Offer not found');
 
   // 2. 該当イベントの max_artists を取得
-  const { data: ev, error: evError } = await (await createSupabaseServerClient())
+  const { data: ev, error: evError } = await supabase
     .from('events')
     .select('id, status, max_artists')
     .eq('id', offer.event_id)
@@ -173,7 +173,7 @@ export async function acceptOffer(offerId: string) {
   if (!ev) throw new Error('Event not found');
 
   // 3. すでに何件 accepted booking があるか数える
-  const { data: existingBookings, error: bookingError } = await (await createSupabaseServerClient())
+  const { data: existingBookings, error: bookingError } = await supabase
     .from('bookings')
     .select('id, status')
     .eq('event_id', offer.event_id)
@@ -188,10 +188,10 @@ export async function acceptOffer(offerId: string) {
   }
 
   // 4. トランザクション的に、オファー承認 + ブッキング作成 + イベント状態更新
-  // (await createSupabaseServerClient()) では rpc またはクライアント側で順にやる形（ここでは簡易版）
+  // supabase では rpc またはクライアント側で順にやる形（ここでは簡易版）
 
   // 4-1. bookings に insert
-  const { error: insertError } = await (await createSupabaseServerClient()).from('bookings').insert({
+  const { error: insertError } = await supabase.from('bookings').insert({
     event_id: offer.event_id,
     musician_id: offer.musician_id,
     status: 'upcoming', // or accepted
@@ -200,7 +200,7 @@ export async function acceptOffer(offerId: string) {
   if (insertError) throw insertError;
 
   // 4-2. この offer を accepted に更新
-  const { error: offerUpdateError } = await (await createSupabaseServerClient())
+  const { error: offerUpdateError } = await supabase
     .from('offers')
     .update({ status: 'accepted' })
     .eq('id', offerId);
@@ -211,7 +211,7 @@ export async function acceptOffer(offerId: string) {
   const newCount = currentCount + 1;
   if (newCount >= (ev.max_artists ?? 1)) {
     // イベントを matched
-    const { error: evUpdateError } = await (await createSupabaseServerClient())
+    const { error: evUpdateError } = await supabase
       .from('events')
       .update({ status: 'matched' })
       .eq('id', ev.id);
@@ -219,7 +219,7 @@ export async function acceptOffer(offerId: string) {
     if (evUpdateError) throw evUpdateError;
 
     // まだ pending の offers を declined にする（任意）
-    const { error: declineError } = await (await createSupabaseServerClient())
+    const { error: declineError } = await supabase
       .from('offers')
       .update({ status: 'declined' })
       .eq('event_id', ev.id)

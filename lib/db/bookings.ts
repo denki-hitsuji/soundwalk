@@ -55,11 +55,11 @@ export type VenueBookingWithDetails = {
  */
 
 export async function getBookingsWithDetails(): Promise<BookingWithDetails[]> {
-
-    const { data, error } = await (await createSupabaseServerClient())
-        .from('bookings')
-        .select(
-            `
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(
+      `
       id,
       event_id,
       musician_id,
@@ -78,17 +78,18 @@ export async function getBookingsWithDetails(): Promise<BookingWithDetails[]> {
         name
       )
     `
-   );
-    if (error) { throw error; }
+    );
+  if (error) { throw error; }
 
-    return data as unknown as BookingWithDetails[];
+  return data as unknown as BookingWithDetails[];
 }
 
 export async function getVenueBookingsWithDetailsDB(userId: string): Promise<VenueBookingWithDetails[]> {
-    const { data, error } = await (await createSupabaseServerClient())
-        .from('bookings')
-        .select(
-            `
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(
+      `
       id,
       event_id,
       musician_id,
@@ -113,13 +114,13 @@ export async function getVenueBookingsWithDetailsDB(userId: string): Promise<Ven
         )
       )
     `
-        )
-        .eq('venue_id', userId)
-        .order('events(event_date)', { ascending: true })
-        .order('events(start_time)', { ascending: true });
+    )
+    .eq('venue_id', userId)
+    .order('events(event_date)', { ascending: true })
+    .order('events(start_time)', { ascending: true });
 
-    if(error) throw error;
-    return data as unknown as VenueBookingWithDetails[];
+  if (error) throw error;
+  return data as unknown as VenueBookingWithDetails[];
 }
 
 export async function createBooking(params: {
@@ -128,7 +129,8 @@ export async function createBooking(params: {
   venueId: string;
   message: string;
 }) {
-  const { data, error } = await (await createSupabaseServerClient())
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
     .from("bookings")
     .insert({
       event_id: params.eventId,
@@ -143,13 +145,14 @@ export async function createBooking(params: {
   if (error) throw error;
 
   return data as unknown as BookingWithDetails[];
-}   
+}
 
 export async function updateBookingStatusDB(params: {
   bookingId: string;
   status: "accepted" | "rejected";
 }) {
-  const { error } = await (await createSupabaseServerClient())
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
     .from("venue_bookings")
     .update({ status: params.status })
     .eq("id", params.bookingId);
