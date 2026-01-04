@@ -44,7 +44,7 @@ export async function getNextPerformance(todayStr?: string) {
   const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();
   const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
-  console.log(`my acts: ${myActs}`);
+  // console.log(`my acts: ${myActs}`);
   const { data, error } = await supabase
     .from("musician_performances")
     .select(
@@ -65,9 +65,6 @@ export async function getNextPerformance(todayStr?: string) {
     .neq("status", "canceled")   
     .order("event_date", { ascending: true })
     .limit(1);
-
-  console.log("typeof error", error && Object.getPrototypeOf(error)?.constructor?.name);
-  console.log("row proto", data?.[0] && Object.getPrototypeOf(data[0])?.constructor?.name);
 
   if (error) throw error;
   return ((data?.[0] ?? null) as unknown as PerformanceWithActs | null);

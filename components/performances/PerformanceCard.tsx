@@ -68,10 +68,11 @@ export function PerformanceCard({
     confirmed: "✅ 確定",
     canceled: "⚪ 辞退",
   };
-const rootClass = [
-  "block p-2 rounded-xl border shadow-sm flex",
-  clickable ? "hover:bg-gray-50 cursor-pointer" : "",
-].join(" ");
+  const rootClass = [
+    "block p-2 rounded-xl border shadow-sm flex",
+    clickable ? "hover:bg-gray-50 cursor-pointer" : "",
+  ].join(" ");
+  console.log(`flyer on card: ${JSON.stringify(flyer)}`)
 
   const cardBody = (
     <div className="w-full">
@@ -79,7 +80,7 @@ const rootClass = [
         <p className="mr-2">{statusLabelMap[status]}</p>
       </div> */}
       <div className="px-2 py-2d flex gap-3">
-        {isMusician && (
+        {
           flyer ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -92,7 +93,7 @@ const rootClass = [
           <div className="h-24 w-24 rounded border bg-gray-50 flex items-center justify-center text-[11px] text-gray-400">
             flyerなし
           </div>
-        ))}
+        )}
 
         <div className="flex-1 min-w-10">
           <div className="flex items-center justify-between gap-2">

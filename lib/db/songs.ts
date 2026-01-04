@@ -34,8 +34,8 @@ export async function getMyActsForSelect() {
   return Array.from(uniq.values());
 }
 
-export async function  getMySongs(actId: string) {
-const supabase = await createSupabaseServerClient();
+export async function getMySongs(actId: string) {
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_songs")
     .select("id, title, act_id, created_at")
@@ -46,8 +46,8 @@ const supabase = await createSupabaseServerClient();
   return data as SongRow[] ?? [];
 }
 
-export async function   getRecentSongs(actId: string, limit = 2) {
-const supabase = await createSupabaseServerClient();
+export async function getRecentSongs(actId: string, limit = 2) {
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_songs")
     .select("id, title, created_at")
@@ -60,7 +60,7 @@ const supabase = await createSupabaseServerClient();
 }
 
 export async function getSongCount(actId: string) {
-const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { count, error } = await supabase
     .from("act_songs")
     .select("*", { count: "exact", head: true })
@@ -71,7 +71,7 @@ const supabase = await createSupabaseServerClient();
 }
 
 export async function getSongById(songId: string) {
-const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_songs")
     .select("*")
@@ -83,7 +83,7 @@ const supabase = await createSupabaseServerClient();
 }
 
 export async function addSong(actId: string, title: string) {
-const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("act_songs").insert({
     act_id: actId,
     title,
@@ -102,24 +102,24 @@ const supabase = await createSupabaseServerClient();
 }
 
 export async function updateSong(song: SongRow) {
-const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { id, title } = song;
   const { error } = await supabase
     .from("act_songs")
     .update({ title })
-    .eq("id", id); 
+    .eq("id", id);
   if (error) throw error;
   return song;
-} 
+}
 
 export async function deleteSong(songId: string) {
-const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("act_songs").delete().eq("id", songId);
   if (error) throw error;
-}   
+}
 
 export async function getSongsByActIds(actIds: string[]) {
-const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_songs")
     .select("id, act_id, title, created_at")
