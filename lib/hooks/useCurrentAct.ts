@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";;
-import { ActRow } from "@/lib/db/acts";
+import { ActRow } from "@/lib/api/acts";
 
 type CurrentActContextValue = {
   currentAct: ActRow | null;

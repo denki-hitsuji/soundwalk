@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getActsByIds } from "@/lib/db/acts";
+import { getActsByIds } from "@/lib/api/acts";
 import { getEventById, removeEventAct, updateEventStatus, upsertEventAct } from "@/lib/api/events";
 import { getEventBookings } from "@/lib/db/venues";
 import { updateBookingStatus } from "@/lib/api/bookings";

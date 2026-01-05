@@ -2,32 +2,8 @@
 "use server";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { createSupabaseServerClient } from "../supabase/server";
-export type EventStatus = 'open' | 'pending' | 'draft' | 'matched' | 'cancelled';
+import type { EventRow, EventStatus, EventWithVenue } from "../db/events";
 
-export type EventRow = {
-  id: string;
-  organizer_profile_id: string;
-  venue_id: string;
-  title: string;
-  event_date: string; // YYYY-MM-DD
-  open_time: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  max_artists: number | null;
-  charge: number | null;
-  conditions: string | null;
-  status: EventStatus;
-  created_at: string;
-};
-
-export type EventWithVenue = EventRow & {
-  venues: {
-    id: string;
-    name: string;
-    address: string | null;
-    volume_preference: string | null;
-  } | null;
-};
 
 /**
  * 店舗側：自分のイベントを1件取得
@@ -397,3 +373,5 @@ export async function updateEventStatus(params: {
 
   if (error) throw error;
 }
+
+export type { EventRow };

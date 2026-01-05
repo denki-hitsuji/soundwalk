@@ -11,7 +11,7 @@ import type {
 } from "@/lib/utils/performance";
 import { getPerformances, PREP_DEFS } from "@/lib/utils/performance";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
-import { getMyActs } from "./acts";
+import { getMyActs } from "@/lib/api/acts";
 export async function getMyUpcomingPerformances(todayStr?: string) {
   const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();

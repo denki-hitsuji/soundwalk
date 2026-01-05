@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";;
 import { PerformanceCard } from "../performances/PerformanceCard";
-import { ActRow, getActsByIds, getAllActs, insertAct } from "@/lib/db/acts";
+import { ActRow, getActsByIds, getAllActs, insertAct } from "@/lib/api/acts";
 import { parseYmdLocal, addDays, fmtMMdd, toYmdLocal } from "@/lib/utils/date";
 import {
   PREP_DEFS,

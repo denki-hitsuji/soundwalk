@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
-import { ActRow, getMyActs } from "@/lib/db/acts";
+import { ActRow, getMyActs } from "@/lib/api/acts";
 import { useCurrentUser } from "@/lib/auth/session.client";
 
 export function ActSwitcher() {

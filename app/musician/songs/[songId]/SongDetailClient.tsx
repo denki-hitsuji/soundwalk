@@ -8,7 +8,7 @@ import SongMemoEditor from "@/components/songs/SongMemoEditor";
 import SongAssetsBox from "@/components/songs/SongAssetsBox";
 import { useRouter } from "next/navigation";
 import { deleteSong, getSongById, SongRow, updateSong } from "@/lib/db/songs";
-import { ActRow, getActById } from "@/lib/db/acts";
+import { ActRow, getActById } from "@/lib/api/acts";
 
 export default function SongDetailClient({ songId }: { songId: string }) {
   const router = useRouter();

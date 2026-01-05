@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
-import { ActRow, deleteActById, getActById, getMyMemberActs } from "@/lib/db/acts";
+import { ActRow, deleteActById, getActById, getMyMemberActs } from "@/lib/api/acts";
 import { PerformanceRow } from "@/lib/utils/performance";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";

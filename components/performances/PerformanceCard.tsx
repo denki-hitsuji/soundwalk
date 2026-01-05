@@ -1,6 +1,6 @@
 "use client";
 
-import { ActRow } from "@/lib/db/acts";
+import { ActRow } from "@/lib/api/acts";
 import { DetailsRow, PerformanceRow, PerformanceWithActs } from "@/lib/utils/performance";
 import Link from "next/link";
 

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
-import { getMyActs } from "@/lib/db/acts";
+import { getMyActs } from "@/lib/api/acts";
 
 type ActOption = { id: string; name: string; act_type: string | null };
 

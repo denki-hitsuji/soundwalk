@@ -1,7 +1,7 @@
 // lib/songQueries.ts
 import { getCurrentUser } from "../auth/session.server";
 import { createSupabaseServerClient } from "../supabase/server";
-import { getMyActs } from "./acts";
+import { getMyActs } from "@/lib/api/acts";
 export type SongRow = {
   id: string;
   act_id: string;

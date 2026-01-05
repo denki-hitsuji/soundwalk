@@ -3,7 +3,7 @@
 
 import { createBooking } from "@/lib/api/bookings";
 import { useCurrentUser } from "@/lib/auth/session.client";
-import { getMyOwnerActs } from "@/lib/db/acts";
+import { getMyOwnerActs } from "@/lib/api/acts";
 import { supabase } from "@/lib/supabase/client";
 export async function submitBooking(formData: FormData, eventId: string) {
   const data = await useCurrentUser();

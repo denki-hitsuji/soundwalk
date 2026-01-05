@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
-import { ensureMyDefaultAct } from "@/lib/db/acts";
+import { ensureMyDefaultAct } from "@/lib/api/acts";
 
 export default function ActNewClient() {
   const router = useRouter();
