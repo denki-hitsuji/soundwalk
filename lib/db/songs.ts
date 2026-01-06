@@ -1,4 +1,5 @@
 // lib/songQueries.ts
+import "server-only"
 import { getCurrentUser } from "../auth/session.server";
 import { createSupabaseServerClient } from "../supabase/server";
 import { getMyActs } from "@/lib/api/acts";

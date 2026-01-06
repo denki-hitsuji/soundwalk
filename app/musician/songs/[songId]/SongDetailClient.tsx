@@ -7,65 +7,31 @@ import { makeSongMemoTemplate } from "@/lib/utils/templates";
 import SongMemoEditor from "@/components/songs/SongMemoEditor";
 import SongAssetsBox from "@/components/songs/SongAssetsBox";
 import { useRouter } from "next/navigation";
-import { deleteSong, getSongById, SongRow, updateSong } from "@/lib/db/songs";
-import { ActRow, getActById } from "@/lib/api/acts";
+import { ActRow, deleteSong, getSongById, SongRow, updateSong } from "./page";
+type Props = {
+  songId: string
+  song: SongRow
+  act?: ActRow
+}
 
-export default function SongDetailClient({ songId }: { songId: string }) {
+export default function SongDetailClient({songId, song, act }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const [song, setSong] = useState<SongRow | null>(null);
-  const [act, setAct] = useState<ActRow | null>(null);
 
   const [memo, setMemo] = useState("");
   const didInit = useRef(false);
 
   const templateText = useMemo(() => makeSongMemoTemplate(), []);
   const [deleting, setDeleting] = useState(false);
-  const load = async () => {
-    setLoading(true);
-
-    const song = await getSongById(songId);
-    if (!song) {
-      setSong(null);
-      setAct(null);
-      setMemo("");
-      setLoading(false);
-      return;
-    }
-
-    setSong(song);
-    setMemo(song.memo ?? "");
-
-    const act = await getActById(song.act_id);
-
-    if (!act) {
-      console.warn("load act error", act);
-      setAct(null);
-    } else {
-      setAct(act as ActRow);
-    }
-
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songId]);
-
+  // setMemo(song.memo ?? "");
   // 空なら自動挿入（初回だけ）
   useEffect(() => {
-    if (loading) return;
-    if (didInit.current) return;
-    didInit.current = true;
-
-    if (!memo.trim()) {
+   if (!memo.trim()) {
       setMemo(templateText);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, templateText]);
+  }, [ templateText]);
 
   const save = async () => {
     if (!song) return;
@@ -73,10 +39,9 @@ export default function SongDetailClient({ songId }: { songId: string }) {
     try {
       const trimmed = memo.trim();
       const updated = await updateSong({ ...song, memo: trimmed ? trimmed : null});
-      setSong(updated); 
+      song = updated; 
 
       alert("保存しました。");
-      await load();
     } catch (e: any) {
       console.error(e);
       alert(e?.message ?? "保存に失敗しました。");
@@ -101,7 +66,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
   const deleteSongLocally = async () => {
     // songId が act_songs.id である設計ならそのまま使える
     // もし songId が別キーなら、ここは song?.id を使う
-    const targetId = songId;
+    const targetId = song.id;
 
     const ok = window.confirm(
       "この曲を削除します。\n譜面・音源などの添付（assets）がある場合、それも削除されます。\n本当に実行しますか？"
@@ -122,7 +87,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
 
       // ✅ 曲本体を削除
       {
-        deleteSong(songId);
+        deleteSong(song.id);
       }
 
       alert("削除しました。");
@@ -154,7 +119,7 @@ export default function SongDetailClient({ songId }: { songId: string }) {
         <SongMemoEditor initialText={memo} />
       </section>
 
-      <SongAssetsBox actSongId={songId} />
+      <SongAssetsBox actSongId={song.id} />
 
             {/* 危険操作：ページ下部に置くのが無難 */}
       <section className="rounded border bg-white p-4">

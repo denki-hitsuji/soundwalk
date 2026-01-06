@@ -3,13 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   listSongAssets,
-  uploadSongAsset,
   deleteSongAsset,
   getSignedUrl,
-  validateSongAssetFile,
-  type SongAssetRow,
-  SONG_ASSET_MAX_BYTES,
-} from "@/lib/db/songAssets";
+  uploadSongAsset,
+} from "@/lib/api/songs";
+import { SONG_ASSET_MAX_BYTES, SongAssetRow, validateSongAssetFile } from "@/lib/utils/songAssets";
 
 function fmtBytes(n: number) {
   if (n < 1024) return `${n}B`;
@@ -82,11 +80,11 @@ const kindLabel: Record<string,string> = {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actSongId]);
 
-  const onPick = (f: File | null) => {
+  const onPick = async (f: File | null) => {
     setErr(null);
     setFile(null);
     if (!f) return;
-    const msg = validateSongAssetFile(f);
+    const msg = await validateSongAssetFile(f);
     if (msg) {
       setErr(msg);
       return;
@@ -99,7 +97,11 @@ const kindLabel: Record<string,string> = {
     setUploading(true);
     setErr(null);
     try {
-      const inserted = await uploadSongAsset({ actSongId, file, assetKind: kind });
+      const fd = new FormData();
+      fd.append("actSongId", actSongId);
+      fd.append("assetKind", kind);
+      fd.append("file", file);
+      const inserted = await uploadSongAsset(fd);
       setFile(null);
 
       // 追加分だけ先に差し込む
