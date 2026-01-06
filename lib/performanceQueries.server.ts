@@ -2,18 +2,7 @@
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { toYmdLocal } from "@/lib/utils/date";
-
-export type PerformanceWithActs = {
-  id: string;
-  event_date: string; // 文字列で持つ（Dateにしない）
-  venue_name: string | null;
-  memo: string | null;
-  act_id: string;
-  status: string | null;
-  status_reason: string | null;
-  status_changed_at: string | null;
-  acts: { id: string; name: string; act_type: string | null }[] | null;
-};
+import { PerformanceWithActs } from "./db/performances";
 
 function toPlainError(e: unknown) {
   if (e instanceof Error) return { message: e.message, name: e.name };

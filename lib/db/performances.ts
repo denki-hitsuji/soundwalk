@@ -8,11 +8,102 @@ import type {
   DetailsRow,
   PrepTaskRow,
   FlyerRow,
+  PerformanceRow,
 } from "@/lib/utils/performance";
 import { getPerformances, PREP_DEFS } from "@/lib/utils/performance";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
-import { getMyActs } from "@/lib/api/acts";
+import { ActRow, getMyActs } from "@/lib/api/acts";
+export type {
+  PerformanceRow,
+  PerformanceWithActs,
+  FlyerMap,
+  DetailsMap,
+  PrepMap,
+  DetailsRow,
+  PrepTaskRow,
+  FlyerRow,
+} from "@/lib/utils/performance"; 
+
+const toStringOrNull = (v: unknown): string | null =>
+  v == null ? null : String(v);
+
+const toString = (v: unknown): string => String(v);
+
+const toBoolean = (v: unknown): boolean => Boolean(v);
+
+/**
+ * “plain object化”の最後の砦。
+ * - Date / Map / Set / Error / null prototype が混ざっていても plain になる
+ * - ただし BigInt は落ちる（必要なら事前に文字列化する）
+ */
+const toPlainJSON = <T>(v: unknown): T =>
+  v == null ? (v as T) : (JSON.parse(JSON.stringify(v)) as T);
+
+function toActRowPlain(a: any): ActRow {
+  return {
+    id: toString(a?.id),
+    name: toString(a?.name),
+    act_type: toStringOrNull(a?.act_type),
+    owner_profile_id: toString(a?.owner_profile_id),
+    is_temporary: toBoolean(a?.is_temporary),
+    description: toStringOrNull(a?.description),
+    icon_url: toStringOrNull(a?.icon_url),
+    photo_url: toStringOrNull(a?.photo_url),
+    profile_link_url: toStringOrNull(a?.profile_link_url),
+  };
+}
+
+function toPerformanceRowPlain(p: any): PerformanceRow {
+  return {
+    id: toString(p?.id),
+    profile_id: toString(p?.profile_id),
+    act_id: toStringOrNull(p?.act_id),
+    act_name: toStringOrNull(p?.act_name),
+    event_id: toStringOrNull(p?.event_id),
+    venue_id: toStringOrNull(p?.venue_id),
+    event_date: toString(p?.event_date),
+    venue_name: toStringOrNull(p?.venue_name),
+    memo: toStringOrNull(p?.memo),
+
+    // DetailsRow の中身が不明なので “plain化”して保持（危険なプロトタイプ排除）
+    details: p?.details == null ? null : toPlainJSON<DetailsRow>(p.details),
+
+    flyer_url: toStringOrNull(p?.flyer_url),
+    event_title: toStringOrNull(p?.event_title),
+
+    status: toStringOrNull(p?.status),
+    status_reason: toStringOrNull(p?.status_reason),
+    status_changed_at: toStringOrNull(p?.status_changed_at),
+  };
+}
+
+function toPerformanceWithActsPlain(p: any): PerformanceWithActs {
+  const actsRaw = p?.acts;
+
+  const acts: ActRow | ActRow[] | null =
+    actsRaw == null
+      ? null
+      : Array.isArray(actsRaw)
+        ? actsRaw.map(toActRowPlain)
+        : toActRowPlain(actsRaw);
+
+  // PerformanceRow部分を明示的に詰め直した上で、acts を載せる
+  return {
+    ...toPerformanceRowPlain(p),
+    acts,
+  };
+}
+
+/**
+ * Supabaseの data を、Client Component に渡して安全な形へ詰め直す
+ */
+export function toPerformanceWithActsArrayPlain(data: unknown): PerformanceWithActs[] {
+  if (!Array.isArray(data)) return [];
+  return data.map(toPerformanceWithActsPlain);
+}
+
 export async function getMyUpcomingPerformances(todayStr?: string) {
+  console.log("getMyUpcomingPerformances start");
   const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();
   const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
@@ -36,8 +127,9 @@ export async function getMyUpcomingPerformances(todayStr?: string) {
     .neq("status", "canceled")   
     .order("event_date", { ascending: true })
 
+  console.log(`data : ${data}`);
   if (error) throw error;
-  return ((data ?? null) as unknown as PerformanceWithActs[] | null);
+  return toPerformanceWithActsArrayPlain(data);
 }
 
 export async function getNextPerformance(todayStr?: string) {
@@ -67,7 +159,7 @@ export async function getNextPerformance(todayStr?: string) {
     .limit(1);
 
   if (error) throw error;
-  return ((data?.[0] ?? null) as unknown as PerformanceWithActs | null);
+  return toPerformanceWithActsPlain(data);
 }
 
 export async function getFlyerMapForPerformances(performanceIds: string[]) {

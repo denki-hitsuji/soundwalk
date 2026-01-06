@@ -9,29 +9,15 @@ import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
 import { ActRow, deleteActById, getActById, getMyMemberActs } from "@/lib/api/acts";
-import { PerformanceRow } from "@/lib/utils/performance";
-import { notifyActsUpdated } from "@/lib/db/actEvents";
+import { PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
+import { notifyActsUpdated } from "@/lib/hooks/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { useCurrentUser } from "@/lib/auth/session.client";
-import { getMyUpcomingPerformances } from "@/lib/db/performances";
-import { getEventById } from "@/lib/api/events";
-import { getMySongs } from "@/lib/db/songs";
+import { SongRow } from "@/lib/api/songs";
+import { User } from "@supabase/auth-js";
+import { MemberRow } from "./page";
 
-type SongRow = {
-  id: string;
-  act_id: string;
-  title: string;
-  memo: string | null;
-  created_at: string;
-};
 
-type MemberRow = {
-  act_id: string;
-  is_admin: boolean;
-  status: string | null;
-};
-
-const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
 
 const statusBadge: Record<string, { label: string; cls: string }> = {
   offered: { label: "🟡 オファー", cls: "bg-blue-100 text-blue-800" },
@@ -44,32 +30,35 @@ function ymdToText(ymd: string) {
   return ymd?.replaceAll("-", "/");
 }
 
-export default function ActDetailClient({ actId }: { actId: string }) {
+type Props = {
+  user: User | null,
+  act: ActRow,
+  performances: PerformanceWithActs[],
+  nextPerformance: PerformanceRow | null,
+  songs: SongRow[],
+  member: MemberRow
+}
+
+export default function ActDetailClient({user, act, performances, nextPerformance, songs, member }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
   const { currentAct, setCurrentAct } = useCurrentAct();
   const mode = sp.get("mode");
   const isEdit = mode === "edit";
 
-  const [userId, setUserId] = useState<string | null>(null);
-  const [member, setMember] = useState<MemberRow | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [act, setAct] = useState<ActRow | null>(null);
-
+  const userId = user?.id;
   // 表示モード用：直近ライブ + 曲20件
-  const [nextPerformance, setNextPerformance] = useState<PerformanceRow | null>(null);
-  const [songs, setSongs] = useState<SongRow[]>([]);
 
   // 権限（最低限：owner/adminだけ編集を見せたいならここで制御）
   const [canEdit, setCanEdit] = useState(false);
 
-  const isOwner = useMemo(() => !!(act && userId && act.owner_profile_id === userId), [act, userId]);
-  const isAdminMember = useMemo(() => member?.is_admin === true, [member]);
-  const canInvite = useMemo(() => isOwner || isAdminMember, [isOwner, isAdminMember]);
-  const canDelete = useMemo(() => isOwner, [isOwner]);
-function Badge({ children }: { children: React.ReactNode }) {
-  return <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{children}</span>;
-}
+  const isOwner = !!(act && userId && act.owner_profile_id === userId);
+  const isAdminMember = (member?.is_admin === true);
+  const canInvite =  isOwner || isAdminMember;
+  const canDelete =  isOwner;
+  function Badge({ children }: { children: React.ReactNode }) {
+    return <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{children}</span>;
+  }
   const roleLabel = useMemo(() => {
     if (isOwner) return <Badge>owner</Badge>;
     if (member?.status === "active") {
@@ -95,15 +84,14 @@ function Badge({ children }: { children: React.ReactNode }) {
     router.replace(q ? `?${q}` : "?");
   };
    const applyActPatch = (patch: Partial<ActRow>) => {
-    setAct((prev) => (prev ? { ...prev, ...patch } : prev));
 
-    // currentAct がこの act なら追随
-    setCurrentAct((prev) => {
-      if (!prev || prev.id !== actId) return prev;
-      return { ...prev, ...patch };
-    });
+    // // currentAct がこの act なら追随
+    // setCurrentAct((prev) => {
+    //   if (!prev || prev.id !== act.id) return prev;
+    //   return { ...prev, ...patch };
+    // });
 
-    notifyActsUpdated();
+    // notifyActsUpdated();
   };
 
  const deleteAct = async () => {
@@ -130,103 +118,6 @@ function Badge({ children }: { children: React.ReactNode }) {
     }
   };
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        // user
-        const user = await useCurrentUser();
-        if (!user) throw new Error("ログイン情報の取得に失敗しました。");
-        const uid = user?.user?.id ?? null;
-        setUserId(uid);
-        // act
-        {
-          const act = await getActById(actId);
-          setAct(act);
-
-          // 編集権限：とりあえず owner のみ（あなたの is_act_admin があるならそれも足せる）
-          if (uid && act?.owner_profile_id === uid) setCanEdit(true);
-          else setCanEdit(false);
-        }
-
-        // next performance: offeredも含める（仕様）
-        {
-          // musician_performances に event_title が無いなら events join して取る必要あり
-          // ここでは最小で「event_titleはnullでも可」にしておく
-          const today = new Date();
-          const todayYmd = today.toISOString().slice(0, 10);
-          const performances = await getMyUpcomingPerformances(todayYmd);
-
-          const list = (performances ?? []) as any[];
-          // ランク優先（offeredを一番上に出す）
-          list.sort((a, b) => {
-            const r = rank(a.status) - rank(b.status);
-            if (r !== 0) return r;
-            return (a.event_date ?? "").localeCompare(b.event_date ?? "");
-          });
-
-          const top = list[0] ?? null;
-
-          // event_title を表示したいなら events から引く（1件だけなので追加クエリでOK）
-          let eventTitle: string | null = null;
-          if (top?.event_id) {
-            const ev = await getEventById(top.event_id);
-            eventTitle = ev?.title ?? null;
-          }
-
-          setNextPerformance(
-            top
-              ? ({
-                id: top.id,
-                profile_id: act?.owner_profile_id || "",
-                act_id: actId,
-                act_name: "",
-                event_id: top.event_id,
-                venue_id: null,
-                memo: null,
-                details: null,
-                flyer_url: null,
-                status: top.status,
-                status_changed_at: null,
-                status_reason: null,    
-                  event_date: top.event_date,
-                  venue_name: top.venue_name,
-                  event_title: eventTitle,
-                } satisfies PerformanceRow)
-              : null
-          );
-        }
-
-        // songs (max 20) : act_songs の構造に合わせて調整
-        {
-          const songs = await getMySongs(actId);
-          setSongs((songs ?? []) as SongRow[]);
-        }
-
-      // membership (owner でも取れるが、owner の場合は判定に使わないのでOK)
-      const members = await getMyMemberActs();
-      if (!members) {
-        // member が無いケースもあるので fatal にはしない
-        console.warn("load act_members error");
-        setMember(null);
-      } else {
-        setMember((members?.[0] as any) ?? null);
-      }
-      } catch (e) {
-        console.error("act detail load error", e);
-        setAct(null);
-        setNextPerformance(null);
-        setSongs([]);
-        setCanEdit(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, [actId]);
-
-  if (loading) return <main className="p-4 text-sm text-gray-500">読み込み中…</main>;
   if (!act) return <main className="p-4 text-sm text-gray-500">名義が見つかりません。</main>;
 
   // ==============
@@ -348,7 +239,7 @@ function Badge({ children }: { children: React.ReactNode }) {
       {/* 公開ページ */}
       <section className="rounded border bg-white p-4 space-y-2">
         <h2 className="text-sm font-semibold text-gray-800">公開ページ</h2>
-        <ActPublicPageEditor actId={actId} actName={act.name} />
+        <ActPublicPageEditor actId={act.id} actName={act.name} />
       </section>
 
       {/* 招待 */}

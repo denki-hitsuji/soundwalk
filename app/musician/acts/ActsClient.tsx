@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
-import { notifyActsUpdated } from "@/lib/db/actEvents";
+import { notifyActsUpdated } from "@/lib/hooks/actEvents";
 import { getCurrentUserClient, useCurrentUser } from "@/lib/auth/session.client";
 import { getMyProfile } from "@/lib/api/profiles";
 import { ActRow } from "@/lib/api/acts";

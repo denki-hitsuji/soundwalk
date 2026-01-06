@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { notifyActsUpdated } from "@/lib/db/actEvents";
+import { notifyActsUpdated } from "@/lib/hooks/actEvents";
 import { ensureMyDefaultAct } from "@/lib/api/acts";
 
 export default function ActNewClient() {

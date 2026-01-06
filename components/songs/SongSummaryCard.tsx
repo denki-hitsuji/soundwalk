@@ -1,6 +1,6 @@
 // SongSummaryCard.tsx
 import Link from "next/link";
-import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
+import { ACTS_UPDATED_EVENT } from "@/lib/hooks/actEvents";
 import { createSupabaseServerClient } from "@/lib/supabase/server"; // ←あなたの実装に合わせてパス調整
 import { getMyActs, getMyMemberActs } from "@/lib/api/acts";
 import { SongRow, updateSong } from "@/lib/db/songs";

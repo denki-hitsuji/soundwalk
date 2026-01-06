@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
+import { ACTS_UPDATED_EVENT } from "@/lib/hooks/actEvents";
 import { ActRow, getMyActs, getMyMemberActs } from "@/lib/api/acts";
 import { addSong, getSongsByActIds, SongRow } from "@/lib/db/songs";
 import { useCurrentUser } from "@/lib/auth/session.client";

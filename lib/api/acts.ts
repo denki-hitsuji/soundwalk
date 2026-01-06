@@ -178,7 +178,17 @@ export async function getActById(actId: string): Promise<ActRow> {
     .single();
 
   if (error) throw error;
-  return data as ActRow;
+  return {
+    id: data.id,
+    name: data.name,
+    act_type: data.act_type,
+    owner_profile_id: data.owner_profile_id,
+    icon_url: data.icon_url,
+    is_temporary: data.is_temporary,
+    description: data.description,
+    photo_url: data.photo_url,
+    profile_link_url: data.profile_link_url
+   } satisfies ActRow;
 }
 export async function getActsByIds(actIds: string[]) {
   const supabase = await createSupabaseServerClient();

@@ -36,7 +36,7 @@ export async function getEventById(eventId: string): Promise<EventRow | null> {
   // 行が無い場合は null を返す（呼び出し側で「イベントが見つかりません」と表示）
   if (!data) return null;
 
-  return {
+  const ret = {
     id: data.id,
     venue_id: data.venue_id,
     title: data.title,
@@ -50,7 +50,8 @@ export async function getEventById(eventId: string): Promise<EventRow | null> {
     created_at: data.created_at,
     max_artists: data.max_artists ?? 1,
     organizer_profile_id: data.organizer_profile_id
-  };
+  } satisfies EventRow;
+  return { ...ret };
 }
 
 
@@ -374,4 +375,4 @@ export async function updateEventStatus(params: {
   if (error) throw error;
 }
 
-export type { EventRow };
+export type { EventRow } from "@/lib/db/events";
