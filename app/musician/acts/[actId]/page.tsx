@@ -1,15 +1,19 @@
 // app/musician/acts/[actId]/page.tsx
-import { ActRow, getActById, getMyMemberActs, MemberRow } from "@/lib/api/acts";
+"use server"
+import { getActById, getMyMemberActs  } from "@/lib/api/acts";
 import ActDetailClient from "./ActDetailClient";
-import { getMyUpcomingPerformances, PerformanceRow } from "@/lib/api/performances";
+import { getMyUpcomingPerformances, PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
 import { EventRow, getEventById } from "@/lib/api/events";
 import { getMySongs } from "@/lib/api/songs";
 import { getCurrentUser } from "@/lib/auth/session.server";
+import { ActRow, MemberRow } from "@/lib/utils/acts";
+import { redirect } from "next/navigation";
 const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
 
 export default async function Page({ params }: { params: Promise<{ actId: string }> }) {
   const { actId } = await params;
   const myAct = await getActById(actId);
+  if(!myAct) redirect(`/musician/acts/`);
 
   const today = new Date();
   const todayYmd = today.toISOString().slice(0, 10);
@@ -17,7 +21,8 @@ export default async function Page({ params }: { params: Promise<{ actId: string
   const performances = await getMyUpcomingPerformances(todayYmd);
   console.log("performanceの直後");
 
-  const list = (performances ?? []) as any[];
+  const performs : PerformanceWithActs[] = (performances ?? []) as any[];
+  const list = performs.filter(p => p.act_id === actId)
   // ランク優先（offeredを一番上に出す）
   list.sort((a, b) => {
     const r = rank(a.status) - rank(b.status);

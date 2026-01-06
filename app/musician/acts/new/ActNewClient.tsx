@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { notifyActsUpdated } from "@/lib/hooks/actEvents";
-import { ensureMyDefaultAct } from "@/lib/api/acts";
+import { ensureMyDefaultAct, getActById, insertAct } from "@/lib/api/acts";
 
-export default function ActNewClient() {
+type Props = {
+  userId: string;
+}
+export default function ActNewClient({ userId }: Props) {
+  
   const router = useRouter();
   const [name, setName] = useState("");
   const [actType, setActType] = useState<"solo" | "band" | "duo">("solo");
@@ -19,7 +23,8 @@ export default function ActNewClient() {
 
     setSaving(true);
     try {
-      const act = await ensureMyDefaultAct();
+      const { id } = await insertAct({ guestName: name, guestActType: actType, ownerProfileId: userId });
+      const act = await getActById(id); 
       if (act && trimmed === act.name) {
         // 既定名義と同じならそちらに遷移
         router.push(`/musician/acts/${act.id}`);
@@ -27,7 +32,7 @@ export default function ActNewClient() {
       }
 
       notifyActsUpdated();
-      router.push(`/musician/acts/${act.id}`);
+      router.push(`/musician/acts/`);
       router.refresh();
     } catch (e: any) {
       setErr(e?.message ?? "作成に失敗しました");

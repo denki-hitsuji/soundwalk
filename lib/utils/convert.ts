@@ -9,3 +9,8 @@ export function toString(v: unknown): string {
 export function toBoolean(v: unknown): boolean {
     return Boolean(v);
 }
+
+export function toPlainError(e: unknown) {
+  if (e instanceof Error) return { message: e.message, name: e.name };
+  return { message: String(e), name: "UnknownError" };
+}

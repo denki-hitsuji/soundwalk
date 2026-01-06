@@ -3,11 +3,8 @@ import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { toYmdLocal } from "@/lib/utils/date";
 import { PerformanceWithActs } from "./db/performances";
+import { toPlainError } from "./utils/convert";
 
-function toPlainError(e: unknown) {
-  if (e instanceof Error) return { message: e.message, name: e.name };
-  return { message: String(e), name: "UnknownError" };
-}
 
 export async function getMyActsServer() {
   const supabase = await createSupabaseServerClient();

@@ -8,12 +8,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
-import { ActRow, deleteActById, MemberRow } from "@/lib/api/acts";
+import { deleteActById } from "@/lib/api/acts";
 import { PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
 import { notifyActsUpdated } from "@/lib/hooks/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { SongRow } from "@/lib/api/songs";
 import { User } from "@supabase/auth-js";
+import { ActRow, MemberRow } from "@/lib/utils/acts";
 
 const statusBadge: Record<string, { label: string; cls: string }> = {
   offered: { label: "🟡 オファー", cls: "bg-blue-100 text-blue-800" },
@@ -46,8 +47,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
   // 表示モード用：直近ライブ + 曲20件
 
   // 権限（最低限：owner/adminだけ編集を見せたいならここで制御）
-  const [canEdit, setCanEdit] = useState(false);
-
+  const canEdit = () => isOwner;
   const isOwner = !!(act && userId && act.owner_profile_id === userId);
   const isAdminMember = (member?.is_admin === true);
   const canInvite =  isOwner || isAdminMember;
@@ -288,7 +288,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
         </div>
 
         {/* 右上：閲覧/編集切替 */}
-        {canEdit ? (
+        {canEdit() ? (
           !isEdit ? (
             <button
               type="button"
