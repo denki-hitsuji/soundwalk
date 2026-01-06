@@ -13,6 +13,7 @@ import type {
 import { getPerformances, PREP_DEFS } from "@/lib/utils/performance";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
 import { ActRow, getMyActs } from "@/lib/api/acts";
+import { toStringOrNull, toBoolean, toString } from "../utils/convert";
 export type {
   PerformanceRow,
   PerformanceWithActs,
@@ -24,12 +25,7 @@ export type {
   FlyerRow,
 } from "@/lib/utils/performance"; 
 
-const toStringOrNull = (v: unknown): string | null =>
-  v == null ? null : String(v);
 
-const toString = (v: unknown): string => String(v);
-
-const toBoolean = (v: unknown): boolean => Boolean(v);
 
 /**
  * “plain object化”の最後の砦。

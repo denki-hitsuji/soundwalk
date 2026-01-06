@@ -4,15 +4,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ACTS_UPDATED_EVENT } from "@/lib/hooks/actEvents";
-import { ActRow, getMyActs, getMyMemberActs } from "@/lib/api/acts";
-import { addSong, getSongsByActIds, SongRow } from "@/lib/db/songs";
-import { useCurrentUser } from "@/lib/auth/session.client";
-
-type MemberRow = {
-  act_id: string;
-  is_admin: boolean;
-  status: string | null;
-};
+import { ActRow } from "@/lib/api/acts";
+import { SongRow } from "@/lib/api/songs";
+import { addSong, getSongsByActIds } from "./page";
 
 function typeLabel(t: string | null) {
   if (!t) return "種別未設定";
@@ -23,13 +17,15 @@ function typeLabel(t: string | null) {
   return t;
 }
 
-export default function SongsPageClient() {
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+type Props = {
+  userId: string | null;
+  acts: ActRow[];
+  memberActIds: Set<string>;
+}
 
-  const [acts, setActs] = useState<ActRow[]>([]);
-  const [songs, setSongs] = useState<SongRow[]>([]);
-  const [memberActIds, setMemberActIds] = useState<Set<string>>(new Set());
+export default function SongsPageClient({userId, acts, memberActIds } : Props) {
+  const [loading, setLoading] = useState(true);
+  const [songs, setSongs] =  useState<SongRow[]>([]);
 
   const [q, setQ] = useState("");
   const [openActIds, setOpenActIds] = useState<Set<string>>(new Set()); // 折り畳み状態
@@ -59,52 +55,8 @@ export default function SongsPageClient() {
   const loadAll = async () => {
     setLoading(true);
 
-    const user = await useCurrentUser();
-    const uid = user?.user?.id ?? null;
-    setUserId(uid);
-
-    if (!uid) {
-      setActs([]);
-      setSongs([]);
-      setMemberActIds(new Set());
-      setOpenActIds(new Set());
-      setLoading(false);
-      return;
-    }
-
-    // member判定（編集可否用）
-    {
-      const mem = await getMyMemberActs();
-      if (!mem) {
-        console.error("load act_members error");
-        setMemberActIds(new Set());
-      } else {
-        setMemberActIds(new Set(((mem ?? []) as unknown as MemberRow[]).map((m) => m.act_id)));
-      }
-    }
-
     // acts（RLSで owner+member が見える前提）
-    const actsData = await getMyActs();
-
-    if (!actsData) {
-      console.error("load acts error");
-      setActs([]);
-      setSongs([]);
-      setLoading(false);
-      return;
-    }
-
-    const actList = (actsData ?? []) as ActRow[];
-    setActs(actList);
-
-    if (actList.length === 0) {
-      setSongs([]);
-      setOpenActIds(new Set());
-      setLoading(false);
-      return;
-    }
-
-    const actIds = actList.map((a) => a.id);
+    const actIds = acts.map((a) => a.id);
 
     // act_songs（songsテーブルは無い前提）
     const songsData = await getSongsByActIds(actIds); 
@@ -122,7 +74,7 @@ export default function SongsPageClient() {
 
     // 折り畳み初期：曲がある名義は開く（名義が多くても“空名義”を畳める）
     const nextOpen = new Set<string>();
-    for (const a of actList) {
+    for (const a of acts) {
       const has = rows.some((s) => s.act_id === a.id);
       if (has) nextOpen.add(a.id);
     }

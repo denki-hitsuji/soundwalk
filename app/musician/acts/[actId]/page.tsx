@@ -1,16 +1,12 @@
 // app/musician/acts/[actId]/page.tsx
-import { ActRow, getActById, getMyMemberActs } from "@/lib/api/acts";
+import { ActRow, getActById, getMyMemberActs, MemberRow } from "@/lib/api/acts";
 import ActDetailClient from "./ActDetailClient";
 import { getMyUpcomingPerformances, PerformanceRow } from "@/lib/api/performances";
 import { EventRow, getEventById } from "@/lib/api/events";
 import { getMySongs } from "@/lib/api/songs";
 import { getCurrentUser } from "@/lib/auth/session.server";
 const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
-export type MemberRow = {
-  act_id: string;
-  is_admin: boolean;
-  status: string | null;
-};
+
 export default async function Page({ params }: { params: Promise<{ actId: string }> }) {
   const { actId } = await params;
   const myAct = await getActById(actId);
@@ -70,7 +66,6 @@ export default async function Page({ params }: { params: Promise<{ actId: string
   const memberAct = (await getMyMemberActs()).find(a => a.id === myAct.id);
   const judgeAdmin = (a : ActRow) => !!(a && user?.id && a.owner_profile_id === user?.id);
   const member = { act_id: memberAct?.id, is_admin: judgeAdmin(myAct), status: "active" } as MemberRow;
-
  
   return <ActDetailClient
     user={user}

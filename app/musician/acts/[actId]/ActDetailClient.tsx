@@ -8,16 +8,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
-import { ActRow, deleteActById, getActById, getMyMemberActs } from "@/lib/api/acts";
+import { ActRow, deleteActById, MemberRow } from "@/lib/api/acts";
 import { PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
 import { notifyActsUpdated } from "@/lib/hooks/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
-import { useCurrentUser } from "@/lib/auth/session.client";
 import { SongRow } from "@/lib/api/songs";
 import { User } from "@supabase/auth-js";
-import { MemberRow } from "./page";
-
-
 
 const statusBadge: Record<string, { label: string; cls: string }> = {
   offered: { label: "🟡 オファー", cls: "bg-blue-100 text-blue-800" },

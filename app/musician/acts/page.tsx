@@ -1,14 +1,5 @@
-import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { ActRow, getMyActs, getMyMemberActs, getMyOwnerActs, updateAct as updateActDb } from "@/lib/api/acts";
-import { getMyProfile } from "@/lib/api/profiles";
 import ActsClient from "./ActsClient";
-
-type MemberRow = {
-  act_id: string;
-  is_admin: boolean;
-  status: string | null;
-  acts: ActRow | ActRow[] | null;
-};
 
 function normalizeAct(a: ActRow | ActRow[] | null): ActRow | null {
   if (!a) return null;

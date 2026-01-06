@@ -2,7 +2,11 @@ import { getCurrentUser } from "@/lib/auth/session.server";;
 import { toYmdLocal } from "@/lib/utils/date";
 import { createSupabaseServerClient } from "../supabase/server";
 import { ActRow } from "../db/acts";
-
+export type MemberRow = {
+  act_id: string;
+  is_admin: boolean;
+  status: string | null;
+};
 // このユーザーの acts 一覧(オーナー・メンバー両方)
 export async function getMyActs(): Promise<ActRow[]> {
   const supabase = await createSupabaseServerClient();
