@@ -81,7 +81,7 @@ export function PerformanceCard({
       </div> */}
       <div className="px-2 py-2d flex gap-3">
         {
-          flyer ? (
+          flyer?.file_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={flyer.file_url}

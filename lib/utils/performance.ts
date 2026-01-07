@@ -2,6 +2,7 @@
 import { ActRow } from "@/lib/utils/acts"
 import { diffDays } from "@/lib/utils/date";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { toString, toBoolean, toStringOrNull } from "./convert";
 export type PerformanceRow = {
   id: string;
   profile_id: string;
@@ -31,7 +32,7 @@ export function toPlainPerformance(row: any) {
     event_id: row.event_id,
     venue_id: row.venue_id ?? null,
     memo: row.memo ?? null,
-    details: null,
+    details: row.details ?? null,
     flyer_url: row.flyer_url,
     status: row.status ?? null,
     event_title: row.event_title ?? null,
@@ -46,6 +47,70 @@ export function toPlainPerformance(row: any) {
     prep: row.prep ?? [],
   };
 }
+
+export const toPlainJSON = <T>(v: unknown): T =>
+  v == null ? (v as T) : (JSON.parse(JSON.stringify(v)) as T);
+
+export function toActRowPlain(a: any): ActRow {
+  return {
+    id: toString(a?.id),
+    name: toString(a?.name),
+    act_type: toStringOrNull(a?.act_type),
+    owner_profile_id: toString(a?.owner_profile_id),
+    is_temporary: toBoolean(a?.is_temporary),
+    description: toStringOrNull(a?.description),
+    icon_url: toStringOrNull(a?.icon_url),
+    photo_url: toStringOrNull(a?.photo_url),
+    profile_link_url: toStringOrNull(a?.profile_link_url),
+  };
+}
+
+export function toPerformanceRowPlain(p: any): PerformanceRow {
+  return {
+    id: toString(p?.id),
+    profile_id: toString(p?.profile_id),
+    act_id: toStringOrNull(p?.act_id),
+    act_name: toStringOrNull(p?.act_name),
+    event_id: toStringOrNull(p?.event_id),
+    venue_id: toStringOrNull(p?.venue_id),
+    event_date: toString(p?.event_date),
+    venue_name: toStringOrNull(p?.venue_name),
+    memo: toStringOrNull(p?.memo),
+
+    // DetailsRow の中身が不明なので “plain化”して保持（危険なプロトタイプ排除）
+    details: p?.details == null ? null : toPlainJSON<DetailsRow>(p.details),
+
+    flyer_url: toStringOrNull(p?.flyer_url),
+    event_title: toStringOrNull(p?.event_title),
+
+    status: toStringOrNull(p?.status),
+    status_reason: toStringOrNull(p?.status_reason),
+    status_changed_at: toStringOrNull(p?.status_changed_at),
+  };
+}
+
+export function toPerformanceWithActsPlain(p: any): PerformanceWithActs {
+  const actsRaw = p?.acts;
+
+  const acts: ActRow | ActRow[] | null =
+    actsRaw == null
+      ? null
+      : Array.isArray(actsRaw)
+        ? actsRaw.map(toActRowPlain)
+        : toActRowPlain(actsRaw);
+
+  // PerformanceRow部分を明示的に詰め直した上で、acts を載せる
+  return {
+    ...toPerformanceRowPlain(p),
+    acts,
+  };
+}
+
+export function toPerformanceWithActsArrayPlain(data: unknown): PerformanceWithActs[] {
+  if (!Array.isArray(data)) return [];
+  return data.map(toPerformanceWithActsPlain);
+}
+
 export type PerformanceWithActs = PerformanceRow & {
   // join が単体/配列で揺れるのに両対応
   acts: ActRow | ActRow[] | null;
@@ -233,8 +298,6 @@ export async function getFutureFlyers(flyerIds: string[]): Promise<{ data: Flyer
   const { data, error } = await supabase
     .from("performance_attachments")
     .select("performance_id, file_url, created_at")
-    .gt("event_date", todayStr)
-    .order("event_date", { ascending: true })
     .order("created_at", { ascending: false });
   if (error) throw error;
   return { data: data as FlyerRow[], error };

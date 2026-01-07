@@ -1,6 +1,6 @@
 "use server"
 import { ensureAndFetchPrepMapDb, getPerformancesForDashboardDb } from "@/lib/db/performances";
-import { toPlainPerformance } from "../utils/performance";
+import { toPlainPerformance, toPerformanceWithActsPlain } from "../utils/performance";
 import { getMyUpcomingPerformancesDb } from "@/lib/db/performances";
 export type { PerformanceRow, PerformanceWithActs } from "@/lib/db/performances";
 import { updatePrepTaskDoneDb } from "../db/performanceActions";
@@ -9,7 +9,7 @@ export async function updatePrepTaskDone(params: { taskId: string; nextDone: boo
 }
 export async function getMyUpcomingPerformances(todayStr:string) {
     const data = await getMyUpcomingPerformancesDb(todayStr);    
-    return data.map(d => toPlainPerformance(d));
+    return data.map(d => toPerformanceWithActsPlain(d));
 }
 export async function getPerformancesForDashboard(userId: string) {
     const data = await getPerformancesForDashboardDb(userId);

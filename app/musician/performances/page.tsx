@@ -23,29 +23,33 @@ import { PerformancesClient } from "./PerformancesClient";
 export default async function PerformancesPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  console.log("PerformancesPage: user got");
 
   const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
-  const todayStr = useMemo(() => toYmdLocal(), []);
-  const todayDate = useMemo(() => parseYmdLocal(todayStr), [todayStr]);
+  const todayStr = toYmdLocal();
+  const todayDate = parseYmdLocal(todayStr);
 
   // 1) ライブ一覧（acts も一緒）
   const { data, error } = await getPerformances();
   const performances = (data ?? []) as unknown as PerformanceWithActs[];
+  console.log("PerformancesPage: performs got");
 
   performances.sort((a, b) => {
     const r = rank(a.status) - rank(b.status);
     if (r !== 0) return r;
     return (b.event_date ?? "").localeCompare(a.event_date ?? "");
   });
+  console.log("PerformancesPage: performs sorted");
   var flyerByPerformanceId: FlyerMap = {};
   var detailsByPerformanceId: DetailsMap = {};
   var prepByPerformanceId: PrepMap = {};
 
-
   const futureIds = performances.filter((p) => p.event_date >= todayStr).map((p) => p.id);
+  console.log("PerformancesPage: furureIds got");
 
   // 2) 未来分の代表フライヤー（最新1枚）
   const { data: atts, error: attErr } = await getFutureFlyers(futureIds);
+  console.log("PerformancesPage: flyers got");
 
   if (attErr) {
     console.error("load future flyers error", attErr);
@@ -59,6 +63,7 @@ export default async function PerformancesPage() {
 
   // 3) 未来分の details
   const { data: dets, error: detErr } = await getDetailsMapForPerformances(futureIds);
+  console.log("PerformancesPage: details got");
 
   if (detErr) {
     console.error("load future details error", detErr);
@@ -85,6 +90,7 @@ export default async function PerformancesPage() {
         };
       });
     });
+ console.log("PerformancesPage: preps got");
 
   const { data: prepMap, error: upErr } = await ensureAndFetchPrepMapDb({
     performances: performances.filter((p) => p.event_date >= todayStr && p.act_id && p.status !== "cancelled"),

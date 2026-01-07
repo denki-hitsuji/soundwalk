@@ -15,20 +15,25 @@ type Prop = {
 };
 
 export function PerformancesClient({ userId, performances, flyerByPerformanceId, detailsByPerformanceId, prep}: Prop) {
-    const [prepByPerformanceId, setPrepByPerformanceId ] = useState<PrepMap>({});
-    setPrepByPerformanceId(prep);
+    // const [prepByPerformanceId, setPrepByPerformanceId ] = useState<PrepMap>({});
+    const prepByPerformanceId = prep;
     const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
-    const todayStr = useMemo(() => toYmdLocal(), []);
-    const todayDate = useMemo(() => parseYmdLocal(todayStr), [todayStr]);
-    const futurePerformances = useMemo(
-        () => performances.filter((p) => p.event_date >= todayStr),
-        [performances, todayStr],
-    );
-
-    const pastPerformances = useMemo(
-        () => performances.filter((p) => p.event_date < todayStr),
-        [performances, todayStr],
-    );
+    // const todayStr = useMemo(() => toYmdLocal(), []);
+    // const todayDate = useMemo(() => parseYmdLocal(todayStr), [todayStr]);
+    // const futurePerformances = useMemo(
+    //     () => performances.filter((p) => p.event_date >= todayStr),
+    //     [performances, todayStr],
+    // );
+    // const pastPerformances = useMemo(
+    //     () => performances.filter((p) => p.event_date < todayStr),
+    //     [performances, todayStr],
+    // );
+    const todayStr =  toYmdLocal();
+    const todayDate = parseYmdLocal(todayStr);
+    const futurePerformances =
+        performances.filter((p) => p.event_date >= todayStr);
+    const pastPerformances = 
+        performances.filter((p) => p.event_date < todayStr);
     const toggleDone = async (performanceId: string, taskKey: string) => {
         const row = prepByPerformanceId[performanceId]?.[taskKey];
         if (!row) return;
@@ -40,23 +45,20 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
                 userId,
             });
 
-            setPrepByPerformanceId((prev) => ({
-                ...prev,
-                [updated.performance_id]: {
-                    ...(prev[updated.performance_id] ?? {}),
-                    [updated.task_key]: updated,
-                },
-            }));
+            // setPrepByPerformanceId((prev) => ({
+            //     ...prev,
+            //     [updated.performance_id]: {
+            //         ...(prev[updated.performance_id] ?? {}),
+            //         [updated.task_key]: updated,
+            //     },
+            // }));
         } catch (e) {
             console.error("prep update error", e);
         }
     };
 
-
-
     return (
-        <>
-
+        <div>
             {/* 未来 */}
             <section className="space-y-2">
                 <h2 className="text-sm font-semibold text-gray-800">これからのライブ</h2>
@@ -133,6 +135,6 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
                     </div>
                 )}
             </section>
-        </>
+        </div>
     );
 }
