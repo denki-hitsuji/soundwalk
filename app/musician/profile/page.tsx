@@ -28,7 +28,7 @@ export default async function MusicianProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-4 space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-xl font-semibold">プロフィール</h1>
       <p className="text-sm text-muted-foreground">
         バンドのメンバー一覧などに表示される “あなたの名前” を編集します。
