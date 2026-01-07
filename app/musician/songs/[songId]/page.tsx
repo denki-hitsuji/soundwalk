@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session.server";
 import { getMyActs } from "@/lib/api/acts";
 export type { SongRow } from "@/lib/api/songs";
 export { deleteSong,  updateSong } from "@/lib/api/songs";
-export type { ActRow } from "@/lib/api/acts"
+export type { ActRow } from "@/lib/utils/acts"
 
 
 

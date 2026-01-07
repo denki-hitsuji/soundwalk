@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ACTS_UPDATED_EVENT } from "@/lib/hooks/actEvents";
-import { ActRow } from "@/lib/api/acts";
+import { ActRow } from "@/lib/utils/acts";
 import { SongRow } from "@/lib/api/songs";
 import { addSong, getSongsByActIds } from "./page";
 

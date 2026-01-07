@@ -1,4 +1,5 @@
-import { ActRow, getMyActs, getMyMemberActs, getMyOwnerActs, updateAct as updateActDb } from "@/lib/api/acts";
+import { getMyActs, getMyMemberActs, getMyOwnerActs, updateAct as updateActDb } from "@/lib/api/acts";
+import { ActRow } from "@/lib/utils/acts";
 import ActsClient from "./ActsClient";
 
 function normalizeAct(a: ActRow | ActRow[] | null): ActRow | null {

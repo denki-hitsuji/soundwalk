@@ -12,7 +12,8 @@ import type {
 } from "@/lib/utils/performance";
 import { getPerformances, PREP_DEFS } from "@/lib/utils/performance";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
-import { ActRow, getMyActs } from "@/lib/api/acts";
+import { getMyActs } from "@/lib/api/acts";
+import { ActRow } from "@/lib/utils/acts"
 import { toStringOrNull, toBoolean, toString } from "../utils/convert";
 export type {
   PerformanceRow,
@@ -98,7 +99,7 @@ export function toPerformanceWithActsArrayPlain(data: unknown): PerformanceWithA
   return data.map(toPerformanceWithActsPlain);
 }
 
-export async function getMyUpcomingPerformances(todayStr?: string) {
+export async function getMyUpcomingPerformancesDb(todayStr?: string) {
   console.log("getMyUpcomingPerformances start");
   const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();
@@ -203,7 +204,7 @@ export async function getDetailsMapForPerformances(performanceIds: string[]) : P
 /**
  * 方式B：アクセス時に必要な段取り行を upsert してから、select して返す
  */
-export async function ensureAndFetchPrepMap(params: {
+export async function ensureAndFetchPrepMapDb(params: {
   performances: Array<{ id: string; event_date: string; act_id: string | null }>;
 }) {
   const supabase = await createSupabaseServerClient();
@@ -284,4 +285,14 @@ export async function upsertPerformance(params: {
   }
 
   return perfId ?? "";
+}
+
+export async function getPerformancesForDashboardDb(userId: string) {
+  const supabase = await createSupabaseServerClient();
+
+  const { data } = await supabase
+    .from("v_dashboard_performances")
+    .select("*");
+
+  return data;
 }

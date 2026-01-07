@@ -4,7 +4,7 @@
 import { useMemo, useState } from "react";
 import { DashboardPerformanceCard } from "@/components/performances/DashboardPerformanceCard";
 import { type PrepMap } from "@/lib/utils/performance";
-import { updatePrepTaskDone } from "@/lib/db/performanceActions";
+import { updatePrepTaskDoneDb } from "@/lib/db/performanceActions";
 import { parseYmdLocal } from "@/lib/utils/date";
 
 export function NextPerformanceSectionClient(props: {
@@ -28,7 +28,7 @@ export function NextPerformanceSectionClient(props: {
     if (!row) return;
 
     try {
-      const updated = await updatePrepTaskDone({
+      const updated = await updatePrepTaskDoneDb({
         taskId: row.id,
         nextDone: !row.is_done,
         userId,

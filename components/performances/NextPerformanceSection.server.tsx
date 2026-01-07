@@ -5,7 +5,7 @@ import {
   getNextPerformanceServer,
 } from "@/lib/performanceQueries.server";
 import { NextPerformanceSectionClient } from "./NextPerformanceSectionClient";
-import { ensureAndFetchPrepMap, getDetailsMapForPerformances, getFlyerMapForPerformances } from "@/lib/db/performances";
+import { ensureAndFetchPrepMapDb, getDetailsMapForPerformances, getFlyerMapForPerformances } from "@/lib/db/performances";
 
 export async function NextPerformanceSectionServer() {
   const todayStr = toYmdLocal();
@@ -24,7 +24,7 @@ export async function NextPerformanceSectionServer() {
   const [flyers, dets, preps] = await Promise.all([
     getFlyerMapForPerformances(ids),
     getDetailsMapForPerformances(ids),
-    ensureAndFetchPrepMap({ performances: [{ id: next.id, event_date: next.event_date, act_id: next.act_id }] }),
+    ensureAndFetchPrepMapDb({ performances: [{ id: next.id, event_date: next.event_date, act_id: next.act_id }] }),
   ]);
   // console.log(`flyers.values: ${JSON.stringify(Object.values(flyers).shift())}`);
 

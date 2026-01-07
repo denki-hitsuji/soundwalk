@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { ActRow, deletePhotoDataAndStorage, updateAct, uploadActPhoto } from "@/lib/api/acts";
+import { deletePhotoDataAndStorage, updateAct, uploadActPhoto } from "@/lib/api/acts";
+import { ActRow} from "@/lib/utils/acts";
 
 type Props = {
   act: ActRow;

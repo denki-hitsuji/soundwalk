@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { ACTS_UPDATED_EVENT } from "@/lib/hooks/actEvents";
-import { ActRow, getMyActs } from "@/lib/api/acts";
+import { getMyActs } from "@/lib/api/acts";
 import { useCurrentUser } from "@/lib/auth/session.client";
+import { ActRow } from "@/lib/utils/acts";
 
 export function ActSwitcher() {
   const { currentAct, setCurrentAct } = useCurrentAct();

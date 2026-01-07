@@ -1,5 +1,5 @@
 // lib/performanceUtils.ts
-import { ActRow } from "@/lib/api/acts"
+import { ActRow } from "@/lib/utils/acts"
 import { diffDays } from "@/lib/utils/date";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 export type PerformanceRow = {
@@ -20,7 +20,32 @@ export type PerformanceRow = {
   status_reason: string | null;      // ★追加
   status_changed_at: string | null;  // ★追加
 };
-
+export function toPlainPerformance(row: any) {
+  return {
+    id: row.id,
+    event_date: row.event_date,
+    venue_name: row.venue_name ?? null,
+    profile_id: row.profile_id,
+    act_id: row.act_id,
+    act_name: row.act_name,
+    event_id: row.event_id,
+    venue_id: row.venue_id ?? null,
+    memo: row.memo ?? null,
+    details: null,
+    flyer_url: row.flyer_url,
+    status: row.status ?? null,
+    event_title: row.event_title ?? null,
+    status_reason: row.status_reason ?? null,
+    status_changed_at: row.status_changed_at ?? null,
+    acts: row.acts ? row.acts.map((a: { id: any; name: any; }) => {
+      return {
+        id: a.id,
+        name: a.name
+      }
+    }) : null,
+    prep: row.prep ?? [],
+  };
+}
 export type PerformanceWithActs = PerformanceRow & {
   // join が単体/配列で揺れるのに両対応
   acts: ActRow | ActRow[] | null;

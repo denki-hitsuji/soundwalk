@@ -21,7 +21,7 @@ export async function updatePerformanceMemo(params: {
   if (error) throw error;
 } 
   
-export async function updatePrepTaskDone(params: {
+export async function updatePrepTaskDoneDb(params: {
   taskId: string;
   nextDone: boolean;
   userId: string | null;

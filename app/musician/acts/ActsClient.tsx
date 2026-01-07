@@ -7,7 +7,7 @@ import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { notifyActsUpdated } from "@/lib/hooks/actEvents";
 import { getCurrentUserClient, useCurrentUser } from "@/lib/auth/session.client";
 import { getMyProfile } from "@/lib/api/profiles";
-import { ActRow } from "@/lib/api/acts";
+import { ActRow } from "@/lib/utils/acts";
 import { updateAct } from "./page";
 
 function Badge({ children }: { children: React.ReactNode }) {

@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";;
 import { PerformanceCard } from "../performances/PerformanceCard";
-import { ActRow, getActsByIds, getAllActs, insertAct } from "@/lib/api/acts";
+import { getActsByIds, getAllActs, insertAct } from "@/lib/api/acts";
 import { parseYmdLocal, addDays, fmtMMdd, toYmdLocal } from "@/lib/utils/date";
 import {
   PREP_DEFS,
@@ -18,6 +18,7 @@ import { useCurrentUser } from "@/lib/auth/session.client";
 import { getMyEvents, updateEventStatus, upsertAllEventActs, upsertEventAct } from "@/lib/api/events";
 import { getEventActs, getEventBookings } from "@/lib/db/venues";
 import { createBooking, getBookingsWithDetails } from "@/lib/db/bookings";
+import { ActRow } from "@/lib/utils/acts";
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
 
 type EventRow = {
