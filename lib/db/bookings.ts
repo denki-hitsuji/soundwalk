@@ -8,8 +8,8 @@ import { BookingStatus, BookingWithDetails } from "../utils/bookings";
  */
 
 export async function getBookingsWithDetails(params: {userId: string}): Promise<BookingWithDetails[]> {
-  const { userId } = params;
   const supabase = await createSupabaseServerClient();
+  const { userId } = params;
   const { data, error } = await supabase
     .from('bookings')
     .select(
