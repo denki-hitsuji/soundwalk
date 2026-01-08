@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { getActsByIds } from "@/lib/api/acts";
 import { getEventBookings } from "@/lib/api/venues";
 import { updateBookingStatus } from "@/lib/api/bookingsAction";
-import { upsertEventAct, updateEventStatus, removeEventAct } from "@/lib/api/events";
+import { upsertEventAct, updateEventStatus, removeEventAct } from "@/lib/api/eventsAction";
 import { getEventById } from "@/lib/api/events";
 ;
 

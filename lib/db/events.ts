@@ -63,7 +63,7 @@ export async function getEventByIdDb(eventId: string): Promise<EventRow | null> 
 /**
  * ミュージシャン側：応募可能なイベント一覧（会場情報付き）
  */
-export async function getOpenEventsForMusician(): Promise<EventWithVenue[]> {
+export async function getOpenEventsForMusicianDb(): Promise<EventWithVenue[]> {
   const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser();
   // user は今のところ使わないが、将来的に「自分のエリアだけ」とかに使える
@@ -139,7 +139,7 @@ export async function getOpenEventsForMusician(): Promise<EventWithVenue[]> {
 /**
  * 店舗としてイベント枠を作成
  */
-export async function createEvent(input: {
+export async function createEventDb(input: {
   title: string;
   event_date: string;   // 'YYYY-MM-DD'
   start_time: string;   // 'HH:MM'
@@ -198,7 +198,7 @@ export async function updateEventDb(eventId: string, input: {
 }
 
 // ★ イベント削除
-export async function deleteEvent(eventId: string): Promise<void> {
+export async function deleteEventDb(eventId: string): Promise<void> {
   const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser();
 
@@ -396,7 +396,7 @@ export async function getEventActsDb(params: {
   return ea as EventWithAct[];
 }
 
-export async function getEventPerformances(params: {
+export async function getEventPerformancesDb(params: {
   eventId: string;
 }): Promise<PerformanceRow[]> {
   const supabase = await createSupabaseServerClient();

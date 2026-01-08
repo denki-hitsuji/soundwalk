@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createEvent } from '@/lib/db/events';
+import { createEventDb } from '@/lib/db/events';
 
 export default function NewEventPage() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function NewEventPage() {
     setLoading(true);
 
     try {
-      await createEvent({
+      await createEventDb({
         title,
         event_date: eventDate,
         start_time: startTime,

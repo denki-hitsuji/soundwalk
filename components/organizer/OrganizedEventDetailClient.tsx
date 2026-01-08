@@ -13,7 +13,8 @@ import {
   detailsSummary,
   statusText,
 } from "@/lib/utils/performance";
-import { getMyEvents, removeEventAct, updateEventStatus, upsertEventAct } from "@/lib/api/events";
+import { getMyEvents } from "@/lib/api/events";
+import { removeEventAct, updateEventStatus, upsertEventAct } from "@/lib/api/eventsAction";
 import { ActRow } from "@/lib/utils/acts";
 import { BookingRow } from "@/lib/utils/bookings";
 import { EventWithVenue } from "@/lib/utils/events";

@@ -4,7 +4,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { getEventById, updateEvent } from "@/lib/api/events";
+import { getEventById } from "@/lib/api/events";
+import { updateEvent } from "@/lib/api/eventsAction";
 
 type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
 

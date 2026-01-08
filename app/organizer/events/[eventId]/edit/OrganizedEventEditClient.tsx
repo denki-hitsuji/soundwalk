@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/lib/auth/session.client";
-import { getEventById, updateEvent, updateEventStatus } from "@/lib/api/events";
+import { getEventById } from "@/lib/api/events";
 import { getAllVenues } from "@/lib/api/venues";
 import { EventRow } from "@/lib/utils/events";
 import { VenueRow } from "@/lib/utils/venues";
+import { updateEvent, updateEventStatus } from "@/lib/api/eventsAction";
 
 export default function OrganizedEventEditClient({ eventId }: { eventId: string }) {
   const router = useRouter();
