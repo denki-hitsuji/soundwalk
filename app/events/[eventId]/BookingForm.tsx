@@ -3,54 +3,23 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { ensureMyDefaultAct, getMyActs } from "@/lib/api/acts";
+import { ensureMyDefaultAct } from "@/lib/api/actsAction";
 import { createBooking } from "@/lib/api/bookingsAction";
 import { EventRow } from "@/lib/utils/events";
+import { ActRow } from "@/lib/utils/acts";
 ;
 
 type Props = {
   userId: string;
   event: EventRow;
+  act: ActRow
 };
 
-type MyAct = {
-  id: string;
-  name: string;
-  act_type: string;
-  owner_profile_id: string;
-  description: string | null;
-  icon_url: string | null;
-};
-
-export function BookingForm({ userId, event }: Props) {
+export function BookingForm({ userId, event, act }: Props) {
   const [message, setMessage] = useState("");
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const [loadingAct, setLoadingAct] = useState(true);
-  const [act, setAct] = useState<MyAct | null>(null);
-  // 自分の現在の名義を表示用に取得
-  useEffect(() => {
-    const loadAct = async () => {
-      setLoadingAct(true);
-      setError(null);
-      try {
-
-
-        const act = await ensureMyDefaultAct();
-
-         setAct(act as MyAct);
-      } catch (e: any) {
-        console.error(e);
-        setError(e.message ?? "名義情報の取得に失敗しました。");
-      } finally {
-        setLoadingAct(false);
-      }
-    };
-
-    void loadAct();
-  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -92,8 +61,7 @@ export function BookingForm({ userId, event }: Props) {
       {/* 現在の名義表示 */}
       <div className="text-xs border rounded px-3 py-2 bg-slate-50">
         <div className="font-semibold mb-1">使用する活動名義</div>
-        {loadingAct && <p className="text-gray-500">名義を読み込み中...</p>}
-        {!loadingAct && act && (
+        { act && (
           <>
             <p>
               名義：<span className="font-medium">{act.name}</span>
@@ -110,7 +78,7 @@ export function BookingForm({ userId, event }: Props) {
             )}
           </>
         )}
-        {!loadingAct && !act && (
+        { !act && (
           <p className="text-red-500">活動名義を取得できませんでした。</p>
         )}
 
@@ -145,7 +113,7 @@ export function BookingForm({ userId, event }: Props) {
 
         <button
           type="submit"
-          disabled={submitting || loadingAct || !act}
+          disabled={submitting || !act}
           className="px-4 py-2 border rounded text-sm font-semibold disabled:opacity-50"
         >
           {submitting ? "送信中..." : "この名義で応募する"}

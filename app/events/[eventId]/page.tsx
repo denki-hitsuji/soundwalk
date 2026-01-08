@@ -1,41 +1,39 @@
 // app/events/[eventId]/page.tsx
-"use server"
 import { getPublicEventForBooking } from "@/lib/api/venues";
 import { BookingForm } from "./BookingForm";
 import { getCurrentUser } from "@/lib/auth/session.server";
+import { ensureMyDefaultAct } from "@/lib/api/actsAction";
 
-type Props = {
-  eventId: string ;
-};
+export const dynamic = "force-dynamic"; // ★ビルド時の静的評価を避ける
+export default async function PublicEventPage({ params }: { params: Promise<{ eventId : string }> }) {
+  const { eventId } = await params;
+  const user = await getCurrentUser();
+  if (!user) throw new Error("ログインが必要です。");
 
-export default async function PublicEventPage({ eventId }: Props) {
-  // const user = await getCurrentUser();
-  // if (!user) throw new Error("ログインが必要です。");
+  if (!eventId) {
+    throw new Error("eventId param is missing");
+  }
 
-  // if (!eventId) {
-  //   throw new Error("eventId param is missing");
-  // }
-
-  // const { event, acceptedCount } = await getPublicEventForBooking(eventId);
+  const act = await ensureMyDefaultAct();
+  const { event, acceptedCount } = await getPublicEventForBooking(eventId);
 
   return (
-    <div></div>
-    // <main className="space-y-6">
-    //   {/* イベント情報 */}
-    //   <section>
-    //     <h1 className="text-2xl font-bold mb-2">{event.title}</h1>
-    //     <p className="text-sm text-gray-600">
-    //       {event.event_date} {event.start_time.slice(0, 5)} 〜{" "}
-    //       {event.end_time.slice(0, 5)}
-    //     </p>
-    //     <p className="text-sm text-gray-600">
-    //       枠: {acceptedCount}/{event.max_artists ?? "∞"}
-    //     </p>
+    <main className="space-y-6">
+      {/* イベント情報 */}
+      <section>
+        <h1 className="text-2xl font-bold mb-2">{event.title}</h1>
+        <p className="text-sm text-gray-600">
+          {event.event_date} {event.start_time.slice(0, 5)} 〜{" "}
+          {event.end_time.slice(0, 5)}
+        </p>
+        <p className="text-sm text-gray-600">
+          枠: {acceptedCount}/{event.max_artists ?? "∞"}
+        </p>
 
-    //   </section>
+      </section>
 
-    //   {/* ブッキングフォーム（クライアント側で書き込み） */}
-    //   <BookingForm userId={ user?.id} event={event} />
-    // </main>
+      {/* ブッキングフォーム（クライアント側で書き込み） */}
+      <BookingForm userId={user?.id} event={event} act={act} />
+    </main>
   );
 }

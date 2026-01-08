@@ -1,13 +1,11 @@
 // app/venue/page.tsx
-"use server";
-
-import { getMyOwnerVenues, getMyVenueProfile } from "@/lib/api/venues";
+import { getMyOwnerVenues } from "@/lib/api/venues";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { VenueRow } from "@/lib/utils/venues";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-;
 
+export const dynamic = "force-dynamic"; // ★ビルド時の静的評価を避ける
 export default async function VenueDashboardPage() {
 
   const user = await getCurrentUser();
@@ -16,6 +14,7 @@ export default async function VenueDashboardPage() {
   }
 
   const venues = await getMyOwnerVenues();
+  // const venues = Array<VenueRow>();
 
   return (
     <main className="space-y-6">

@@ -1,6 +1,5 @@
 // lib/api/musician.ts
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-const supabase = await createSupabaseServerClient();
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 
 export type MusicianProfile = {
@@ -17,6 +16,7 @@ export type MusicianProfile = {
  * 現在ログイン中ユーザーを取得
  */
 async function getCurrentUser() {
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
     error,
@@ -31,6 +31,7 @@ async function getCurrentUser() {
  * 自分のミュージシャンプロフィールを取得
  */
 export async function getMyMusicianProfile(): Promise<MusicianProfile | null> {
+  const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser();
 
   const { data, error } = await supabase
@@ -59,6 +60,7 @@ export async function upsertMyMusicianProfile(input: {
   sampleVideoUrl: string;
   bio: string;
 }): Promise<MusicianProfile> {
+  const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser();
 
   const payload = {

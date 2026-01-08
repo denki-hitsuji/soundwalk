@@ -1,5 +1,4 @@
 // app/venue/events/[eventId]/page.tsx
-"use server"
 import { notFound } from "next/navigation";
 import { EventPerformancesPanel } from "@/components/venue/EventPerformancesPanel";
 import { getCurrentUser } from "@/lib/auth/session.server";

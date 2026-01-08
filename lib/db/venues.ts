@@ -241,7 +241,7 @@ const supabase = await createSupabaseServerClient();
 
   return {
     event: event as EventRow,
-    acceptedCount,
+    acceptedCount: acceptedCount
   };
 }
 

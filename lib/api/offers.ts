@@ -2,7 +2,6 @@
 "use server"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/auth/session.server";
-const supabase = await createSupabaseServerClient();
 export type Offer = {
   id: string;
   event_id: string;
@@ -30,6 +29,7 @@ export type OfferWithMusician = Offer & {
 export async function getOffersForEvent(
   eventId: string
 ): Promise<OfferWithMusician[]> {
+  const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser();
 
   const { data, error } = await supabase
@@ -106,6 +106,7 @@ export type OfferStatus = 'pending' | 'accepted' | 'declined';
  * ミュージシャンとして「イベントに応募」する
  */
 export async function applyToEvent(eventId: string, message?: string): Promise<Offer> {
+  const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser();
   if(!user) {
     throw new Error('ログインが必要です');
@@ -134,6 +135,7 @@ export async function applyToEvent(eventId: string, message?: string): Promise<O
  * ミュージシャン側：自分が応募した offers 一覧
  */
 export async function getMyOffers(): Promise<Offer[]> {
+  const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser();
   if(!user) {
     throw new Error('ログインが必要です');
@@ -152,6 +154,7 @@ export async function getMyOffers(): Promise<Offer[]> {
  * 店舗側：応募を承認 → events.status更新 → bookings作成
  */
 export async function acceptOffer(offerId: string) {
+  const supabase = await createSupabaseServerClient();
   // 1. オファーを取得して event_id, musician_id を知る
   const { data: offer, error: offerError } = await supabase
     .from('offers')

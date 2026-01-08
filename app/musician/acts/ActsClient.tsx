@@ -8,7 +8,7 @@ import { notifyActsUpdated } from "@/lib/db/actEvents";
 import { getCurrentUserClient, useCurrentUser } from "@/lib/auth/session.client";
 import { getMyProfile } from "@/lib/api/profiles";
 import { ActRow } from "@/lib/utils/acts";
-import { updateAct } from "./page";
+import { updateAct } from "@/lib/api/actsAction";
 
 function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{children}</span>;

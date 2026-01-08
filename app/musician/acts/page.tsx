@@ -1,4 +1,4 @@
-import { getMyActs, getMyMemberActs, getMyOwnerActs, updateAct as updateActDb } from "@/lib/api/acts";
+import { getMyActs, getMyMemberActs, getMyOwnerActs } from "@/lib/api/acts";
 import { ActRow } from "@/lib/utils/acts";
 import ActsClient from "./ActsClient";
 
@@ -7,10 +7,6 @@ function normalizeAct(a: ActRow | ActRow[] | null): ActRow | null {
   return Array.isArray(a) ? a[0] ?? null : a;
 }
 
-export function updateAct(act: ActRow) {
-  updateActDb(act);
-  return act;
-}
 export default async function Page( ) {
   const myActs: ActRow[] = await getMyActs();
   const myOwnerActs: ActRow[] = await getMyOwnerActs();

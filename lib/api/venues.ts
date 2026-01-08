@@ -1,11 +1,9 @@
 // lib/api/venue.ts
 "use server"
-import "server-only"
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "../auth/session.server";
 import { getAllVenuesDb, getEventBookingsDb, getMyOwnerVenuesDb, getPublicEventForBookingDb, getVenueByIdDb, getVenueEventsWithAcceptedCountDb, upsertMyVenueProfileDb } from "../db/venues";
 import { VenueRow } from "../utils/venues";
-const supabase = await createSupabaseServerClient();
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 
 export type VenueProfile = {
@@ -22,6 +20,7 @@ export type VenueProfile = {
  * 自分の店舗（venues）プロフィールを取得
  */
 export async function getMyVenueProfile(): Promise<VenueProfile | null> {
+  const supabase = await createSupabaseServerClient();
   const user = await getCurrentUser();
   if (!user) throw new Error("ログインが必要です");
 
