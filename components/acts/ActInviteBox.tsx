@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useCurrentUser } from "@/lib/auth/session.client";
-import { createActInvite } from "@/lib/api/acts";
+import { createActInvite } from "@/lib/api/actsAction";
 
 export function ActInviteBox({ actId }: { actId: string }) {
   const [loading, setLoading] = useState(false);

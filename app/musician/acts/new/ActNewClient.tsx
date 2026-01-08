@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
-import { getActById, insertAct } from "@/lib/api/acts";
+import { getActById } from "@/lib/api/acts";
+import { insertAct } from "@/lib/api/actsAction";
 
 type Props = {
   userId: string;

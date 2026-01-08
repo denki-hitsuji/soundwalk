@@ -42,3 +42,7 @@ export type MessageRow = {
     source: string | null;
     created_at: string;
 };
+export function normalizeAct(a: ActRow | ActRow[] | null): ActRow | null {
+  if (!a) return null;
+  return Array.isArray(a) ? a[0] ?? null : a;
+}

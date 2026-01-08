@@ -1,11 +1,11 @@
 // app/musician/organized-events/[eventId]/page.tsx
 "use client";
 
-import { useEffect, useState, useMemo, act } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PerformanceCard } from "../performances/PerformanceCard";
-import { getActsByIds, getAllActs, insertAct } from "@/lib/api/acts";
+import { insertAct } from "@/lib/api/actsAction";
 import { parseYmdLocal, addDays, fmtMMdd, toYmdLocal } from "@/lib/utils/date";
 import {
   PREP_DEFS,
@@ -13,14 +13,11 @@ import {
   detailsSummary,
   statusText,
 } from "@/lib/utils/performance";
-import { getMyEvents, removeEventAct, updateEventStatus, upsertAllEventActs, upsertEventAct } from "@/lib/api/events";
-import { createBookingDb, getBookingsWithDetails } from "@/lib/db/bookings";
+import { getMyEvents, removeEventAct, updateEventStatus, upsertEventAct } from "@/lib/api/events";
 import { ActRow } from "@/lib/utils/acts";
-import { BookingRow, BookingStatus } from "@/lib/utils/bookings";
-import { EventRow, EventWithVenue } from "@/lib/utils/events";
-import { getEventBookings } from "@/lib/api/venues";
+import { BookingRow } from "@/lib/utils/bookings";
+import { EventWithVenue } from "@/lib/utils/events";
 import { createBooking, createOfferAndInboxPerformance, updateBookingStatus } from "@/lib/api/bookingsAction";
-
 
 type Props = {
   userId: string; 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { deletePhotoDataAndStorage, uploadActPhoto } from "@/lib/api/acts";
+import { deletePhotoDataAndStorage, uploadActPhoto } from "@/lib/api/actsAction";
 import { ActRow} from "@/lib/utils/acts";
 import { updateAct } from "@/lib/api/actsAction";
 
