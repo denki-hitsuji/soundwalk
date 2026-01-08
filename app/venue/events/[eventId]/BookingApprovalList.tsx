@@ -4,9 +4,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { getActsByIds } from "@/lib/api/acts";
-import { getEventById, removeEventAct, updateEventStatus, upsertEventAct } from "@/lib/api/events";
-import { getEventBookings } from "@/lib/db/venues";
-import { updateBookingStatus } from "@/lib/api/bookings";
+import { getEventBookings } from "@/lib/api/venues";
+import { updateBookingStatus } from "@/lib/api/bookingsAction";
+import { upsertEventAct, updateEventStatus, removeEventAct } from "@/lib/api/events";
+import { getEventById } from "@/lib/api/events";
 ;
 
 type Props = {
@@ -156,7 +157,6 @@ export function BookingApprovalList({ eventId }: Props) {
       // 2. event_acts に存在していれば削除
       await removeEventAct({ eventId: booking.event_id, actId: booking.act_id });
 
-      await load();
       router.refresh();
     } catch (e: any) {
       console.error(e);

@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { getAllVenues, Venue } from "@/lib/db/venues";
+import { getAllVenues } from "@/lib/api/venues";
+import { VenueRow } from "@/lib/utils/venues";
 
 // react-leaflet は SSR 不可なので dynamic import
 const MapContainer = dynamic(
@@ -41,7 +42,7 @@ if (typeof window !== "undefined") {
 }
 
 export default function MapPage() {
-  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venues, setVenues] = useState<VenueRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
 

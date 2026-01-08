@@ -1,18 +1,14 @@
 // app/venue/[venueId]/page.tsx
-import { getVenueEventsWithAcceptedCount } from "@/lib/db/venues";
+"use server";
+import { getVenueEventsWithAcceptedCount } from "@/lib/api/venues";
 
-type Props = {
-  params: { venueId: string };
-};
-
-export default async function VenuePage({ params }: Props) {
-  const { venueId } = params;
-
-  const events = await getVenueEventsWithAcceptedCount(venueId);
+export default async function VenuePage({ params }: { params: Promise<{ venueId: string }> }) {
+  const { venueId } = await params;
+  // const events = await getVenueEventsWithAcceptedCount(venueId);
 
   return (
     <main className="p-4 space-y-4">
-      <h1 className="text-xl font-bold">この会場のイベント一覧</h1>
+      {/* <h1 className="text-xl font-bold">この会場のイベント一覧</h1>
 
       {events.length === 0 && <p>まだイベントがありません。</p>}
 
@@ -37,7 +33,7 @@ export default async function VenuePage({ params }: Props) {
             </div>
           </li>
         ))}
-      </ul>
+      </ul> */}
     </main>
   );
 }

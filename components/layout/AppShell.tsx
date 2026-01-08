@@ -1,4 +1,5 @@
 // AppShell.tsx（Server Component）
+"use server";
 import { AppShellClient } from "./AppShellClient";
 import { createSupabaseServerClient } from "@/lib/supabase/server"; // ←あなたの実装に合わせてパス調整
 

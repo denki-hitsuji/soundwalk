@@ -1,9 +1,9 @@
 // lib/api/bookings.ts
 "use server";
 import { getCurrentUser } from "@/lib/auth/session.server";
-import { get } from "http";
-import { BookingStatus, BookingWithDetails, getBookingsWithDetails, getVenueBookingsWithDetailsDB, updateBookingStatusDB, VenueBookingWithDetails } from "../db/bookings";
-
+import { getBookingsWithDetails, getVenueBookingsWithDetailsDB } from "../db/bookings";
+import { BookingStatus, BookingWithDetails } from "../utils/bookings";
+import { VenueBookingWithDetails } from "../utils/venues";
 
 /**
  * ミュージシャン側：自分のブッキング一覧
@@ -13,7 +13,7 @@ export async function getMyBookingsWithDetails(): Promise<BookingWithDetails[]> 
   const user = await getCurrentUser();
   if(!user) throw new Error("ログインが必要です");
 
-  const data = getBookingsWithDetails().then((bookings) => {
+  const data = getBookingsWithDetails({ userId: user.id}).then((bookings) => {
     return bookings.filter((booking) => booking.musician_id === user.id);
   });
 
@@ -111,40 +111,3 @@ export async function getVenueBookingsWithDetails(): Promise<VenueBookingWithDet
 
   return normalized;
 }
-
-export async function createBooking(params: {
-  eventId: string;
-  musicianId: string;
-  venueId: string;
-  message: string;
-}) : Promise<BookingWithDetails> {
-  const user = await getCurrentUser();
-  if(!user) throw new Error("ログインが必要です");
-
-  const booking = await createBooking({
-    eventId: params.eventId,
-    musicianId: params.musicianId,
-    venueId: params.venueId,
-    message: params.message
-  });
-  await updateBookingStatus({ bookingId: booking.id, status: "accepted" });
-
-  return booking;
-}
-
-export async function updateBookingStatus(params: {
-  bookingId: string;
-  status: "accepted" | "rejected";
-}) {
-  const user = await getCurrentUser();
-  if(!user) throw new Error("ログインが必要です");
-
-  try {
-    await updateBookingStatusDB({
-      bookingId: params.bookingId,
-      status: params.status
-    });
-  } catch (error) {
-    throw error;
-  }
-} 

@@ -1,60 +1,14 @@
 "use server";
-
+import "server-only"
 import { createSupabaseServerClient } from "../supabase/server";
-export type BookingStatus = 'upcoming' | 'accepted' | 'completed' | 'cancelled';
+import { BookingStatus, BookingWithDetails } from "../utils/bookings";
 
-export type BookingWithDetails = {
-  id: string;
-  event_id: string;
-  musician_id: string;
-  venue_id: string;
-  status: BookingStatus;
-  created_at: string;
-  events: {
-    id: string;
-    title: string;
-    event_date: string;
-    start_time: string;
-    end_time: string;
-  } | null;
-  venues: {
-    id: string;
-    name: string;
-  } | null;
-};
-
-
-// 店舗側で使う：ミュージシャン情報もほしい版
-export type VenueBookingWithDetails = {
-  id: string;
-  event_id: string;
-  musician_id: string;
-  venue_id: string;
-  status: BookingStatus;
-  created_at: string;
-  events: {
-    id: string;
-    title: string;
-    event_date: string;
-    start_time: string;
-    end_time: string;
-  } | null;
-  musicians: {
-    id: string;
-    genre: string | null;
-    area: string | null;
-    sample_video_url: string | null;
-    bio: string | null;
-    profiles: {
-      display_name: string;
-    } | null;
-  } | null;
-};
 /**
  * ミュージシャン側：自分のブッキング一覧
  */
 
-export async function getBookingsWithDetails(): Promise<BookingWithDetails[]> {
+export async function getBookingsWithDetails(params: {userId: string}): Promise<BookingWithDetails[]> {
+  const { userId } = params;
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('bookings')
@@ -62,7 +16,7 @@ export async function getBookingsWithDetails(): Promise<BookingWithDetails[]> {
       `
       id,
       event_id,
-      musician_id,
+      act_id,
       venue_id,
       status,
       created_at,
@@ -78,13 +32,13 @@ export async function getBookingsWithDetails(): Promise<BookingWithDetails[]> {
         name
       )
     `
-    );
+    ).eq(`act_id`, userId);
   if (error) { throw error; }
 
   return data as unknown as BookingWithDetails[];
 }
 
-export async function getVenueBookingsWithDetailsDB(userId: string): Promise<VenueBookingWithDetails[]> {
+export async function getVenueBookingsWithDetailsDB(venueId: string): Promise<BookingWithDetails[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('bookings')
@@ -115,18 +69,19 @@ export async function getVenueBookingsWithDetailsDB(userId: string): Promise<Ven
       )
     `
     )
-    .eq('venue_id', userId)
+    .eq('venue_id', venueId)
     .order('events(event_date)', { ascending: true })
     .order('events(start_time)', { ascending: true });
 
   if (error) throw error;
-  return data as unknown as VenueBookingWithDetails[];
+  return data as unknown as BookingWithDetails[];
 }
 
-export async function createBooking(params: {
+export async function createBookingDb(params: {
   eventId: string;
-  musicianId: string;
+  actId: string;
   venueId: string;
+  status: BookingStatus 
   message: string;
 }) {
   const supabase = await createSupabaseServerClient();
@@ -134,17 +89,17 @@ export async function createBooking(params: {
     .from("bookings")
     .insert({
       event_id: params.eventId,
-      musician_id: params.musicianId,
+      act_id: params.actId,
       venue_id: params.venueId,
       message: params.message || null,
-      status: "upcoming",
+      status: params.status?? "upcoming",
     })
     .select()
     .single();
 
   if (error) throw error;
 
-  return data as unknown as BookingWithDetails[];
+  return data as unknown as BookingWithDetails;
 }
 
 export async function updateBookingStatusDB(params: {
@@ -158,4 +113,16 @@ export async function updateBookingStatusDB(params: {
     .eq("id", params.bookingId);
 
   if (error) throw error;
+}
+
+export async function createOfferAndInboxPerformanceDb(params: { eventId: string, actId: string }) {
+  const { eventId, actId } = params;
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("create_offer_and_inbox_performance", {
+          p_event_id: eventId,
+          p_act_id: actId,
+        });
+
+        console.log("offer rpc result", { data, error });
+        if (error) throw error;
 }

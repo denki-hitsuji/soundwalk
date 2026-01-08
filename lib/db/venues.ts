@@ -1,61 +1,17 @@
 // lib/venueQueries.ts
+"use server"
+import "server-only"
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-// ===== 型定義 =====
-export type Venue = {
-  id: string;
-  name: string;
-  latitude: number | null;
-  longitude: number | null;
-  city: string | null;
-  prefecture: string | null;
-};
-
-export type Act = {
-  id: string;
-  name: string;
-  act_type: string;
-  owner_profile_id: string;
-  description?: string | null;
-  icon_url?: string | null;
-};
-
-export type Event = {
-  id: string;
-  venue_id: string;
-  title: string;
-  event_date: string;
-  start_time: string;
-  end_time: string;
-  max_artists: number | null;
-  description: string | null;
-  status: string;
-  created_at: string;
-};
-
-export type EventAct = {
-  event_id: string;
-  act_id: string;
-  status: string;
-  sort_order: number | null;
-  created_at: string;
-  act: Act;
-};
-
-export type VenueBooking = {
-  id: string;
-  status: string;
-  message: string | null;
-  created_at: string;
-  event_id: string;
-  act_id: string;
-  event?: Partial<Event>; // 必要に応じて page 側で埋める
-  act: Pick<Act, "id" | "name" | "act_type" | "owner_profile_id">;
-};
+import { VenueProfile, VolumeLevel } from "../api/venues";
+import { getCurrentUser } from "../auth/session.server";
+import { EventWithAct, EventRow } from "../utils/events";
+import { VenueBooking, VenueRow } from "../utils/venues";
+import { BookingRow } from "../utils/bookings";
 
 // ==========================================================
 //   venueId → Event + acceptedCount
 // ==========================================================
-export async function getVenueById(venueId: string): Promise<Venue | null> {
+export async function getVenueByIdDb(venueId: string): Promise<VenueRow | null> {
 const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("venues")
@@ -64,10 +20,10 @@ const supabase = await createSupabaseServerClient();
     .single();
 
   if (error) throw error;
-  return (data ?? null) as Venue | null;
+  return (data ?? null) as VenueRow | null;
 } 
 
-export async function getAllVenues(): Promise<Venue[]> {
+export async function getAllVenuesDb(): Promise<VenueRow[]> {
 const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("venues")
@@ -75,10 +31,10 @@ const supabase = await createSupabaseServerClient();
     .order("name", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as Venue[];
+  return (data ?? []) as VenueRow[];
 }
 
-export async function getVenueEventsWithAcceptedCount(venueId: string) {
+export async function getVenueEventsWithAcceptedCountDb(venueId: string) {
 const supabase = await createSupabaseServerClient();
   // 1. 会場のイベント取得
   const { data: events, error: eventsError } = await supabase
@@ -109,7 +65,7 @@ const supabase = await createSupabaseServerClient();
   return events.map((e) => ({
     ...e,
     acceptedCount: countMap.get(e.id) ?? 0,
-  })) as (Event & { acceptedCount: number })[];
+  })) as (EventRow & { acceptedCount: number })[];
 }
 
 // ==========================================================
@@ -161,15 +117,15 @@ const supabase = await createSupabaseServerClient();
 }
 
 // ==========================================================
-//   eventId → venue_bookings（応募）
+//   eventId → bookings（応募）
 // ==========================================================
 
-export async function getEventBookings(eventId: string) {
+export async function getEventBookingsDb(eventId: string) {
 const supabase = await createSupabaseServerClient();
   // 1. booking だけ取る
   const { data: bookings, error: bookingsError } = await supabase
-    .from("venue_bookings")
-    .select("id, status, message, created_at, event_id, act_id")
+    .from("bookings")
+    .select("*")
     .eq("event_id", eventId)
     .order("created_at", { ascending: false });
 
@@ -181,7 +137,7 @@ const supabase = await createSupabaseServerClient();
   // 2. act 情報取得
   const { data: acts, error: actsError } = await supabase
     .from("acts")
-    .select("id, name, act_type, owner_profile_id")
+    .select("*")
     .in("id", actIds);
 
   if (actsError) throw actsError;
@@ -191,7 +147,7 @@ const supabase = await createSupabaseServerClient();
   return bookings.map((b) => ({
     ...b,
     act: actMap.get(b.act_id)!,
-  })) as VenueBooking[];
+  })) as BookingRow[];
 }
 
 // ==========================================================
@@ -203,7 +159,7 @@ const supabase = await createSupabaseServerClient();
   // 1. event_acts を取得
   const { data, error } = await supabase
     .from("event_acts")
-    .select("event_id, act_id, status, sort_order, created_at")
+    .select("*")
     .eq("event_id", eventId)
     .order("sort_order", { ascending: true, nullsFirst: false });
 
@@ -226,7 +182,7 @@ const supabase = await createSupabaseServerClient();
   return data.map((ea) => ({
     ...ea,
     act: actMap.get(ea.act_id)!,
-  })) as EventAct[];
+  })) as EventWithAct[];
 }
 
 // ==========================================================
@@ -248,9 +204,9 @@ const supabase = await createSupabaseServerClient();
   const eventActs = await getEventActs(eventId);
 
   // 3. 応募
-  const bookings = await getEventBookings(eventId);
+  const bookings = await getEventBookingsDb(eventId);
 
-  const acceptedCount = eventActs.filter((ea) => ea.status === "accepted").length;
+  const acceptedCount = eventActs.filter((ea) => ea.event_act.status === "accepted").length;
 
   return {
     event: event as Event,
@@ -260,7 +216,7 @@ const supabase = await createSupabaseServerClient();
   };
 }
 
-export async function getPublicEventForBooking(eventId: string) {
+export async function getPublicEventForBookingDb(eventId: string) {
 const supabase = await createSupabaseServerClient();
   // 1. イベント本体
   const { data: event, error: eventError } = await supabase
@@ -284,7 +240,7 @@ const supabase = await createSupabaseServerClient();
     eventActs?.filter((ea) => ea.status === "accepted").length ?? 0;
 
   return {
-    event: event as Event,
+    event: event as EventRow,
     acceptedCount,
   };
 }
@@ -333,5 +289,75 @@ const supabase = await createSupabaseServerClient();
   return recruitingEvents.map((e) => ({
     ...e,
     acceptedCount: acceptedCountMap.get(e.id) ?? 0,
-  })) as (Event & { acceptedCount: number })[];
+  })) as (EventRow & { acceptedCount: number })[];
+}
+/**
+ * 自分の店舗プロフィールを upsert
+ */
+export async function upsertMyVenueProfileDb(input: {
+  name: string;
+  address: string;
+  capacity: number | null;
+  volumePreference: VolumeLevel;
+  hasPa: boolean;
+  photoUrl: string;
+}): Promise<VenueProfile> {
+  const supabase = await createSupabaseServerClient();
+  const user = await getCurrentUser();
+  if (!user) throw new Error("ログインが必要です");
+
+  const payload = {
+    id: user.id,
+    name: input.name,
+    address: input.address || null,
+    capacity: input.capacity,
+    volume_preference: input.volumePreference || null,
+    has_pa: input.hasPa,
+    photo_url: input.photoUrl || null,
+  };
+
+  const { data, error } = await supabase
+    .from('venues')
+    .upsert(payload)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as VenueProfile;
+}
+
+export async function getMyOwnerVenuesDb(){
+  const supabase = await createSupabaseServerClient();
+  const user = await getCurrentUser();
+  const { data, error: queryError } = await supabase
+        .from("venue_admins")
+        .select(
+            `
+            venue_id,
+            venues (
+              id,
+              name,
+              short_name,
+              city,
+              prefecture
+            )
+          `,
+        )
+        .eq("profile_id", user?.id)
+        .order("created_at", { ascending: true });
+
+    if (queryError) throw queryError;
+
+    const list: VenueRow[] =
+    (data ?? []).map((row: any) => ({
+      id: row.venues.id as string,
+      name: row.venues.name as string,
+      short_name: row.venues.short_name ?? null,
+      city: row.venues.city ?? null,
+      prefecture: row.venues.prefecture ?? null,
+      latitude: row.venues.latitude ?? null,
+      longitude: row.venues.longitude ?? null
+    })) ?? [];
+
+  return list;
 }

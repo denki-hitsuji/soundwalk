@@ -2,7 +2,7 @@
 import { getCurrentUser } from "@/lib/auth/session.server";;
 import { toYmdLocal } from "@/lib/utils/date";
 import { createSupabaseServerClient } from "../supabase/server";
-import { ActRow } from "../db/acts";
+import { ActRow } from "../utils/acts";
 
 // このユーザーの acts 一覧(オーナー・メンバー両方)
 export async function getMyActs(): Promise<ActRow[]> {
@@ -206,7 +206,7 @@ export async function getActsByIds(actIds: string[]) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("acts")
-    .select("id, name, act_type")
+    .select("*")
     .in("id", actIds);  
 
   if (error) throw error;

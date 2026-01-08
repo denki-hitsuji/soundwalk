@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createEvent } from '@/lib/api/events';
+import { createEvent } from '@/lib/db/events';
 
 export default function NewEventPage() {
   const router = useRouter();

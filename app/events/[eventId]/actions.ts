@@ -1,13 +1,13 @@
 // app/events/[eventId]/actions.ts
 "use server";
 
-import { createBooking } from "@/lib/api/bookings";
-import { useCurrentUser } from "@/lib/auth/session.client";
+import { createBooking } from "@/lib/api/bookingsAction";
 import { getMyOwnerActs } from "@/lib/api/acts";
-import { supabase } from "@/lib/supabase/client";
+import { getCurrentUser } from "@/lib/auth/session.server";
+import { getMyVenueProfile } from "@/lib/api/venues";
 export async function submitBooking(formData: FormData, eventId: string) {
-  const data = await useCurrentUser();
-  if (!data.user) {
+  const user = await getCurrentUser();
+  if (!user) {
     throw new Error("ログインが必要です");
   }
 
@@ -19,20 +19,18 @@ export async function submitBooking(formData: FormData, eventId: string) {
   if (!act) {
     throw new Error("このユーザーに紐づく活動名義(Act)がありません");
   }
+  
+  const venue = await getMyVenueProfile();
 
   // 2. venue_bookings に insert
-  const { error: insertError } = await supabase.from("venue_bookings").insert({
-    event_id: eventId,
-    act_id: act.id,
-    message: message || null,
-    status: "pending",
-  });
   const booking = createBooking({
-    eventId,
-    musicianId: act.id,
-    venueId: data?.user?.id ?? "",
+    userId: user.id, 
+    eventId: eventId,
+    actId: act.id,
+    venueId: venue?.id ?? "",
     message: message ,
+    status: "upcoming", 
+
   });
 
-  if (insertError) throw insertError;
 }

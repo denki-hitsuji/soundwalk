@@ -3,11 +3,12 @@
 import { getActById, getMyMemberActs  } from "@/lib/api/acts";
 import ActDetailClient from "./ActDetailClient";
 import { getMyUpcomingPerformances, PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
-import { EventRow, getEventById } from "@/lib/api/events";
 import { getMySongs } from "@/lib/api/songs";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { ActRow, MemberRow } from "@/lib/utils/acts";
 import { redirect } from "next/navigation";
+import { EventRow } from "@/lib/utils/events";
+import { getEventById } from "@/lib/api/events";
 const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
 
 export default async function Page({ params }: { params: Promise<{ actId: string }> }) {

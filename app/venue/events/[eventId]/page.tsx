@@ -1,102 +1,55 @@
 // app/venue/events/[eventId]/page.tsx
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+"use server"
 import { notFound } from "next/navigation";
 import { EventPerformancesPanel } from "@/components/venue/EventPerformancesPanel";
+import { getCurrentUser } from "@/lib/auth/session.server";
+import { getEventById } from "@/lib/api/events";
+import { getVenueById } from "@/lib/api/venues";
+import { getPerformances } from "@/lib/utils/performance";
 
-type PageProps = {
-  params: { eventId: string };
-};
-
-export default async function VenueEventPage({ params }: PageProps) {
-  const supabase = await createSupabaseServerClient();
-  const eventId = params.eventId;
+export default async function VenueEventPage({ params }: { params: Promise<{ eventId: string }> }) {
+  const { eventId } = await params;
 
   // 認証（主催者判定に使う）
-  const {
-    data: { user },
-  } = await (await createSupabaseServerClient()).auth.getUser();
+  // const user = await getCurrentUser();
 
-  if (!user) {
-    // 未ログインの扱いはプロジェクトの方針に合わせて
-    notFound();
-  }
+  // if (!user) {
+  //   // 未ログインの扱いはプロジェクトの方針に合わせて
+  //   notFound();
+  // }
 
   // event本体（必要カラムだけ）
-  const { data: event, error: eventErr } = await (await createSupabaseServerClient())
-    .from("events")
-    .select(
-      `
-      id,
-      date,
-      venue_id,
-      organizer_profile_id,
-      max_artists,
-      reconfirm_deadline
-    `
-    )
-    .eq("id", eventId)
-    .single();
+  // const event = await getEventById(eventId);
+  // // 主催者チェック（ここで弾くのがUX的に親切）
+  // if (event?.organizer_profile_id !== user.id) {
+  //   notFound();
+  // }
 
-  if (eventErr || !event) notFound();
+  // // venue（任意：表示用）
+  // const venue = await getVenueById(event.venue_id);
 
-  // 主催者チェック（ここで弾くのがUX的に親切）
-  if (event.organizer_profile_id !== user.id) {
-    notFound();
-  }
+  // // 出演者一覧（event_id で紐付いているものだけ）
+  // // acts は name 等、profiles は display_name 等（あなたの実カラムに合わせて読み替え）
+  // const performances = (await getPerformances()).data.filter(p => p.event_id === eventId);
 
-  // venue（任意：表示用）
-  const { data: venue } = event.venue_id
-    ? await (await createSupabaseServerClient())
-        .from("venues")
-        .select("id,name")
-        .eq("id", event.venue_id)
-        .single()
-    : { data: null };
+  // const list = performances ?? [];
 
-  // 出演者一覧（event_id で紐付いているものだけ）
-  // acts は name 等、profiles は display_name 等（あなたの実カラムに合わせて読み替え）
-  const { data: performances, error: perfErr } = await (await createSupabaseServerClient())
-    .from("musician_performances")
-    .select(
-      `
-      id,
-      profile_id,
-      act_id,
-      status,
-      status_reason,
-      status_changed_at,
-      created_at,
-      memo,
-      acts ( id, name ),
-      profiles ( id, display_name )
-    `
-    )
-    .eq("event_id", eventId)
-    .order("created_at", { ascending: true });
+  // const confirmed = list.filter((p) => p.status === "confirmed");
+  // const pending = list.filter((p) => p.status === "pending_reconfirm");
+  // const canceled = list.filter((p) => p.status === "canceled");
 
-  if (perfErr) {
-    // ここは状況に応じてエラーページでもOK
-    throw new Error(perfErr.message);
-  }
-
-  const list = performances ?? [];
-
-  const confirmed = list.filter((p) => p.status === "confirmed");
-  const pending = list.filter((p) => p.status === "pending_reconfirm");
-  const canceled = list.filter((p) => p.status === "canceled");
-
-  const usedSlots = confirmed.length + pending.length;
-  const maxArtists = event.max_artists ?? null;
+  // const usedSlots = confirmed.length + pending.length;
+  // const maxArtists = event.max_artists ?? null;
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
+      {/* <header className="space-y-1">
         <div className="text-sm text-neutral-600">
           {venue?.name ?? "（会場未設定）"}
         </div>
         <h1 className="text-xl font-semibold">イベント詳細</h1>
         <div className="text-sm text-neutral-700">
-          日時: {formatJaDateTime(event.date)}
+          日時: {formatJaDateTime(event.event_date)}
         </div>
       </header>
 
@@ -138,7 +91,7 @@ export default async function VenueEventPage({ params }: PageProps) {
           flyer_url: p.flyer?.file_url ?? null,
           event_title: p.event_title,
         }))}
-      />
+      /> */}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
 import { deleteActById } from "@/lib/api/acts";
 import { PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
-import { notifyActsUpdated } from "@/lib/hooks/actEvents";
+import { notifyActsUpdated } from "@/lib/db/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { SongRow } from "@/lib/api/songs";
 import { User } from "@supabase/auth-js";

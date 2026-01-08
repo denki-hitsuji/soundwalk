@@ -1,114 +1,37 @@
 // app/musician/organized-events/page.tsx
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
-import { useCurrentUser } from "@/lib/auth/session.client";
-import { getEventActs } from "@/lib/db/venues";
-
-type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
-
-type EventRow = {
-  id: string;
-  venue_id: string;
-  title: string;
-  event_date: string;
-  open_time: string | null;
-  start_time: string;
-  end_time: string;
-  max_artists: number | null;
-  status: EventStatus;
-  created_at: string;
-  venues?: { id: string; name: string }[];
-};
-
+import { getEventActs } from "@/lib/api/events";
+import { EventWithAct, EventRow, EventWithVenue } from "@/lib/utils/events";
 type EventWithCount = EventRow & {
   acceptedCount: number;
 };
 
-export default function MusicianOrganizedEventsPage() {
-  const [loading, setLoading] = useState(true);
-  const [userMissing, setUserMissing] = useState(false);
-  const [events, setEvents] = useState<EventWithCount[]>([]);
-  const [error, setError] = useState<string | null>(null);
+type Props = {
+  userId: string;
+  events: EventWithVenue[];
+  eventActs: EventWithAct[];
+}
+export default function MusicianOrganizedEventsPage({ userId, events, eventActs }:Props) {
+  const eventIds = events.map((e) => e.id);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const user = await useCurrentUser();
-        if (!user.user) {
-          setUserMissing(true);
-          return;
-        }
+  // 2. event_acts から acceptedCount を集計
+  const countMap = new Map<string, number>();
+  eventActs.map(act => {
+    countMap.set(
+      act.event_act.event_id as string,
+      (countMap.get(act.event_act.event_id as string) ?? 0) + 1,
+    ); });
 
-        // 1. 自分が企画したイベントを取得
-        const { data: eventRows, error: eventsError } = await supabase
-          .from("events")
-          .select(
-            `
-            id,
-            venue_id,
-            title,
-            event_date,
-            open_time,
-            start_time,
-            end_time,
-            max_artists,
-            status,
-            created_at,
-            venues (
-              id,
-              name
-            )
-          `,
-          )
-          .eq("organizer_profile_id", user.user?.id)
-          .order("event_date", { ascending: true })
-          .order("start_time", { ascending: true });
-
-        if (eventsError) throw eventsError;
-
-        if (!eventRows || eventRows.length === 0) {
-          setEvents([]);
-          return;
-        }
-
-        const eventList = eventRows as EventRow[];
-        const eventIds = eventList.map((e) => e.id);
-
-        // 2. event_acts から acceptedCount を集計
-        const eventActs = eventIds.map(e => getEventActs(e));
-        const countMap = new Map<string, number>();
-        for (const row of eventActs ?? []) {
-          const r = await row;
-          countMap.set(
-            r[0].event_id as string,
-            (countMap.get(r[0].event_id as string) ?? 0) + 1,
-          );
-        }
-
-        const withCount: EventWithCount[] = eventList.map((e) => ({
-          ...e,
-          acceptedCount: countMap.get(e.id) ?? 0,
-        }));
-
-        setEvents(withCount);
-      } catch (e: any) {
-        console.error(e);
-        setError(e.message ?? "エラーが発生しました。");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, []);
-
+  const withCount: EventWithCount[] = events.map((e) => ({
+    ...e,
+    acceptedCount: countMap.get(e.id) ?? 0,
+  }));
+      
   const totalAccepted = useMemo(
-    () => events.reduce((sum, e) => sum + e.acceptedCount, 0),
+    () => withCount.reduce((sum, e) => sum + e.acceptedCount, 0),
     [events],
   );
 
@@ -116,23 +39,6 @@ export default function MusicianOrganizedEventsPage() {
     t ? t.slice(0, 5) : "";
 
   // ===== UI =====
-
-  if (loading) {
-    return (
-      <main className="p-4">
-        <p className="text-sm text-gray-500">読み込み中...</p>
-      </main>
-    );
-  }
-
-  if (userMissing) {
-    return (
-      <main className="p-4">
-        <p className="text-sm text-red-500">ログインが必要です。</p>
-      </main>
-    );
-  }
-
   return (
     <main className="space-y-4">
       <div className="flex items-center justify-between">
@@ -150,9 +56,7 @@ export default function MusicianOrganizedEventsPage() {
         </Link>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
-
-      {!error && events.length === 0 && (
+      {events.length === 0 && (
         <p className="text-sm text-gray-500">
           まだあなたが企画したイベントはありません。
           「企画管理 → 新しいイベントを企画する」から作成できます。
@@ -166,7 +70,7 @@ export default function MusicianOrganizedEventsPage() {
       )}
 
       <ul className="space-y-2">
-        {events.map((event) => {
+        {withCount.map((event) => {
           const openTime = formatTime(event.open_time);
           const startTime = formatTime(event.start_time);
           const endTime = formatTime(event.end_time);
@@ -181,11 +85,11 @@ export default function MusicianOrganizedEventsPage() {
                   <div>
                     <div className="font-semibold">{event.title}</div>
 
-                    {event.venues && event.venues.length > 0 && (
+                    {/* {event.venues &&  (
                       <div className="text-[11px] text-gray-500">
                         会場: {event.venues[0].name}
                       </div>
-                    )}
+                    )} */}
 
                     <div className="text-xs text-gray-600">
                       {event.event_date}{" "}

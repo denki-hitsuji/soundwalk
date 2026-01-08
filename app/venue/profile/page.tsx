@@ -6,7 +6,7 @@ import {
   getMyVenueProfile,
   upsertMyVenueProfile,
   type VolumeLevel,
-} from '@/lib/api/venue';
+} from '@/lib/api/venues';
 
 const volumeOptions: { value: VolumeLevel; label: string }[] = [
   { value: 'quiet', label: 'かなり静かめ（会話が主）' },

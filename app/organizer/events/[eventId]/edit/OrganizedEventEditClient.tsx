@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { EventRow, getEventById, updateEvent, updateEventStatus } from "@/lib/api/events";
 import { useCurrentUser } from "@/lib/auth/session.client";
-import { getAllVenues, Venue } from "@/lib/db/venues";
-
-type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
+import { getEventById, updateEvent, updateEventStatus } from "@/lib/api/events";
+import { getAllVenues } from "@/lib/api/venues";
+import { EventRow } from "@/lib/utils/events";
+import { VenueRow } from "@/lib/utils/venues";
 
 export default function OrganizedEventEditClient({ eventId }: { eventId: string }) {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
   const [error, setError] = useState<string | null>(null);
 
   const [event, setEvent] = useState<EventRow | null>(null);
-  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venues, setVenues] = useState<VenueRow[]>([]);
 
   // form state
   const [title, setTitle] = useState("");
@@ -55,7 +55,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
 
       // venues（選択肢）
       const venues = await getAllVenues();
-      setVenues(venues as Venue[]);
+      setVenues(venues as VenueRow[]);
 
       // init form
       setTitle(row.title ?? "");

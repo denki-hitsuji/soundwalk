@@ -1,22 +1,14 @@
 // app/venue/page.tsx
-"use server";
+"use client";
 
-import { getMyOwnerVenues, getMyVenueProfile } from "@/lib/api/venues";
-import { getCurrentUser } from "@/lib/auth/session.server";
-import { VenueRow } from "@/lib/utils/venues";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-;
+import { VenueRow } from "@/lib/utils/venues";
+type Props = {
+    userId: string;
+    venues: VenueRow[];
+}
 
-export default async function VenueDashboardPage() {
-
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
-
-  const venues = await getMyOwnerVenues();
-
+export default function VenueDashboardClient({userId, venues }: Props) {
   return (
     <main className="space-y-6">
       <div>
@@ -113,3 +105,5 @@ export default async function VenueDashboardPage() {
     </main>
   );
 }
+
+   

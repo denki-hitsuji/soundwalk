@@ -3,12 +3,14 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
-import { useCurrentUser } from "@/lib/auth/session.client";
+import { ensureMyDefaultAct, getMyActs } from "@/lib/api/acts";
+import { createBooking } from "@/lib/api/bookingsAction";
+import { EventRow } from "@/lib/utils/events";
 ;
 
 type Props = {
-  eventId: string;
+  userId: string;
+  event: EventRow;
 };
 
 type MyAct = {
@@ -20,7 +22,7 @@ type MyAct = {
   icon_url: string | null;
 };
 
-export function BookingForm({ eventId }: Props) {
+export function BookingForm({ userId, event }: Props) {
   const [message, setMessage] = useState("");
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,44 +30,17 @@ export function BookingForm({ eventId }: Props) {
 
   const [loadingAct, setLoadingAct] = useState(true);
   const [act, setAct] = useState<MyAct | null>(null);
-
   // 自分の現在の名義を表示用に取得
   useEffect(() => {
     const loadAct = async () => {
       setLoadingAct(true);
       setError(null);
       try {
-        const user = await useCurrentUser();
-        if (!user.user) {
-          setError("ログインが必要です。");
-          return;
-        }
 
-        const { data: acts, error: actsError } = await supabase
-          .from("acts")
-          .select("*")
-          .eq("owner_profile_id", user.user.id)
-          .order("created_at", { ascending: true });
 
-        if (actsError) throw actsError;
+        const act = await ensureMyDefaultAct();
 
-        if (acts && acts.length > 0) {
-          setAct(acts[0] as MyAct);
-        } else {
-          // なければデフォルトActを作成
-          const { data: newAct, error: insertActError } = await supabase
-            .from("acts")
-            .insert({
-              name: user.user?.user_metadata?.name ?? "My Act",
-              act_type: "solo",
-              owner_profile_id: user.user.id,
-            })
-            .select("*")
-            .single();
-
-          if (insertActError) throw insertActError;
-          setAct(newAct as MyAct);
-        }
+         setAct(act as MyAct);
       } catch (e: any) {
         console.error(e);
         setError(e.message ?? "名義情報の取得に失敗しました。");
@@ -91,14 +66,14 @@ export function BookingForm({ eventId }: Props) {
     try {
       const trimmedMessage = message.trim();
 
-      const { error: bookingError } = await supabase.from("venue_bookings").insert({
-        event_id: eventId,
-        act_id: act.id,
-        message: trimmedMessage || null, // ← これはあくまで「ひと言メッセージ」
-        status: "pending",
-      });
-
-      if (bookingError) throw bookingError;
+      await createBooking({
+        userId: userId,
+        eventId: event.id,
+        venueId: event.venue_id,
+        actId: act.id,
+        message: trimmedMessage , // ← これはあくまで「ひと言メッセージ」
+        status: "pending", 
+      })
 
       setInfo("この名義で応募を送信しました。");
       setMessage("");

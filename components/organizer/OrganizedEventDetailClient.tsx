@@ -1,10 +1,9 @@
 // app/musician/organized-events/[eventId]/page.tsx
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, act } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";;
 import { PerformanceCard } from "../performances/PerformanceCard";
 import { getActsByIds, getAllActs, insertAct } from "@/lib/api/acts";
 import { parseYmdLocal, addDays, fmtMMdd, toYmdLocal } from "@/lib/utils/date";
@@ -14,62 +13,32 @@ import {
   detailsSummary,
   statusText,
 } from "@/lib/utils/performance";
-import { useCurrentUser } from "@/lib/auth/session.client";
-import { getMyEvents, updateEventStatus, upsertAllEventActs, upsertEventAct } from "@/lib/api/events";
-import { getEventActs, getEventBookings } from "@/lib/db/venues";
-import { createBooking, getBookingsWithDetails } from "@/lib/db/bookings";
+import { getMyEvents, removeEventAct, updateEventStatus, upsertAllEventActs, upsertEventAct } from "@/lib/api/events";
+import { createBookingDb, getBookingsWithDetails } from "@/lib/db/bookings";
 import { ActRow } from "@/lib/utils/acts";
-type EventStatus = "open" | "pending" | "draft" | "matched" | "cancelled";
+import { BookingRow, BookingStatus } from "@/lib/utils/bookings";
+import { EventRow, EventWithVenue } from "@/lib/utils/events";
+import { getEventBookings } from "@/lib/api/venues";
+import { createBooking, createOfferAndInboxPerformance, updateBookingStatus } from "@/lib/api/bookingsAction";
 
-type EventRow = {
-  id: string;
-  venue_id: string;
-  title: string;
-  event_date: string;
-  open_time: string | null;
-  start_time: string;
-  end_time: string;
-  max_artists: number | null;
-  status: EventStatus;
-  charge: number | null;
-  conditions: string | null;
-  created_at: string;
-  venues?: { id: string; name: string }[];
-};
-type BookingStatus = "offered" | "pending" | "accepted" | "rejected";
 
-type BookingRow = {
-  id: string;
-  status: BookingStatus;
-  message: string | null;
-  created_at: string;
-  event_id: string;
-  act_id: string;
-  act_name: string;
-  act_type: string;
-  owner_profile_id: string | null;
-};
 type Props = {
-  eventId: string;
-};
-export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [userMissing, setUserMissing] = useState(false);
-
-  const [event, setEvent] = useState<EventRow | null>(null);
-
+  userId: string; 
+  event: EventWithVenue;
   // 決定済み出演者（event_acts.status = accepted）
-  const [acts, setActs] = useState<ActRow[]>([]);
+  eventActs: ActRow[];
+  eventBookings: BookingRow[];
+  allActs: ActRow[];
+};
+export default function MusicianOrganizedEventDetailClient({ userId,
+  event, eventActs , eventBookings, allActs }: Props) {
+  const router = useRouter();
+
 
   // 応募・招待一覧（venue_bookings）
-  const [bookings, setBookings] = useState<BookingRow[]>([]);
-  const [bookingError, setBookingError] = useState<string | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
-
+  const [bookingError, setBookingError] = useState<string | null>(null);
   // 招待用に使える act 一覧
-  const [allActs, setAllActs] = useState<ActRow[]>([]);
-  const [actsLoading, setActsLoading] = useState(true);
   const [inviteActId, setInviteActId] = useState("");
   const [inviteMessage, setInviteMessage] = useState("");
   const [inviting, setInviting] = useState(false);
@@ -84,129 +53,13 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   // acceptedCount は決定済み（event_acts）から計算
-  const acceptedCount = useMemo(() => acts.length, [acts]);
+  const acceptedCount = useMemo(() => eventActs.length, [eventActs]);
 
   const maxArtists = event?.max_artists ?? null;
   const isFull = maxArtists != null && acceptedCount >= maxArtists;
 
   const formatTime = (t: string | null | undefined) =>
     t ? t.slice(0, 5) : null;
-
-  const load = async () => {
-    if (!eventId) {
-      setError("eventId が指定されていません。");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setBookingError(null);
-    setActsLoading(true);
-
-    try {
-      const user = await useCurrentUser();
-      if (!user) {
-        setUserMissing(true);
-        return;
-      }
-
-      // 1. 自分が企画したイベントかつ指定IDのものを取得
-      const data = await getMyEvents();
-      const eventRow = data.find((e) => e.id === eventId);
-      if (!eventRow) {
-        setError("このイベントは見つからないか、あなたの企画ではありません。");
-        return;
-      }
-
-      const e = eventRow as EventRow;
-      setEvent(e);
-
-      // 2. event_acts から accepted の出演名義を取得
-      const eventActs = await getEventActs(eventId);
-      const acceptedActs = eventActs.filter((ea) => ea.status === "accepted");
-
-      const actList: ActRow[] =
-        (eventActs ?? []).map((row: any) => ({
-          id: row.acts?.id ?? row.act_id,
-          name: row.acts?.name ?? "(不明な名義)",
-          act_type: row.acts?.act_type ?? "",
-          owner_profile_id: row.acts?.owner_profile_id,
-          is_temporary: row.acts?.is_temporary,
-          description: row.acts?.description,
-          icon_url: row.acts?.icon_url,
-          photo_url: row.acts?.photo_url,
-          profile_link_url: row.acts?.profile_link_url,
-          
-        })) ?? [];
-
-      setActs(actList);
-
-      // 3. venue_bookings から応募・招待一覧を取得
-      const bookings = await getEventBookings(eventId);
-
-      const actIds = Array.from(
-        new Set(bookings.map((b: any) => b.act_id)),
-      ) as string[];
-
-      let actMapForBookings = new Map<string, ActRow>();
-
-      if (actIds.length > 0) {
-        const actsForBookings = await getActsByIds(actIds);
-
-        actMapForBookings = new Map(
-          (actsForBookings ?? []).map((a: any) => [
-            a.id as string,
-            {
-              id: a.id,
-              name: a.name,
-              act_type: a.act_type,
-              owner_profile_id: a.owner_profile_id,
-            } as ActRow,
-          ]),
-        );
-      }
-
-      const bookingList: BookingRow[] = bookings.filter(p => p.status !== "accepted").map((b: any) => {
-        const act = actMapForBookings.get(b.act_id as string);
-        return {
-          id: b.id,
-          status: b.status as BookingStatus,
-          message: b.message,
-          created_at: b.created_at,
-          event_id: b.event_id,
-          act_id: b.act_id,
-          act_name: act?.name ?? "(不明な名義)",
-          act_type: act?.act_type ?? "",
-          owner_profile_id: act?.owner_profile_id ?? null,
-        };
-      });
-
-      setBookings(bookingList);
-
-      // 4. 招待候補の全 act を取得（シンプルに全件）
-      const { data: allActsRows, error: allActsError } = await supabase
-        .from("acts")
-        .select("id, name, act_type")
-        .order("name", { ascending: true });
-        
-      if (allActsError) throw allActsError;
-      const allActs = getAllActs();
-
-      setAllActs((allActsRows ?? []) as ActRow[]);
-    } catch (e: any) {
-      console.error(e);
-      setError(e.message ?? "イベント情報の取得に失敗しました。");
-    } finally {
-      setLoading(false);
-      setActsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId]);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,41 +73,47 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
     }
 
     setInviting(true);
+
+    // 1. 自分が企画したイベントかつ指定IDのものを取得
+    const data = await getMyEvents();
+    const eventRow = data.find((e) => e.id === event.id);
+    if (!eventRow) {
+      setError("このイベントは見つからないか、あなたの企画ではありません。");
+      return;
+    }
+    // 2. event_acts から accepted の出演名義を取得
+    setInviteError(null);
+
+    if (!inviteActId) {
+      setInviteError("招待するミュージシャン（名義）を選択してください。");
+      return;
+    }
+
+    setInviting(true);
     try {
       // すでにこのイベントに紐づく booking がないか簡易チェック
-      const existing = (await getEventBookings(event.id)).find(b => b.act_id === inviteActId);
+      const existing = eventBookings.find(b => b.act_id === inviteActId);
 
-      if (existing ) {
+      if (existing) {
         setInviteError("このミュージシャンはすでにこのイベントに紐づいています。");
         return;
       }
 
       // 招待も応募もひとまず pending として venue に流す
-      const bookings = await createBooking({
-        eventId: event.id,
-        musicianId: inviteActId,
-        venueId: event.venue_id,
-        message: inviteMessage.trim(),
-      });
-
-      const { data, error } = await supabase.rpc("create_offer_and_inbox_performance", {
-        p_event_id: event.id,
-        p_act_id: inviteActId,
-      });
-
-      console.log("offer rpc result", { data, error });
-      if (error) throw error;
+      eventActs.map(a =>
+        createOfferAndInboxPerformance({ eventId: event.id, actId: a.id })
+      );
 
       setInviteActId("");
       setInviteMessage("");
-      await load(); // 応募一覧を更新
     } catch (e: any) {
       console.error(e);
       setInviteError(e.message ?? "招待の作成に失敗しました。");
     } finally {
       setInviting(false);
-    }
-  };
+    };
+  }
+
 
   const handleApprove = async (booking: BookingRow) => {
     if (!event) return;
@@ -270,44 +129,32 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
 
     setMutatingId(booking.id);
     try {
-      // 1. venue_bookings を accepted に
-      const { error: bookingError } = await supabase
-        .from("venue_bookings")
-        .update({ status: "accepted" })
-        .eq("id", booking.id);
+      // 1. bookings を accepted に
+      updateBookingStatus({
+        bookingId: booking.id,
+        status: 'accepted'
+      })
 
       if (bookingError) throw bookingError;
 
       // 2. event_acts に accepted を upsert
-      const { error: eaError } = await supabase
-        .from("event_acts")
-        .upsert(
-          {
-            event_id: booking.event_id,
-            act_id: booking.act_id,
-            status: "accepted",
-          },
-          { onConflict: "event_id,act_id" },
-        );
-
-      if (eaError) throw eaError;
-
+      upsertEventAct(
+        {
+          eventId: booking.event_id,
+          actId: booking.act_id,
+          status: "accepted",
+        }
+      );
       // 3. 上限に達したら events.status を matched に更新
       if (maxArtists != null) {
         const newAcceptedCount =
           acceptedCount + (booking.status === "accepted" ? 0 : 1);
 
         if (newAcceptedCount >= maxArtists) {
-          const { error: statusError } = await supabase
-            .from("events")
-            .update({ status: "matched" })
-            .eq("id", booking.event_id);
-
-          if (statusError) throw statusError;
+          updateEventStatus({ eventId: event.id, status: "matched" });
         }
       }
 
-      await load();
       router.refresh();
     } catch (e: any) {
       console.error(e);
@@ -322,24 +169,14 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
     setBookingError(null);
     setMutatingId(booking.id);
     try {
-      // 1. venue_bookings を rejected に
-      const { error: bookingError } = await supabase
-        .from("venue_bookings")
-        .update({ status: "rejected" })
-        .eq("id", booking.id);
-
-      if (bookingError) throw bookingError;
+      // 1. bookings を rejected に
+      updateBookingStatus({
+        bookingId: booking.id,
+        status: 'rejected'
+      })
 
       // 2. event_acts に存在していれば削除
-      const { error: eaError } = await supabase
-        .from("event_acts")
-        .delete()
-        .eq("event_id", booking.event_id)
-        .eq("act_id", booking.act_id);
-
-      if (eaError) throw eaError;
-
-      await load();
+      removeEventAct({ eventId: booking.event_id, actId: booking.act_id });
       router.refresh();
     } catch (e: any) {
       console.error(e);
@@ -350,111 +187,81 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
   };
 
   const handleAddGuest = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!event) return;
+    e.preventDefault();
+    if (!event) return;
 
-  setGuestError(null);
+    setGuestError(null);
 
-  // ★ まず現在のユーザーを取得しておく
-  const user = await useCurrentUser();
-  if (!user) {
-    setGuestError("ログインが必要です。");
-    return;
-  }
-
-  if (!guestName.trim()) {
-    setGuestError("名義名を入力してください。");
-    return;
-  }
-  if (!guestActType) {
-    setGuestError("形態（ソロ／バンドなど）を選択してください。");
-    return;
-  }
-
-  // 枠制限チェック（ゲストは「決定済み」で追加する前提）
-  if (maxArtists != null && acceptedCount >= maxArtists) {
-    setGuestError(
-      `最大組数(${maxArtists}組)に達しているため、これ以上追加できません。`,
-    );
-    return;
-  }
-
-  setAddingGuest(true);
-  try {
-    // ★ owner_profile_id を必ず渡す
-    const newAct = await insertAct({
-      guestName: guestName.trim(),
-      guestActType: guestActType,
-      ownerProfileId: user?.user?.id || "",
-    });
-
-    const actId = (newAct as { id: string }).id;
-
-    // 2. event_acts に accepted として紐づけ
-    await upsertEventAct({ 
-      eventId: event.id,
-      actId: actId,
-      status: "accepted",
-    });
-
-    // 3. venue_bookings にも accepted として登録
-    const { error: bookingError } = await supabase
-      .from("venue_bookings")
-      .insert({
-        event_id: event.id,
-        act_id: actId,
-        status: "accepted",
-        message: "主催によるゲスト枠として追加",
-      });
-    await createBooking({
-      eventId: event.id,
-      musicianId: actId,
-      venueId: event.venue_id,
-      message: ""
-    });
-
-    if (bookingError) throw bookingError;
-
-    // 4. 上限に達したら events.status を matched に更新
-    if (maxArtists != null) {
-      const newAcceptedCount = acceptedCount + 1;
-      if (newAcceptedCount >= maxArtists) {
-        updateEventStatus({ eventId: event.id, status: "matched" });
-
-      }
+    // ★ まず現在のユーザーを取得しておく
+    if (!guestName.trim()) {
+      setGuestError("名義名を入力してください。");
+      return;
+    }
+    if (!guestActType) {
+      setGuestError("形態（ソロ／バンドなど）を選択してください。");
+      return;
     }
 
-    setGuestName("");
-    setGuestActType("");
-    await load();
-    router.refresh();
-  } catch (e: any) {
-    console.error(e);
-    setGuestError(e.message ?? "ゲスト名義の追加に失敗しました。");
-  } finally {
-    setAddingGuest(false);
-  }
-};
+    // 枠制限チェック（ゲストは「決定済み」で追加する前提）
+    if (maxArtists != null && acceptedCount >= maxArtists) {
+      setGuestError(
+        `最大組数(${maxArtists}組)に達しているため、これ以上追加できません。`,
+      );
+      return;
+    }
+
+    setAddingGuest(true);
+    try {
+      // ★ owner_profile_id を必ず渡す
+      const newAct = await insertAct({
+        guestName: guestName.trim(),
+        guestActType: guestActType,
+        ownerProfileId: userId || "",
+      });
+
+      const actId = (newAct as { id: string }).id;
+
+      // 2. event_acts に accepted として紐づけ
+      await upsertEventAct({
+        eventId: event.id,
+        actId: actId,
+        status: "accepted",
+      });
+
+      // 3. venue_bookings にも accepted として登録
+      createBooking({
+        userId: userId,
+        eventId: event.id,
+        actId: actId,
+        venueId: event.venue_id,
+        status: "accepted",
+        message: "主催によるゲスト枠として追加",
+      })
+
+      if (bookingError) throw bookingError;
+
+      // 4. 上限に達したら events.status を matched に更新
+      if (maxArtists != null) {
+        const newAcceptedCount = acceptedCount + 1;
+        if (newAcceptedCount >= maxArtists) {
+          updateEventStatus({ eventId: event.id, status: "matched" });
+
+        }
+      }
+
+      setGuestName("");
+      setGuestActType("");
+      router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      setGuestError(e.message ?? "ゲスト名義の追加に失敗しました。");
+    } finally {
+      setAddingGuest(false);
+    }
+  };
 
 
   // ===== UI =====
-
-  if (loading) {
-    return (
-      <main >
-        <p className="text-sm text-gray-500">読み込み中...</p>
-      </main>
-    );
-  }
-
-  if (userMissing) {
-    return (
-      <main >
-        <p className="text-sm text-red-500">ログインが必要です。</p>
-      </main>
-    );
-  }
-
   if (!event) {
     return (
       <main className="space-y-3">
@@ -494,9 +301,9 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
             {endTime && <> 〜 {endTime}</>}
           </p>
 
-          {event.venues && event.venues.length > 0 && (
+          {event.venues && event.venues && (
             <p className="text-xs text-gray-500 mt-1">
-              会場: <span className="font-semibold">{event.venues[0].name}</span>
+              会場: <span className="font-semibold">{event.venues.name}</span>
             </p>
           )}
 
@@ -512,7 +319,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
             )}
           </p>
           <Link
-            href={`/organizer/events/${eventId}/edit`}
+            href={`/organizer/events/${event.id}/edit`}
             className="text-xs rounded border px-3 py-1.5 hover:bg-gray-50"
           >
             編集
@@ -574,14 +381,14 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
       <section className="border rounded bg-white shadow-sm p-4 space-y-2">
         <h2 className="text-sm font-semibold mb-1">出演名義（決定済み）</h2>
 
-        {acts.length === 0 && (
+        {eventActs.length === 0 && (
           <p className="text-sm text-gray-500">
             まだ確定している出演者はいません。
           </p>
         )}
 
         <ul className="space-y-1">
-          {acts.map((act) => (
+          {eventActs.map((act) => (
             <li
               key={act.id}
               className="flex items-center justify-between border rounded px-2 py-1"
@@ -613,19 +420,19 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
           <p className="text-sm text-red-500">{bookingError}</p>
         )}
 
-        { maxArtists != null && isFull && (
+        {maxArtists != null && isFull && (
           <p className="text-sm">
             最大組数に達しました。
           </p>
         )}
-        { !isFull && bookings.length === 0 && !bookingError && (
+        {!isFull && eventBookings.length === 0 && !bookingError && (
           <p className="text-sm text-gray-500">
             まだ応募や招待はありません。
           </p>
         )}
 
         <ul className="space-y-2">
-          {bookings.map((b) => (
+          {eventBookings.map((b) => (
             <li
               key={b.id}
               className="bg-white space-y-1"
@@ -636,7 +443,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
                   event_id: b.event_id,
                   venue_id: event.venue_id,
                   event_date: event.event_date,
-                  venue_name: event.venues && event.venues.length > 0 ? event.venues[0].name : "",
+                  venue_name: event.venues && event.venues ? event.venues.name : "",
                   act_id: b.act_id,
                   status: b.status === "pending" ? "offered" : b.status === "accepted" ? "confirmed" : "canceled",
                   details: null,
@@ -667,7 +474,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
                 addDays={addDays}
                 fmtMMdd={fmtMMdd}
                 statusText={statusText}
-                onToggleDone={() => {}}
+                onToggleDone={() => { }}
               />
 
               {b.status === "offered" && (
@@ -677,7 +484,7 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
                     disabled={mutatingId === b.id || isFull}
                     className="px-3 py-1.5 rounded bg-green-600 text-xs font-semibold text-white disabled:opacity-50"
                   >
-                    {mutatingId === b.id ? "承認中..." : "承認する"}    
+                    {mutatingId === b.id ? "承認中..." : "承認する"}
                   </button>
                   <button
                     onClick={() => void handleReject(b)}
@@ -688,79 +495,75 @@ export default function MusicianOrganizedEventDetailClient({ eventId }: Props) {
                   </button>
                 </div>
               )}
-            </li> 
+            </li>
           ))}
         </ul>
       </section>
 
       {/* ミュージシャンをお誘いする（既存） */}
       {!isFull && (
-      <section className="border rounded bg-white shadow-sm p-4 space-y-3">
-        <h2 className="text-sm font-semibold mb-1">ミュージシャンをお誘いする</h2>
-        <p className="text-xs text-gray-600">
-          このイベントに出演してほしいミュージシャン（名義）を選んで、会場側に
-          「この組み合わせでやりたい」という意思を伝えます。
-          招待も応募と同じく、venue のブッキング一覧に pending として登録されます。
-        </p>
-
-        {actsLoading && (
-          <p className="text-sm text-gray-500">ミュージシャン一覧を読み込み中...</p>
-        )}
-
-        {!actsLoading && allActs.length === 0 && (
-          <p className="text-sm text-gray-500">
-            まだ登録されているミュージシャン（名義）がありません。
+        <section className="border rounded bg-white shadow-sm p-4 space-y-3">
+          <h2 className="text-sm font-semibold mb-1">ミュージシャンをお誘いする</h2>
+          <p className="text-xs text-gray-600">
+            このイベントに出演してほしいミュージシャン（名義）を選んで、会場側に
+            「この組み合わせでやりたい」という意思を伝えます。
+            招待も応募と同じく、venue のブッキング一覧に pending として登録されます。
           </p>
-        )}
 
-        {inviteError && (
-          <p className="text-sm text-red-500">{inviteError}</p>
-        )}
+          {allActs.length === 0 && (
+            <p className="text-sm text-gray-500">
+              まだ登録されているミュージシャン（名義）がありません。
+            </p>
+          )}
 
-        {!actsLoading && allActs.length > 0 && (
-          <form
-            onSubmit={handleInvite}
-            className="space-y-3 text-sm"
-          >
-            <label className="block">
-              招待するミュージシャン（名義）
-              <select
-                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                value={inviteActId}
-                onChange={(e) => setInviteActId(e.target.value)}
-              >
-                <option value="">選択してください</option>
-                {allActs.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}（{a.act_type}）
-                  </option>
-                ))}
-              </select>
-            </label>
+          {inviteError && (
+            <p className="text-sm text-red-500">{inviteError}</p>
+          )}
 
-            <label className="block">
-              招待メッセージ（任意）
-              <textarea
-                className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                rows={2}
-                value={inviteMessage}
-                onChange={(e) => setInviteMessage(e.target.value)}
-                placeholder="例: この日は◯◯と対バンでどうですか？ など"
-              />
-            </label>
+          {allActs.length > 0 && (
+            <form
+              onSubmit={handleInvite}
+              className="space-y-3 text-sm"
+            >
+              <label className="block">
+                招待するミュージシャン（名義）
+                <select
+                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                  value={inviteActId}
+                  onChange={(e) => setInviteActId(e.target.value)}
+                >
+                  <option value="">選択してください</option>
+                  {allActs.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}（{a.act_type}）
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={inviting || !allActs.length}
-                className="px-4 py-1.5 rounded bg-emerald-600 text-xs font-semibold text-white disabled:opacity-50"
-              >
-                {inviting ? "招待中..." : "このミュージシャンを招待する"}
-              </button>
-            </div>
-          </form>
-        )}
-      </section>
+              <label className="block">
+                招待メッセージ（任意）
+                <textarea
+                  className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                  rows={2}
+                  value={inviteMessage}
+                  onChange={(e) => setInviteMessage(e.target.value)}
+                  placeholder="例: この日は◯◯と対バンでどうですか？ など"
+                />
+              </label>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={inviting || !allActs.length}
+                  className="px-4 py-1.5 rounded bg-emerald-600 text-xs font-semibold text-white disabled:opacity-50"
+                >
+                  {inviting ? "招待中..." : "このミュージシャンを招待する"}
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
       )}
       {/* アプリ未使用のゲストを追加する */}
       {!isFull && (

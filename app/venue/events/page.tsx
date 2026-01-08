@@ -1,112 +1,36 @@
 // app/venue/events/page.tsx
-"use client";
-
-import { useEffect, useState } from "react";
+"use server"
+import { EventRow, EventWithAct, EventWithCount } from "@/lib/utils/events";
+import { getEventActs, getMyEvents } from "@/lib/api/events";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";;
 
-type EventRow = {
-  id: string;
-  venue_id: string;
-  title: string;
-  event_date: string;
-  start_time: string;
-  end_time: string;
-  max_artists: number | null;
-  status: string;
-  created_at: string;
-  venues?: { id: string; name: string }[]; // ★ 配列にする
-};
+export default async function VenueEventsPage() {
+    // 1. 全イベント + venues.name を取得
+    const events = await getMyEvents();
+    if (!events || events.length === 0) {
+      return;
+    }
 
+    const eventList = events as EventRow[];
+    const eventIds = eventList.map((e) => e.id);
 
-type EventWithCount = EventRow & {
-  acceptedCount: number;
-};
+    // 2. event_acts から acceptedCount を集計
+    const actRows: EventWithAct[] = [];
+    eventIds.map(async id => actRows.concat(await getEventActs({ eventId: id })));
+    const countMap = new Map<string, number>();
+    for (const row of actRows ?? []) {
+      countMap.set(
+        row.id,
+        (countMap.get(row.id) ?? 0) + 1,
+      );
+    }
 
-export default function VenueEventsPage() {
-  const [loading, setLoading] = useState(true);
-  const [events, setEvents] = useState<EventWithCount[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // 1. 全イベント + venues.name を取得
-        const { data: eventRows, error: eventsError } = await supabase
-          .from("events")
-          .select(
-            `
-            id,
-            venue_id,
-            title,
-            event_date,
-            start_time,
-            end_time,
-            max_artists,
-            status,
-            created_at,
-            venues (
-              id,
-              name
-            )
-          `,
-          )
-          .order("event_date", { ascending: true });
-
-        if (eventsError) throw eventsError;
-        if (!eventRows || eventRows.length === 0) {
-          setEvents([]);
-          return;
-        }
-
-        const eventList = eventRows as EventRow[];
-        const eventIds = eventList.map((e) => e.id);
-
-        // 2. event_acts から acceptedCount を集計
-        const { data: actsRows, error: actsError } = await supabase
-          .from("event_acts")
-          .select("event_id, status")
-          .eq("status", "accepted")
-          .in("event_id", eventIds);
-
-        if (actsError) throw actsError;
-
-        const countMap = new Map<string, number>();
-        for (const row of actsRows ?? []) {
-          countMap.set(
-            row.event_id,
-            (countMap.get(row.event_id) ?? 0) + 1,
-          );
-        }
-
-        const withCount: EventWithCount[] = eventList.map((e) => ({
-          ...e,
-          acceptedCount: countMap.get(e.id) ?? 0,
-        }));
-
-        setEvents(withCount);
-      } catch (e: any) {
-        console.error(e);
-        setError(e.message ?? "エラーが発生しました。");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, []);
+    const withCount: EventWithCount[] = eventList.map((e) => ({
+      ...e,
+      acceptedCount: countMap.get(e.id) ?? 0,
+    }));
 
   // ===== UI =====
-
-  if (loading) {
-    return (
-      <main className="p-4">
-        <p className="text-sm text-gray-500">読み込み中...</p>
-      </main>
-    );
-  }
 
   return (
     <main className="p-4 space-y-4">
@@ -115,14 +39,14 @@ export default function VenueEventsPage() {
         登録済みのイベント枠と、決定済みの組数を一覧で確認できます。
       </p>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {/* {error && <p className="text-sm text-red-500">{error}</p>} */}
 
-      {!error && events.length === 0 && (
+      {/* {!error && events.length === 0 && (
         <p className="text-sm text-gray-500">まだイベントがありません。</p>
-      )}
+      )} */}
 
       <ul className="space-y-2">
-        {events.map((event) => (
+        {withCount.map((event) => (
           <li key={event.id}>
             <Link
               href={`/venue/events/${event.id}`}
@@ -132,9 +56,9 @@ export default function VenueEventsPage() {
                 <div>
                   <div className="font-semibold">{event.title}</div>
 
-                  {event.venues && event.venues.length > 0 && (
+                  {event.venue_id  && (
                     <div className="text-[11px] text-gray-500">
-                      会場: {event.venues[0].name}
+                      会場: {event.venue_id}
                     </div>
                   )}
 

@@ -9,7 +9,7 @@ import { PerformanceMemoEditor } from "@/components/performances/PerformanceMemo
 import { CoreInfoEditor } from "@/components/CoreInfoEditor";
 import { PersonalPerformanceCoreEditor } from "@/components/PersonalPerformanceCoreEditor";
 import { PerformanceRow } from "@/lib/utils/performance";
-import { ActRow, AttachmentRow, DetailsRow, MessageRow } from "@/lib/db/acts";
+import { ActRow, AttachmentRow, DetailsRow, MessageRow } from "@/lib/utils/acts";
 
 
 type VenueRow = { id: string; name: string };

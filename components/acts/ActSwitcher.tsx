@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
-import { ACTS_UPDATED_EVENT } from "@/lib/hooks/actEvents";
+import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { getMyActs } from "@/lib/api/acts";
 import { useCurrentUser } from "@/lib/auth/session.client";
 import { ActRow } from "@/lib/utils/acts";

@@ -4,8 +4,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useCurrentUser } from "@/lib/auth/session.client";
-import { EventRow } from "@/lib/api/events";
-;
+import { EventRow } from "@/lib/utils/events";
 
 type MyAct = {
   id: string;
