@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
 import { getMyActs } from "@/lib/api/acts";
 import { useCurrentUser } from "@/lib/auth/session.client";
-import { upsertPerformance } from "@/lib/db/performances";
+import { upsertPerformance } from "@/lib/api/performancesAction";
 
 type ActOption = {
   id: string;

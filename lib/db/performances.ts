@@ -70,7 +70,7 @@ export async function getMyUpcomingPerformancesDb(todayStr?: string) {
   return toPerformanceWithActsArrayPlain(data);
 }
 
-export async function getNextPerformance(todayStr?: string) {
+export async function getNextPerformanceDb(todayStr?: string) {
   const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();
   const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
@@ -100,7 +100,7 @@ export async function getNextPerformance(todayStr?: string) {
   return toPerformanceWithActsPlain(data);
 }
 
-export async function getFlyerMapForPerformances(performanceIds: string[]) {
+export async function getFlyerMapForPerformancesDb(performanceIds: string[]) {
   const supabase = await createSupabaseServerClient();
   if (performanceIds.length === 0) return {} as FlyerMap;
 
@@ -122,7 +122,7 @@ export async function getFlyerMapForPerformances(performanceIds: string[]) {
   return map;
 }
 
-export async function getDetailsMapForPerformances(performanceIds: string[]) : Promise<DetailsMap> {
+export async function getDetailsMapForPerformancesDb(performanceIds: string[]) : Promise<DetailsMap> {
   const supabase = await createSupabaseServerClient();
   if (performanceIds.length === 0) return {} as DetailsMap;
 
@@ -188,7 +188,7 @@ export async function ensureAndFetchPrepMapDb(params: {
   return pm;
 }
 
-export async function upsertPerformance(params: {
+export async function upsertPerformanceDb(params: {
   id: string | null;
   profile_id: string;
   event_date: string;
@@ -236,4 +236,74 @@ export async function getPerformancesForDashboardDb(userId: string) {
     .select("*");
 
   return data;
+}
+
+export async function updatePerformanceMemoDb(params: {
+  performanceId: string;
+  newMemo: string | null;
+}): Promise<void> {
+  const supabase = await createSupabaseServerClient();
+  const { performanceId, newMemo } = params;
+
+  const patch = {
+    memo: newMemo?.trim() ? newMemo.trim() : null,
+  };
+
+  const { error } = await supabase
+    .from("musician_performances")
+    .update(patch)
+    .eq("id", performanceId);
+
+  if (error) throw error;
+} 
+  
+export async function updatePrepTaskDoneDb(params: {
+  taskId: string;
+  nextDone: boolean;
+  userId: string | null;
+}): Promise<PrepTaskRow> {
+  const { taskId, nextDone, userId } = params;
+  const supabase = await createSupabaseServerClient();
+  const payload = nextDone
+    ? { is_done: true, done_at: new Date().toISOString(), done_by_profile_id: userId }
+    : { is_done: false, done_at: null, done_by_profile_id: null };
+
+  const { data, error } = await supabase
+    .from("performance_prep_tasks")
+    .update(payload)
+    .eq("id", taskId)
+    .select("id, performance_id, task_key, act_id, due_date, is_done, done_at, done_by_profile_id")
+    .single();
+
+  if (error) throw error;
+  return data as PrepTaskRow;
+}
+
+export async function deletePerformanceMemoDb(performanceId: string): Promise<void> { 
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("musician_performances")
+    .update({ memo: null })
+    .eq("id", performanceId);
+
+  if (error) throw error;
+}   
+
+export async function upsertPerformanceDetailsDb(params: {
+  performanceId: string;
+  notes: string | null;
+}): Promise<void> {
+  const { performanceId, notes } = params;
+  const supabase = await createSupabaseServerClient();
+  const payload = {
+    performance_id: performanceId,
+    notes: notes?.trim() ? notes.trim() : null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from("performance_details")
+    .upsert(payload, { onConflict: "performance_id" });
+
+  if (error) throw error;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { PerformanceCard } from "@/components/performances/PerformanceCard";
-import { updatePrepTaskDone } from "@/lib/api/performances";
+import { updatePrepTaskDone } from "@/lib/api/performancesAction";
 import { addDays, fmtMMdd, parseYmdLocal, toYmdLocal } from "@/lib/utils/date";
 import { DetailsMap, detailsSummary, FlyerMap, normalizeAct, PerformanceWithActs, PREP_DEFS, PrepMap, statusText } from "@/lib/utils/performance";
 import Link from "next/link";

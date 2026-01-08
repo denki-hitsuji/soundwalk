@@ -15,7 +15,7 @@ import {
 
 import { toYmdLocal, parseYmdLocal, addDays } from "@/lib/utils/date";
 import { getFutureFlyers } from "@/lib/utils/performance";
-import { ensureAndFetchPrepMapDb, getDetailsMapForPerformances } from "@/lib/db/performances";
+import { ensureAndFetchPrepMapDb, getDetailsMapForPerformancesDb } from "@/lib/db/performances";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { redirect } from "next/navigation";
 import { PerformancesClient } from "./PerformancesClient";
@@ -62,7 +62,7 @@ export default async function PerformancesPage() {
   }
 
   // 3) 未来分の details
-  const { data: dets, error: detErr } = await getDetailsMapForPerformances(futureIds);
+  const { data: dets, error: detErr } = await getDetailsMapForPerformancesDb(futureIds);
   console.log("PerformancesPage: details got");
 
   if (detErr) {
