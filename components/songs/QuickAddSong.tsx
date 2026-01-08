@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addSong } from "@/lib/db/songs";
+import { addSongDb } from "@/lib/db/songs";
 
 export function QuickAddSong({
   actId,
@@ -19,7 +19,7 @@ export function QuickAddSong({
 
     setLoading(true);
     try {
-      await addSong(actId, title.trim());
+      await addSongDb(actId, title.trim());
       setTitle("");
       onAdded?.();
     } finally {

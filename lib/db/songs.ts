@@ -1,4 +1,5 @@
 // lib/songQueries.ts
+"use server"
 import "server-only"
 import { getCurrentUser } from "../auth/session.server";
 import { createSupabaseServerClient } from "../supabase/server";
@@ -17,7 +18,7 @@ export type ActOption = {
   act_type: string | null;
 };
 
-export async function getMyActsForSelect() {
+export async function getMyActsForSelectDb() {
   const user = await getCurrentUser();
   if (!user) return []; // ★ここが重要（uuid "" を投げない）
 
@@ -35,7 +36,7 @@ export async function getMyActsForSelect() {
   return Array.from(uniq.values());
 }
 
-export async function getMySongs(actId: string) {
+export async function getMySongsDb(actId: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_songs")
@@ -47,7 +48,7 @@ export async function getMySongs(actId: string) {
   return data as SongRow[] ?? [];
 }
 
-export async function getRecentSongs(actId: string, limit = 2) {
+export async function getRecentSongsDb(actId: string, limit = 2) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_songs")
@@ -60,7 +61,7 @@ export async function getRecentSongs(actId: string, limit = 2) {
   return data as SongRow[] ?? [];
 }
 
-export async function getSongCount(actId: string) {
+export async function getSongCountDb(actId: string) {
   const supabase = await createSupabaseServerClient();
   const { count, error } = await supabase
     .from("act_songs")
@@ -71,7 +72,7 @@ export async function getSongCount(actId: string) {
   return count ?? 0;
 }
 
-export async function getSongById(songId: string) {
+export async function getSongByIdDb(songId: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_songs")
@@ -83,7 +84,7 @@ export async function getSongById(songId: string) {
   return data as SongRow;
 }
 
-export async function addSong(actId: string, title: string) {
+export async function addSongDb(actId: string, title: string) {
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("act_songs").insert({
     act_id: actId,
@@ -102,7 +103,7 @@ export async function addSong(actId: string, title: string) {
   return added.data as SongRow;
 }
 
-export async function updateSong(song: SongRow) {
+export async function updateSongDb(song: SongRow) {
   const supabase = await createSupabaseServerClient();
   const { id, title } = song;
   const { error } = await supabase
@@ -113,13 +114,13 @@ export async function updateSong(song: SongRow) {
   return song;
 }
 
-export async function deleteSong(songId: string) {
+export async function deleteSongDb(songId: string) {
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("act_songs").delete().eq("id", songId);
   if (error) throw error;
 }
 
-export async function getSongsByActIds(actIds: string[]) {
+export async function getSongsByActIdsDb(actIds: string[]) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_songs")

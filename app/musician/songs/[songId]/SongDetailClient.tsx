@@ -7,7 +7,9 @@ import { makeSongMemoTemplate } from "@/lib/utils/templates";
 import SongMemoEditor from "@/components/songs/SongMemoEditor";
 import SongAssetsBox from "@/components/songs/SongAssetsBox";
 import { useRouter } from "next/navigation";
-import { ActRow, deleteSong, getSongById, SongRow, updateSong } from "./page";
+import { deleteSong, updateSong } from "@/lib/api/songsAction";
+import { SongRow } from "@/lib/db/songs";
+import { ActRow } from "@/lib/utils/acts";
 type Props = {
   songId: string
   song: SongRow

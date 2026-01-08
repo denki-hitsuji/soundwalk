@@ -5,9 +5,9 @@ import {
   listSongAssets,
   deleteSongAsset,
   getSignedUrl,
-  uploadSongAsset,
 } from "@/lib/api/songs";
 import { SONG_ASSET_MAX_BYTES, SongAssetRow, validateSongAssetFile } from "@/lib/utils/songAssets";
+import { uploadSongAsset } from "@/lib/api/songsAction";
 
 function fmtBytes(n: number) {
   if (n < 1024) return `${n}B`;

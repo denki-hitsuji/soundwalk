@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { ActRow } from "@/lib/utils/acts";
-import { SongRow } from "@/lib/api/songs";
-import { addSong, getSongsByActIds } from "./page";
+import { getSongsByActIds, SongRow } from "@/lib/api/songs";
+import { addSong } from "@/lib/api/songsAction";
 
 function typeLabel(t: string | null) {
   if (!t) return "種別未設定";

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { createSupabaseServerClient } from "@/lib/supabase/server"; // ←あなたの実装に合わせてパス調整
 import { getMyActs, getMyMemberActs } from "@/lib/api/acts";
-import { SongRow, updateSong } from "@/lib/db/songs";
+import { SongRow, updateSongDb } from "@/lib/db/songs";
 
 // ✅ Client部品（イベント受信して refresh するだけ）
 import { ActsUpdateRefresher, AddSongForm } from "./SongSummaryClientBits";
