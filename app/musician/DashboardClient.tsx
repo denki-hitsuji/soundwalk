@@ -5,8 +5,11 @@ import { useCurrentAct } from "@/lib/hooks/useCurrentAct"; // ← あなたの�
 import { NextPerformanceSectionClient } from "@/components/performances/NextPerformanceSectionClient";
 import { SongSummaryCard } from "@/components/songs/SongSummaryCard";
 // import { QuickPerformanceBar } from "@/components/performances/QuickPerformanceBar"; // あるなら
-
-export default function DashboardClient() {
+type Props = {
+  userId: string
+  
+}
+export default function DashboardClient({userId }: Props) {
   const { currentActId, loading } = useCurrentAct();
 
   if (loading) return null;
