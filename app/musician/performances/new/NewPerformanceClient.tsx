@@ -8,6 +8,7 @@ import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/ut
 import { getMyActs } from "@/lib/api/acts";
 import { useCurrentUser } from "@/lib/auth/session.client";
 import { upsertPerformance } from "@/lib/api/performancesAction";
+import { ActRow } from "@/lib/utils/acts";
 
 type ActOption = {
   id: string;
@@ -15,7 +16,12 @@ type ActOption = {
   act_type: string | null;
 };
 
-export default function NewPerformanceClient() {
+type Props = {
+  userId: string | null;  
+  myActs: ActRow[];
+}
+
+export default function NewPerformanceClient({ userId, myActs }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
 
@@ -27,34 +33,12 @@ export default function NewPerformanceClient() {
   const [venueName, setVenueName] = useState(sp.get("venue") ?? "");
   const [memo, setMemo] = useState("");
 
-  const [userId, setUserId] = useState<string | null>(null);
-  const [acts, setActs] = useState<ActOption[]>([]);
-  const [actsLoading, setActsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      setActsLoading(true);
-      const user = await useCurrentUser();
-      if (!user) return;
-      setUserId(user?.user?.id ?? null);
-
-      const data = await getMyActs();
-
-      const list = (data ?? []) as ActOption[];
-      setActs(list);
-      // actId が空なら先頭を自動選択（クイックバー未使用時の体験UP）
-      if (!actId && list.length > 0) setActId(list[0].id);
-
-      setActsLoading(false);
-    };
-
-    void load();
-    // actId は依存に入れない（初回自動選択のため）
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const noActs = !actsLoading && acts.length === 0;
+  const list = (myActs ?? []) as ActOption[];
+  // actId が空なら先頭を自動選択（クイックバー未使用時の体験UP）
+  if (!actId && list.length > 0) setActId(list[0].id);
+  const noActs = myActs.length === 0;
 
   const handleSave = async () => {
     if (!userId) {
@@ -120,9 +104,7 @@ export default function NewPerformanceClient() {
             </Link>
           </div>
 
-          {actsLoading ? (
-            <p className="text-xs text-gray-500 mt-1">読み込み中です…</p>
-          ) : noActs ? (
+          {noActs ? (
             <div className="mt-1 text-xs text-red-500 space-y-1">
               <p>まだ出演名義が登録されていません。</p>
               <p>
@@ -140,7 +122,7 @@ export default function NewPerformanceClient() {
               onChange={(e) => setActId(e.target.value)}
             >
               <option value="">選択してください</option>
-              {acts.map((a) => (
+              {myActs.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
                   {a.act_type ? `（${a.act_type}）` : ""}
@@ -176,7 +158,7 @@ export default function NewPerformanceClient() {
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving || actsLoading || noActs}
+          disabled={saving || noActs}
           className="mt-2 bg-blue-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
         >
           {saving ? "保存中…" : "このライブを記録する"}

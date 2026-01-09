@@ -204,7 +204,7 @@ export async function upsertPerformanceDb(params: {
     venue_name: venue_name?.trim() ? venue_name.trim() : null,
     memo: memo?.trim() ? memo.trim() : null,
     act_id,
-    updated_at: new Date().toISOString(),
+    profile_id ,
   };
 
   let perfId = id;

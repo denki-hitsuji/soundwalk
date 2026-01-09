@@ -1,3 +1,4 @@
+"use server"
 import { deletePerformanceMemoDb, ensureAndFetchPrepMapDb, updatePerformanceMemoDb, updatePrepTaskDoneDb, upsertPerformanceDb, upsertPerformanceDetailsDb } from "../db/performances";
 
 export async function updatePrepTaskDone(params: { taskId: string; nextDone: boolean; userId: string | null; }) {
@@ -17,8 +18,9 @@ export async function upsertPerformance(params: {
     memo: string | null;
     act_id: string | null;
 }): Promise<string> { 
-      return await upsertPerformanceDb(params);
+    return await upsertPerformanceDb(params);
 }
+
 export async function updatePerformanceMemo(params: {
     performanceId: string;
     newMemo: string | null;
