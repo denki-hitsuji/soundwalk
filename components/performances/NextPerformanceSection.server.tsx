@@ -1,11 +1,9 @@
 // components/performances/NextPerformanceSection.server.tsx
 import { toYmdLocal } from "@/lib/utils/date";
-import {
-  getMyActsServer,
-  getNextPerformanceServer,
-} from "@/lib/performanceQueries.server";
+
 import { NextPerformanceSectionClient } from "./NextPerformanceSectionClient";
 import { ensureAndFetchPrepMapDb, getDetailsMapForPerformancesDb, getFlyerMapForPerformancesDb } from "@/lib/db/performances";
+import { getMyActsServer, getNextPerformanceServer } from "@/lib/utils/performance";
 
 export async function NextPerformanceSectionServer() {
   const todayStr = toYmdLocal();

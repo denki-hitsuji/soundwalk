@@ -1,4 +1,5 @@
-// lib/performanceQueries.ts
+"use server"
+import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   PerformanceWithActs,
@@ -14,7 +15,7 @@ import { getPerformances, PREP_DEFS, toPerformanceWithActsArrayPlain, toPerforma
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
 import { getMyActs } from "@/lib/api/acts";
 import { ActRow } from "@/lib/utils/acts"
-import { toStringOrNull, toBoolean, toString } from "../utils/convert";
+import { toStringOrNull, toBoolean, toString, toPlainError } from "../utils/convert";
 export type {
   PerformanceRow,
   PerformanceWithActs,
@@ -26,18 +27,6 @@ export type {
   FlyerRow,
 } from "@/lib/utils/performance"; 
 
-
-
-/**
- * “plain object化”の最後の砦。
- * - Date / Map / Set / Error / null prototype が混ざっていても plain になる
- * - ただし BigInt は落ちる（必要なら事前に文字列化する）
- */
-
-
-/**
- * Supabaseの data を、Client Component に渡して安全な形へ詰め直す
- */
 
 
 export async function getMyUpcomingPerformancesDb(todayStr?: string) {
@@ -306,4 +295,51 @@ export async function upsertPerformanceDetailsDb(params: {
     .upsert(payload, { onConflict: "performance_id" });
 
   if (error) throw error;
+}
+
+
+export async function getMyActsServerDb() {
+  const supabase = await createSupabaseServerClient();
+  const { data: auth, error: authErr } = await supabase.auth.getUser();
+  if (authErr) throw new Error(`auth.getUser failed: ${toPlainError(authErr).message}`);
+  const userId = auth.user?.id;
+  if (!userId) return { userId: null , actIds: [] as string[] };
+
+  const { data, error } = await supabase.from("v_my_acts").select("id");
+  if (error) throw new Error(`v_my_acts select failed: ${toPlainError(error).message}`);
+
+  return { userId, actIds: (data ?? []).map((r: any) => String(r.id)) };
+}
+
+export async function getNextPerformanceServerDb(todayStr?: string) {
+  const t = todayStr ?? toYmdLocal();
+  const { actIds } = await getMyActsServerDb();
+  if (actIds.length === 0) return null;
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("musician_performances")
+    .select(
+      `
+      id,
+      event_date,
+      venue_name,
+      memo,
+      act_id,
+      status,
+      status_reason,
+      status_changed_at,
+      acts:acts ( id, name, act_type )
+    `
+    )
+    .in("act_id", actIds)
+    .gte("event_date", t)
+    .neq("status", "canceled")
+    .order("event_date", { ascending: true })
+    .limit(1);
+
+  if (error) throw new Error(`musician_performances select failed: ${toPlainError(error).message}`);
+
+  // supabaseの返すdataは基本 plain object なのでOK。Date化しないのが大事。
+  return (data?.[0] ?? null) as PerformanceWithActs | null;
 }

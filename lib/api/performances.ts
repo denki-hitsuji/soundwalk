@@ -22,3 +22,9 @@ export async function getFlyerMapForPerformances(performanceIds: string[]) {
 export async function getDetailsMapForPerformances(performanceIds: string[]): Promise<DetailsMap> {
       return await getDetailsMapForPerformancesDb(performanceIds);
 }
+
+
+export async function getNextPerformanceServer(todayStr?: string) {
+ 
+  return 
+}
