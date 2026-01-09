@@ -1,10 +1,10 @@
 "use server"
 import {
-  listSongAssetsDb,
-  deleteSongAssetDb,
-  getSignedUrlDb,
+  listSongAssets,
+  deleteSongAsset,
+  getSignedUrl,
   SongAssetRow,
-} from "@/lib/db/songAssets";
+} from "@/lib/utils/songAssets";
 import { getMySongsDb, getSongByIdDb, getSongsByActIdsDb } from "@/lib/db/songs";
 export type { SongRow } from "@/lib/db/songs";
 
@@ -22,14 +22,14 @@ export async function getSongById(songId: string) {
     return await getSongByIdDb(songId);
 }
 
-export async function getSignedUrl(objectPath: string, expiresInSec: number) {
-    return await getSignedUrlDb(objectPath, expiresInSec);
-}
+// export async function getSignedUrl(objectPath: string, expiresInSec: number) {
+//     return await getSignedUrlDb(objectPath, expiresInSec);
+// }
 
-export async function deleteSongAsset(asset: SongAssetRow) {
-    return await deleteSongAssetDb(asset)
-}
+// export async function deleteSongAsset(asset: SongAssetRow) {
+//     return await deleteSongAssetDb(asset)
+// }
 
-export async function listSongAssets(songId: string) {
-  return await listSongAssetsDb(songId);
-}
+// export async function listSongAssets(songId: string) {
+//   return await listSongAssetsDb(songId);
+// }

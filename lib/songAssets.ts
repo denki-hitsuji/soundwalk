@@ -1,7 +1,6 @@
 // lib/songAssets.ts
+import { supabase } from "@/lib/supabase/client";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server"; 
-import { SONG_ASSET_MAX_BYTES, ALLOWED_MIME_TYPES } from "../utils/songAssets";
 export type SongAssetRow = {
   id: string;
   act_song_id: string;
@@ -17,9 +16,18 @@ export type SongAssetRow = {
 
 const BUCKET = "song-assets";
 
+// 方針：10MB、動画NG、whitelist、音声はmp3のみ
+export const SONG_ASSET_MAX_BYTES = 10 * 1024 * 1024;
 
+export const ALLOWED_MIME_TYPES = new Set<string>([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "audio/mpeg", // mp3
+]);
 
-export async function validateSongAssetFile({ file }: { file: File; }): Promise< string | null> {
+export function validateSongAssetFile(file: File): string | null {
   if (!file) return "ファイルが選択されていません。";
   if (file.size > SONG_ASSET_MAX_BYTES) return "ファイルサイズが10MBを超えています。";
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
@@ -41,7 +49,6 @@ function sanitizeFilename(name: string) {
 }
 
 export async function listSongAssets(actSongId: string) {
-const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("act_song_assets")
     .select("id, act_song_id, uploader_profile_id, bucket, object_path, original_filename, mime_type, size_bytes, asset_kind, created_at")
@@ -53,7 +60,6 @@ const supabase = await createSupabaseServerClient();
 }
 
 export async function getSignedUrl(objectPath: string, expiresInSec = 60 * 10) {
-const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(objectPath, expiresInSec);
   if (error) throw error;
   return data.signedUrl;
@@ -64,10 +70,9 @@ export async function uploadSongAsset(params: {
   file: File;
   assetKind: string;
 }) {
-const supabase = await createSupabaseServerClient();
   const { actSongId, file, assetKind } = params;
 
-  const msg = await validateSongAssetFile({ file });
+  const msg = validateSongAssetFile(file);
   if (msg) throw new Error(msg);
 
   const { data: u } = await supabase.auth.getUser();
@@ -117,7 +122,6 @@ const supabase = await createSupabaseServerClient();
 }
 
 export async function deleteSongAsset(asset: SongAssetRow) {
-const supabase = await createSupabaseServerClient();
   // 1) DB delete (RLSで弾けるはず)
   const { error: dbErr } = await supabase
     .from("act_song_assets")
