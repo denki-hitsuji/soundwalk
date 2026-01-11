@@ -59,13 +59,12 @@ async function saveProfile(_prev: ActionState | null, formData: FormData): Promi
   const payload = {
     id: user?.id,
     display_name,
-    updated_at: new Date().toISOString(),
   };
 
   const { data, error } = await supabase
     .from("profiles")
     .upsert(payload, { onConflict: "id" })
-    .select("id, display_name, avatar_url, updated_at")
+    .select("id, display_name, avatar_url")
     .single();
 
   if (error) {

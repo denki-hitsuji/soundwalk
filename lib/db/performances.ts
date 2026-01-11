@@ -287,7 +287,6 @@ export async function upsertPerformanceDetailsDb(params: {
   const payload = {
     performance_id: performanceId,
     notes: notes?.trim() ? notes.trim() : null,
-    updated_at: new Date().toISOString(),
   };
 
   const { error } = await supabase
