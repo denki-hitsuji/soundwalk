@@ -1,31 +1,39 @@
-"use server"
-import OrganizedEventDetailClient from "@/components/organizer/OrganizedEventDetailClient";
-import { getActsByIds, getAllActs } from "@/lib/api/acts";
-import { getEventActs, getEventById, getMyEvents } from "@/lib/api/events";
-import { getEventBookings } from "@/lib/api/venues";
+// app/events/[eventId]/page.tsx
+import { getPublicEventForBooking } from "@/lib/api/venues";
+import { BookingForm } from "./BookingForm";
 import { getCurrentUser } from "@/lib/auth/session.server";
-import { redirect } from "next/navigation";
+import { ensureMyDefaultAct } from "@/lib/api/actsAction";
 
-export default async function OrganizerEventDetailPage(
-  { params }: { params: Promise<{ eventId: string }> }
-) {
+export const dynamic = "force-dynamic"; // ★ビルド時の静的評価を避ける
+export default async function PublicEventPage({ params }: { params: Promise<{ eventId : string }> }) {
   const { eventId } = await params;
-  // const user = await getCurrentUser();
-  // if (!user) redirect("/login");
+  const user = await getCurrentUser();
+  if (!user) throw new Error("ログインが必要です。");
 
-  // const event = await (await getMyEvents()).find(e => e.id == eventId);
-  // if (!event) throw Error("イベントが見つかりません。");
-  // const relatedIds = (await getEventActs({ eventId: event?.id })).map(ea => ea.event_act.act_id);
-  // const eventActs = await getActsByIds(relatedIds);
-  // const eventBookings = await getEventBookings(eventId);
-  // const allActs = await getAllActs();
+  if (!eventId) {
+    throw new Error("eventId param is missing");
+  }
+
+  const act = await ensureMyDefaultAct();
+  const { event, acceptedCount } = await getPublicEventForBooking(eventId);
+
   return (
-    <div>
-      {/* <OrganizedEventDetailClient
-    userId={user?.id} event={event} eventActs={eventActs}
-    eventBookings={eventBookings} allActs={allActs}
-  />; */}
-  </div>
-  )
+    <main className="space-y-6">
+      {/* イベント情報 */}
+      <section>
+        <h1 className="text-2xl font-bold mb-2">{event.title}</h1>
+        <p className="text-sm text-gray-600">
+          {event.event_date} {event.start_time.slice(0, 5)} 〜{" "}
+          {event.end_time.slice(0, 5)}
+        </p>
+        <p className="text-sm text-gray-600">
+          枠: {acceptedCount}/{event.max_artists ?? "∞"}
+        </p>
 
+      </section>
+
+      {/* ブッキングフォーム（クライアント側で書き込み） */}
+      <BookingForm userId={user?.id} event={event} act={act} />
+    </main>
+  );
 }
