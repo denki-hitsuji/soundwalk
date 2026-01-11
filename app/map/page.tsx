@@ -87,7 +87,7 @@ export default function MapPage() {
         <p className="text-sm text-gray-500">読み込み中...</p>
       )}
 
-      <div className="h-[480px] w-full rounded border overflow-hidden bg-gray-200">
+      <div className="relative z-0 h-[480px] w-full rounded border overflow-hidden bg-gray-200">
         {/* ここがポイント：
             サーバー描画時 & クライアント初回レンダーでは isClient=false → 中身なし
             useEffect 後の2回目レンダーで isClient=true → MapContainer を描画 */}
