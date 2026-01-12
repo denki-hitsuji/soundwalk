@@ -5,15 +5,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
-import { getCurrentUserClient, useCurrentUser } from "@/lib/auth/session.client";
 import { getMyProfile } from "@/lib/api/profiles";
 import { ActRow } from "@/lib/utils/acts";
-import { updateAct } from "@/lib/api/actsAction";
+import { ensureMyDefaultAct, insertAct, updateAct } from "@/lib/api/actsAction";
 
 function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{children}</span>;
 }
 type Props = {
+    userId : string,
     myActs: ActRow[],
     myOwnerActs: ActRow[],
     myMemberActs: ActRow[]
@@ -60,7 +60,7 @@ function ActListCard({
           </div>
 
           {desc && (
-            <div className="mt-2 text-xs text-gray-600 whitespace-pre-wrap break-words line-clamp-3">
+            <div className="mt-2 text-xs text-gray-600 whitespace-pre-wrap wrap-break-words line-clamp-3">
               {desc}
             </div>
           )}
@@ -72,13 +72,12 @@ function ActListCard({
   );
 }
 
-export default function ActsPage({ myActs, myOwnerActs, myMemberActs }: Props) {
+export default function ActsPage({userId, myActs, myOwnerActs, myMemberActs }: Props) {
   const router = useRouter();
   const { currentAct, setCurrentAct } = useCurrentAct();
 
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-    const acts = myActs;
+  const acts = myActs;
   const ownedActs = myOwnerActs;
   const memberActs = myMemberActs;
   const [memberMap, setMemberMap] = useState<Record<string, { is_admin: boolean }>>({});
@@ -116,6 +115,7 @@ export default function ActsPage({ myActs, myOwnerActs, myMemberActs }: Props) {
   }, []);
 
   const createSoloAct = async () => {
+    console.log("create solo act started");
     setCreateError(null);
 
     const name = soloName.trim();
@@ -126,17 +126,9 @@ export default function ActsPage({ myActs, myOwnerActs, myMemberActs }: Props) {
 
     setCreatingSolo(true);
     try {
-      const uid = userId;
-      if (!uid) {
-        setCreateError("ログイン情報が見つかりません。再ログインしてください。");
-        return;
-      }
-
-      const inserted = await updateAct({
-        id: userId,
+      const inserted = await insertAct({
         name,
         act_type: "solo",
-        owner_profile_id: uid,
         description: "",
         is_temporary: false,
         photo_url: null,
@@ -157,6 +149,7 @@ export default function ActsPage({ myActs, myOwnerActs, myMemberActs }: Props) {
       setCreateError(e?.message ?? "作成に失敗しました");
     } finally {
       setCreatingSolo(false);
+      console.log("create solo act end");
     }
   };
 

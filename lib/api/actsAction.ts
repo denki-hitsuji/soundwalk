@@ -1,5 +1,7 @@
+"use server"
 import { uploadActPhotoDb, deletePhotoDataAndStorageDb, createActInviteDb, deleteActByIdDb, ensureMyDefaultActDb, insertActDb, updateActDb } from "../db/acts";
 import { ActRow } from "../utils/acts";
+import { BookingWithDetails } from "../utils/bookings";
 
 // デフォルトActを保証：なければ作る
 
@@ -21,9 +23,13 @@ export async function deleteActById(actId: string) {
   return await deleteActByIdDb(actId);
 }
 export async function insertAct(params: {
-    guestName: string;
-    guestActType: string;
-    ownerProfileId: string;
+  name: string,
+  act_type: string,
+  description: string,
+  is_temporary: boolean,
+  photo_url: string | null,
+  profile_link_url: string | null,
+  icon_url: string | null,
 }): Promise<{
     id: string;
 }>{

@@ -115,6 +115,9 @@ export default function EventEditPage() {
         start_time: startTime + ":00",
         end_time: endTime + ":00",
         max_artists: parsedMax ?? 0,
+        open_time: null,
+        charge: null ,
+        conditions: null
       });
 
       router.push(`/venue/events/${eventId}`);

@@ -197,22 +197,31 @@ export async function getAllActsDb(): Promise<ActRow[]> {
 }
 
 export async function insertActDb(params: {
-  guestName: string;
-  guestActType: string;
-  ownerProfileId: string;
+  name: string,
+  act_type: string,
+  description: string,
+  is_temporary: boolean,
+  photo_url: string | null,
+  profile_link_url: string | null,
+  icon_url: string | null,
 }): Promise<{ id: string }> {
   const supabase = await createSupabaseServerClient();
+  const user = await getCurrentUser();
   const { data, error } = await supabase
       .from("acts")
-      .insert({
-        name: params.guestName.trim(),
-        act_type: params.guestActType,
-        owner_profile_id: params.ownerProfileId, 
-        is_temporary: true,
-      })
-      .select("id")
-      .single();
-  
+    .insert({
+      name: params.name,
+      act_type: params.act_type,
+      owner_profile_id: user?.id,
+      description: params.description,
+      is_temporary: params.is_temporary,
+      photo_url: params.photo_url,
+      profile_link_url: params.profile_link_url,
+      icon_url: params.icon_url,
+    })
+    .select("id")
+    .single();
+
   if (error) throw error;
   return data as { id: string };
 }

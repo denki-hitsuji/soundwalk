@@ -24,7 +24,15 @@ export default function ActNewClient({ userId }: Props) {
 
     setSaving(true);
     try {
-      const { id } = await insertAct({ guestName: name, guestActType: actType, ownerProfileId: userId });
+      const { id } = await insertAct({
+        name,
+        act_type: "solo",
+        description: "",
+        is_temporary: false,
+        photo_url: null,
+        profile_link_url: null,
+        icon_url: null,
+      });
       const act = await getActById(id); 
       if (act && trimmed === act.name) {
         // 既定名義と同じならそちらに遷移

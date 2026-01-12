@@ -215,9 +215,13 @@ export default function MusicianOrganizedEventDetailClient({ userId,
     try {
       // ★ owner_profile_id を必ず渡す
       const newAct = await insertAct({
-        guestName: guestName.trim(),
-        guestActType: guestActType,
-        ownerProfileId: userId || "",
+        name:guestName,
+        act_type: guestActType,
+        description: "",
+        is_temporary: false,
+        photo_url: null,
+        profile_link_url: null,
+        icon_url: null,
       });
 
       const actId = (newAct as { id: string }).id;
