@@ -2,7 +2,7 @@
 import { actionAsyncStorage } from "next/dist/server/app-render/action-async-storage.external";
 import { getCurrentUser } from "../auth/session.server";
 import { createSupabaseServerClient } from "../supabase/server";
-import { EventWithAct, EventRow, EventStatus, EventWithVenue } from "../utils/events";
+import { EventWithAct, EventRow, EventStatus, EventWithVenue, toPlainEventWithVenue } from "../utils/events";
 import { ActRow } from "../utils/acts";
 import { PerformanceRow, toPlainPerformance } from "../utils/performance";
 
@@ -15,7 +15,7 @@ import { PerformanceRow, toPlainPerformance } from "../utils/performance";
  * 店舗側：自分のイベントを 1件取得
  * EventOffersPage (/venue/events/[eventId]) から使用
  */
-export async function getEventByIdDb(eventId: string): Promise<EventRow | null> {
+export async function getEventByIdDb(eventId: string): Promise<EventWithVenue | null> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('events')
@@ -30,7 +30,13 @@ export async function getEventByIdDb(eventId: string): Promise<EventRow | null> 
   created_at,
   max_artists,
   organizer_profile_id,
-  reconfirm_deadline
+  reconfirm_deadline,
+        venues (
+        id,
+        name,
+        address,
+        volume_preference
+      )
 `)
     .eq('id', eventId)
     .maybeSingle(); // 行が無い場合は error ではなく data: null になる
@@ -40,22 +46,7 @@ export async function getEventByIdDb(eventId: string): Promise<EventRow | null> 
   // 行が無い場合は null を返す（呼び出し側で「イベントが見つかりません」と表示）
   if (!data) return null;
 
-  const ret = {
-    id: data.id,
-    venue_id: data.venue_id,
-    title: data.title,
-    event_date: data.event_date,
-    start_time: data.start_time,
-    open_time: null,
-    charge: null,
-    conditions: null,
-    end_time: data.end_time,
-    status: data.status as EventStatus,
-    created_at: data.created_at,
-    max_artists: data.max_artists ?? 1,
-    organizer_profile_id: data.organizer_profile_id,
-    reconfirm_deadline: data.reconfirm_deadline
-  } satisfies EventRow;
+  const ret = toPlainEventWithVenue(data) satisfies EventWithVenue;
   return { ...ret };
 }
 
@@ -102,36 +93,9 @@ export async function getOpenEventsForMusicianDb(): Promise<EventWithVenue[]> {
 
   const raw = (data ?? []) as any[];
 
-  const normalized: EventWithVenue[] = raw.map((row) => {
-    const venueRaw = Array.isArray(row.venues)
-      ? row.venues[0] ?? null
-      : row.venues ?? null;
-
-    return {
-      id: row.id,
-      venue_id: row.venue_id,
-      organizer_profile_id: row.organizer_profile_id,
-      title: row.title,
-      event_date: row.event_date,
-      start_time: row.start_time,
-      end_time: row.end_time,
-      status: row.status as EventStatus,
-      created_at: row.created_at,
-      max_artists: row.max_artists,
-      open_time: row.open_time,
-      charge: row.charge,
-      conditions: row.conditions,
-      reconfirm_deadline: row.reconfirm_deadline,
-      venues: venueRaw
-        ? {
-          id: venueRaw.id,
-          name: venueRaw.name,
-          address: venueRaw.address ?? null,
-          volume_preference: venueRaw.volume_preference ?? null,
-        }
-        : null,
-    };
-  });
+  const normalized: EventWithVenue[] = raw.map(
+    (row) => toPlainEventWithVenue(row)
+  );
 
   return normalized;
 }

@@ -22,10 +22,13 @@ import { createBooking, createOfferAndInboxPerformance, updateBookingStatus } fr
 
 type Props = {
   userId: string; 
+  // イベント情報（会場情報付き)
   event: EventWithVenue;
   // 決定済み出演者（event_acts.status = accepted）
   eventActs: ActRow[];
+  // イベント招待状況
   eventBookings: BookingRow[];
+  // オファー可能な全アーティスト
   allActs: ActRow[];
 };
 export default function MusicianOrganizedEventDetailClient({ userId,

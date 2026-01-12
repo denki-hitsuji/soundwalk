@@ -45,3 +45,33 @@ export type EventWithAct = EventRow & {
 export type EventWithCount = EventRow & {
   acceptedCount: number;
 };
+
+export function toPlainEventWithVenue(row: any) {
+  const venueRaw = Array.isArray(row.venues)
+    ? row.venues[0] ?? null
+    : row.venues ?? null;
+  return {
+    id: row.id,
+    venue_id: row.venue_id,
+    organizer_profile_id: row.organizer_profile_id,
+    title: row.title,
+    event_date: row.event_date,
+    start_time: row.start_time,
+    end_time: row.end_time,
+    status: row.status as EventStatus,
+    created_at: row.created_at,
+    max_artists: row.max_artists,
+    open_time: row.open_time,
+    charge: row.charge,
+    conditions: row.conditions,
+    reconfirm_deadline: row.reconfirm_deadline,
+    venues: venueRaw
+      ? {
+        id: venueRaw.id,
+        name: venueRaw.name,
+        address: venueRaw.address ?? null,
+        volume_preference: venueRaw.volume_preference ?? null,
+      }
+      : null,
+  };
+}
