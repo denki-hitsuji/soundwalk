@@ -12,7 +12,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "soundwalk",
+  title: String ({
+    default:
+      process.env.NEXT_PUBLIC_APP_ENV === "prod"
+        ? "Soundwalk"
+        : `Soundwalk [${process.env.NEXT_PUBLIC_APP_ENV}]`,
+  }),
   description: "街に音楽が溢れるためのアプリ",
 };
 

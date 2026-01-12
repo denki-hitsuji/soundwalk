@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { MobileMenu } from "./MobileMenu";
 import { signOut } from "@/lib/auth/session.client";
 import { NAV_ITEMS } from "./NavItems";
+import { EnvBadge } from "./EnvBadge";
 
 
 function classNames(...xs: Array<string | false | null | undefined>) {
@@ -67,7 +68,10 @@ export function AppShellClient({
       <header className="sticky top-0 z-20 border-b bg-white">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
           <Link href="/" className="font-semibold tracking-tight">
-            soundwalk
+            {process.env.NEXT_PUBLIC_APP_ENV === "prod"
+              ? "Soundwalk"
+              : `Soundwalk [${process.env.NEXT_PUBLIC_APP_ENV}]`
+            }
           </Link>
 
           <div className="flex items-center gap-3">{/* 予約枠 */}</div>
@@ -129,6 +133,7 @@ export function AppShellClient({
           </div>
 
           {children}
+          <EnvBadge />
         </main>
       </div>
     </div>
