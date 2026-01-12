@@ -1,5 +1,6 @@
 // AppShell.tsx（Server Component）
 "use server";
+import { redirect } from "next/navigation";
 import { AppShellClient } from "./AppShellClient";
 import { createSupabaseServerClient } from "@/lib/supabase/server"; // ←あなたの実装に合わせてパス調整
 
@@ -10,6 +11,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const initialUserId = user?.id ?? null;
 

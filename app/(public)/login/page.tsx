@@ -64,7 +64,7 @@ export default function LoginPage() {
       </form>
 
       <div className="mt-4 text-sm text-gray-600">
-        はじめて？{" "}
+        まだアカウントがない場合は、ここから作成します。<br/>
         <Link href="/signup" className="text-gray-900 underline">
           サインアップ
         </Link>
