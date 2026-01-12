@@ -9,17 +9,21 @@ import { getAllVenues } from "@/lib/api/venues";
 import { EventRow } from "@/lib/utils/events";
 import { VenueRow } from "@/lib/utils/venues";
 import { updateEvent, updateEventStatus } from "@/lib/api/eventsAction";
-
-export default function OrganizedEventEditClient({ eventId }: { eventId: string }) {
+type Props = {
+  userId: string;
+  event: EventRow;
+  allVenues: VenueRow[]
+}
+export default function OrganizedEventEditClient({userId, event , allVenues}: Props) {
+  
   const router = useRouter();
-
+  const eventId = event.id;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [canceling, setCanceling] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
-  const [event, setEvent] = useState<EventRow | null>(null);
   const [venues, setVenues] = useState<VenueRow[]>([]);
 
   // form state
@@ -38,40 +42,28 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
     setError(null);
 
     try {
-      // auth
-      const auth = await useCurrentUser();  
-      if (!auth) throw new Error("ログインしてください。");
-
-      // event
-      const event = await getEventById(eventId);
-      if (!event) throw new Error("イベントが見つかりませんでした。");
-      const row = event as EventRow;
-
       // organizer check
-      if (row.organizer_profile_id !== auth.user?.id) {
+      if (event.organizer_profile_id !== userId) {
         throw new Error("このイベントはあなたの企画ではありません。");
       }
-
-      setEvent(row);
 
       // venues（選択肢）
       const venues = await getAllVenues();
       setVenues(venues as VenueRow[]);
 
       // init form
-      setTitle(row.title ?? "");
-      setVenueId(row.venue_id ?? "");
-      setEventDate(row.event_date ?? "");
-      setOpenTime(row.open_time ? row.open_time.slice(0, 5) : "");
-      setStartTime(row.start_time ? row.start_time.slice(0, 5) : "");
-      setEndTime(row.end_time ? row.end_time.slice(0, 5) : "");
-      setMaxArtists(row.max_artists == null ? "" : String(row.max_artists));
-      setCharge(row.charge == null ? "" : String(row.charge));
-      setConditions(row.conditions ?? "");
+      setTitle(event.title ?? "");
+      setVenueId(event.venue_id ?? "");
+      setEventDate(event.event_date ?? "");
+      setOpenTime(event.open_time ? event.open_time.slice(0, 5) : "");
+      setStartTime(event.start_time ? event.start_time.slice(0, 5) : "");
+      setEndTime(event.end_time ? event.end_time.slice(0, 5) : "");
+      setMaxArtists(event.max_artists == null ? "" : String(event.max_artists));
+      setCharge(event.charge == null ? "" : String(event.charge));
+      setConditions(event.conditions ?? "");
     } catch (e: any) {
       console.error(e);
       setError(e?.message ?? "読み込みに失敗しました。");
-      setEvent(null);
     } finally {
       setLoading(false);
     }
@@ -80,7 +72,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId]);
+  }, [] );
 
   const canSave = useMemo(() => {
     if (!event) return false;
@@ -103,7 +95,7 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
     try {
       const payload = {
         title: title.trim(),
-        venue_id: venueId,
+        venue_id: venueId ,
         event_date: eventDate,
         open_time: openTime ? openTime : null,
         start_time: startTime ? startTime : null,
@@ -113,10 +105,9 @@ export default function OrganizedEventEditClient({ eventId }: { eventId: string 
         conditions: conditions.trim() ? conditions.trim() : null,
       };
 
-      await updateEvent(eventId, { ...event, ...payload });
+      await updateEvent(eventId,  payload );
 
       alert("保存しました。");
-      router.push(`/organizer/events/${eventId}`);
       router.refresh();
     } catch (e: any) {
       console.error(e);

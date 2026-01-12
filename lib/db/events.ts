@@ -1,4 +1,4 @@
-"use server"
+import "server-only"
 import { actionAsyncStorage } from "next/dist/server/app-render/action-async-storage.external";
 import { getCurrentUser } from "../auth/session.server";
 import { createSupabaseServerClient } from "../supabase/server";
@@ -20,17 +20,20 @@ export async function getEventByIdDb(eventId: string): Promise<EventWithVenue | 
   const { data, error } = await supabase
     .from('events')
     .select(`
-  id,
-  venue_id,
-  title,
-  event_date,
-  start_time,
-  end_time,
-  status,
-  created_at,
-  max_artists,
-  organizer_profile_id,
-  reconfirm_deadline,
+    id,
+    organizer_profile_id,
+    venue_id,
+    title,
+    event_date,
+    open_time,
+    start_time,
+    end_time,
+    max_artists,
+    status, 
+    charge,
+    conditions,
+    created_at,
+    reconfirm_deadline,
         venues (
         id,
         name,
@@ -140,9 +143,14 @@ export async function updateEventDb(eventId: string, input: {
   start_time: string | null;
   end_time: string | null;
   max_artists: number | null;
+  venue_id: string | null;
+  open_time: string | null;
+  charge: Number | null;
+  conditions: string | null,
 }): Promise<void> {
+  console.log("🔥 updateEventDb called", eventId, input);
   const supabase = await createSupabaseServerClient();
-  const user = await getCurrentUser();
+  // const user = await getCurrentUser();
 
   const { error } = await supabase
     .from('events')
@@ -152,13 +160,18 @@ export async function updateEventDb(eventId: string, input: {
       start_time: input.start_time,
       end_time: input.end_time,
       max_artists: input.max_artists,
+      venue_id: input.venue_id,
+      open_time: input.open_time,
+      charge: input.charge,
+      conditions: input.conditions
     })
     .eq('id', eventId)
-    .eq('venue_id', user?.id); // 自分のイベントだけ更新できるように制限
+    // .eq('organizer_profile_id', user?.id); // 自分のイベントだけ更新できるように制限
 
   if (error) {
     throw error;
   }
+  console.log("🔥 updateEventDb end");
 }
 
 // ★ イベント削除
@@ -171,7 +184,7 @@ export async function deleteEventDb(eventId: string): Promise<void> {
     .from('events')
     .select('id')
     .eq('id', eventId)
-    .eq('venue_id', user?.id)
+    .eq('organizer_profile_id', user?.id)
     .maybeSingle();
 
   if (evError) throw evError;
