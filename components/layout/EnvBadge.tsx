@@ -3,14 +3,13 @@
 const ENV = process.env.NEXT_PUBLIC_APP_ENV;
 
 export function EnvBadge() {
-  if (!ENV) return null;
+  // ✅ 本番では一切表示しない
+  if (!ENV || ENV === "prod") return null;
 
   const color =
-    ENV === "prod"
-      ? "bg-red-600"
-      : ENV === "staging"
+    ENV === "staging"
       ? "bg-yellow-500"
-      : "bg-green-600";
+      : "bg-green-600"; // local / dev
 
   return (
     <div
