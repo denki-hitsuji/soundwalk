@@ -258,6 +258,7 @@ export async function getPerformances(): Promise<{ data: PerformanceWithActs[]; 
       `
     )
     .not("acts", "is", null) // act.name が null の行を除外
+    .neq("status", "canceled")
     .order("event_date", { ascending: false });
   if (error) throw error;
   const normalizedData = data.map((p) => {
