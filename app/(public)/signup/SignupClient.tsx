@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";;
+import { useRouter, useSearchParams } from "next/navigation";
+import { signupOrRedirect } from "@/lib/auth/signup";
+;
 
 export default function SignupClient() {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()
+  const router = useRouter();
   const next = useMemo(() => {
     const raw = searchParams.get("next");
     // open redirect対策：内部パスだけ許可
@@ -25,20 +27,20 @@ export default function SignupClient() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          // ★ ここが肝：確認メールを踏んだら next に戻る
-          emailRedirectTo: `${location.origin}${next}`,
-        },
-      });
-      if (error) throw error;
+      const res = await signupOrRedirect({ email, password, next });
 
-      // ★ ここで「移動」しない（メール確認あり運用だから）
-      setSentTo(email);
-    } catch (e: any) {
-      setError(e?.message ?? "登録に失敗しました");
+      if (res.status === "existing") {
+        // ★シナリオ通り：ログインへ誘導（メールも渡す）
+        router.push(`/login?email=${encodeURIComponent(res.email)}&next=${encodeURIComponent(res.next)}&reason=existing`);
+        return;
+      }
+
+      if (res.status === "sent") {
+        setSentTo(res.email);
+        return;
+      }
+
+      setError(res.message ?? "登録に失敗しました");
     } finally {
       setSubmitting(false);
     }
