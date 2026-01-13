@@ -9,6 +9,7 @@ export type BookingRow = {
   act_id: string;
   act_name: string;
   act_type: string;
+  act_icon_url: string;
   owner_profile_id: string | null;
 };
 export type BookingWithDetails = {

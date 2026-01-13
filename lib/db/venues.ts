@@ -147,6 +147,9 @@ const supabase = await createSupabaseServerClient();
   return bookings.map((b) => ({
     ...b,
     act: actMap.get(b.act_id)!,
+    act_id: actMap.get(b.act_id).id,
+    act_name:  actMap.get(b.act_id).name,
+    act_icon_url :actMap.get(b.act_id).photo_url, 
   })) as BookingRow[];
 }
 
@@ -176,6 +179,7 @@ const supabase = await createSupabaseServerClient();
 
   if (actsError) throw actsError;
 
+  console.log(acts);
   const actMap = new Map(acts?.map((a) => [a.id, a]) ?? []);
 
   // 3. EventAct 型として返す
@@ -190,16 +194,6 @@ const supabase = await createSupabaseServerClient();
 // ==========================================================
 
 export async function getEventWithDetails(eventId: string) {
-const supabase = await createSupabaseServerClient();
-  // 1. イベント本体
-  const { data: event, error: eventError } = await supabase
-    .from("events")
-    .select("*")
-    .eq("id", eventId)
-    .single();
-
-  if (eventError) throw eventError;
-
   // 2. 出演名義
   const eventActs = await getEventActs(eventId);
 

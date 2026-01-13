@@ -19,6 +19,7 @@ import { ActRow } from "@/lib/utils/acts";
 import { BookingRow } from "@/lib/utils/bookings";
 import { EventWithVenue } from "@/lib/utils/events";
 import { createBooking, createOfferAndInboxPerformance, updateBookingStatus } from "@/lib/api/bookingsAction";
+import { BookingCard } from "./BookingCard";
 
 type Props = {
   userId: string; 
@@ -442,7 +443,7 @@ export default function MusicianOrganizedEventDetailClient({ userId,
               key={b.id}
               className="bg-white space-y-1"
             >
-              <PerformanceCard
+              <BookingCard
                 p={{
                   id: "",
                   event_id: b.event_id,
@@ -459,17 +460,7 @@ export default function MusicianOrganizedEventDetailClient({ userId,
                   status_changed_at: null,
                   status_reason: null,
                   event_title: event.title,
-                  acts: {
-                    id: b.act_id,
-                    name: b.act_name,
-                    act_type: b.act_type,
-                    owner_profile_id: "",
-                    is_temporary: false,
-                    description: null,
-                    icon_url: null,
-                    photo_url: null,
-                    profile_link_url: null
-                  },
+                  acts: eventActs.find(a => a.id === b.act_id) ?? null
                 }}
                 prepDefs={PREP_DEFS}
                 todayDate={todayDate}
