@@ -10,17 +10,30 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+async function generateMetadata(): Promise<Metadata> {
 
-export const metadata: Metadata = {
-  title: String ({
-    default:
-      process.env.NEXT_PUBLIC_APP_ENV === "prod"
+  const title =       process.env.NEXT_PUBLIC_APP_ENV === "prod"
         ? "Soundwalk"
-        : `Soundwalk [${process.env.NEXT_PUBLIC_APP_ENV}]`,
-  }),
-  description: "街に音楽が溢れるためのアプリ",
-};
+        : `Soundwalk [${process.env.NEXT_PUBLIC_APP_ENV}]`
 
+  const description = "街に音楽が溢れるためのアプリ";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,        // ✅ string
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,        // ✅ string
+      description,
+    },
+  };
+}
+export const metadata: Metadata = await generateMetadata(); 
 export default function RootLayout({
   children,
 }: Readonly<{
