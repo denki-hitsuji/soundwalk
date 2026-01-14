@@ -82,11 +82,10 @@ export default function NewEventPage() {
         setError("会場を選択してください。");
         return;
       }
-
       const parsedMax =
         maxArtists.trim() === "" ? null : Number(maxArtists.trim());
       if (
-        parsedMax !== null &&
+        parsedMax == null ||
         (Number.isNaN(parsedMax) || parsedMax < 1)
       ) {
         setError("最大組数は1以上の数値で入力してください。");
@@ -250,7 +249,7 @@ export default function NewEventPage() {
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
               value={maxArtists}
               onChange={(e) => setMaxArtists(e.target.value)}
-              placeholder="空欄で上限なし"
+              placeholder="例: 5"
             />
           </label>
         </div>
