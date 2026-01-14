@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 async function generateMetadata(): Promise<Metadata> {
 
-  const title =       process.env.NEXT_PUBLIC_APP_ENV === "prod"
+  const title = process.env.NEXT_PUBLIC_APP_ENV === "prod"
         ? "Soundwalk"
         : `Soundwalk [${process.env.NEXT_PUBLIC_APP_ENV}]`
 
