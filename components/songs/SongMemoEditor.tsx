@@ -7,7 +7,7 @@ import { makeSongMemoTemplate } from "@/lib/utils/templates";
 type Props = {
   initialText: string | null;
   // 後で保存を繋ぐなら追加
-  // onSave?: (nextText: string) => Promise<void> | void;
+  onSave?: (nextText: string) => Promise<void> | void;
 };
 
 function linkifyText(text: string) {
@@ -44,7 +44,8 @@ function linkifyText(text: string) {
   });
 }
 
-export default function SongMemoEditor({ initialText }: Props) {
+export default function SongMemoEditor({ initialText, onSave }: Props) {
+  if (!onSave) throw Error("onSaveは必ず指定してください");
   const [mode, setMode] = useState<"view" | "edit">("view");
 
   // 編集中の値（編集中だけ textarea が触る）
@@ -92,6 +93,8 @@ export default function SongMemoEditor({ initialText }: Props) {
   // ★ ここでは「保存＝コミット」まで（DB保存は親で繋ぐ想定）
   const saveEdit = async () => {
     // ここに onSave を繋ぐならここで await onSave(text)
+    console.log("before saveEdit: " + text);
+    await onSave(text);
     setCommittedText(text);
     setMode("view");
   };
@@ -114,7 +117,7 @@ export default function SongMemoEditor({ initialText }: Props) {
           </button>
         </div>
 
-        <div className="rounded border bg-white px-3 py-2 text-sm whitespace-pre-wrap h-full min-h-[60vh]">
+        <div className="rounded border bg-white px-3 py-2 text-sm text-gray-700 whitespace-pre-wrap h-full min-h-[60vh]">
           {hasText ? (
             linkifyText(committedText)
           ) : (

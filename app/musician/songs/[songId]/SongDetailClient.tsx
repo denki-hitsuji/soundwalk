@@ -21,6 +21,7 @@ export default function SongDetailClient({songId, song, act }: Props) {
 
   const templateText = useMemo(() => makeSongMemoTemplate(), []);
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
   // setMemo(song.memo ?? "");
   // 空なら自動挿入（初回だけ）
   useEffect(() => {
@@ -28,6 +29,24 @@ export default function SongDetailClient({songId, song, act }: Props) {
       song.memo = templateText;
     }
   }, [ templateText]);
+
+  const save = async (text:string) => {
+    if (!song) return;
+    // console.log("before update" + text);
+    try {
+      const trimmed = text.trim();
+      const updated = await updateSong({ ...song, memo: trimmed ? trimmed : null});
+      song = updated; 
+      // console.log("after update " + JSON.stringify(song));
+
+      alert("保存しました。");
+    } catch (e: any) {
+      console.error(e);
+      alert(e?.message ?? "保存に失敗しました。");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!song) {
     return (
@@ -78,7 +97,7 @@ export default function SongDetailClient({songId, song, act }: Props) {
       </header>
 
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
-        <SongMemoEditor initialText={song.memo} />
+        <SongMemoEditor initialText={song.memo} onSave={save}/>
       </section>
 
       <SongAssetsBox actSongId={song.id} />

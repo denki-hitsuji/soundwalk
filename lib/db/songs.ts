@@ -105,11 +105,10 @@ export async function addSongDb(actId: string, title: string) {
 
 export async function updateSongDb(song: SongRow) {
   const supabase = await createSupabaseServerClient();
-  const { id, title } = song;
   const { error } = await supabase
     .from("act_songs")
-    .update({ title })
-    .eq("id", id);
+    .update(song)
+    .eq("id", song.id);
   if (error) throw error;
   return song;
 }
