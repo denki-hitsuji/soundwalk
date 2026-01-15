@@ -1,6 +1,6 @@
 "use server"
-import { getDetailsMapForPerformancesDb, getFlyerMapForPerformancesDb, getNextPerformanceDb, getPerformancesForDashboardDb } from "@/lib/db/performances";
-import { toPlainPerformance, toPerformanceWithActsPlain, DetailsMap } from "../utils/performance";
+import { getDetailsForPerformanceDb, getDetailsMapForPerformancesDb, getFlyerMapForPerformancesDb, getNextPerformanceDb, getPerformanceAttachmentsDb, getPerformanceByIdDb, getPerformanceMessagesDb, getPerformancesForDashboardDb } from "@/lib/db/performances";
+import { toPlainPerformance, toPerformanceWithActsPlain, DetailsMap, getPerformances } from "../utils/performance";
 import { getMyUpcomingPerformancesDb } from "@/lib/db/performances";
 export type { PerformanceRow, PerformanceWithActs } from "@/lib/db/performances";
 
@@ -27,4 +27,22 @@ export async function getDetailsMapForPerformances(performanceIds: string[]): Pr
 export async function getNextPerformanceServer(todayStr?: string) {
  
   return 
+}
+
+export async function getPerformanceAttachments(params: { performanceId: string }) {
+  return await getPerformanceAttachmentsDb(params);
+}
+export async function getPerformanceMessages(params: { performanceId: string }) {
+  return await getPerformanceMessagesDb(params);
+}
+export async function getDetailsMapForPerformance(performanceId: string): Promise<DetailsMap> {
+  return await getDetailsMapForPerformances([performanceId]);
+}
+
+export async function getMyPerformanceById(params: {performanceId : string}) {
+   return await getPerformanceByIdDb(params);
+}
+
+export async function getDetailsForPerformance(params: { performanceId: string }) {
+      return await getDetailsForPerformanceDb(params);
 }

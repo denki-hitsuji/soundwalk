@@ -399,6 +399,7 @@ export async function getEventPerformancesDb(params: {
   event_id,
   booking_id ,
   offer_id ,
+  booking_id, created_at, offer_id, open_time, start_time,
       acts ( id, name ),
       profiles ( id, display_name )
     `

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white text-gray-900">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white text-gray-900">
       <header className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-4">
         <Link href="/" className="text-sm font-semibold tracking-tight">
           soundwalk

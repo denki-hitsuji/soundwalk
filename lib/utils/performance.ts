@@ -4,22 +4,29 @@ import { diffDays, toYmdLocal } from "@/lib/utils/date";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { toString, toBoolean, toStringOrNull, toPlainError } from "./convert";
 export type PerformanceRow = {
-  id: string;
-  profile_id: string;
-  act_id: string | null;
-  act_name: string | null;
-  event_id: string | null;
-  venue_id: string | null;
-  event_date: string;
-  venue_name: string | null;
-  memo: string | null;
+  // DBにないプロパティ
+  act_name: string | null
   details: DetailsRow | null;
   flyer_url: string | null;
   event_title: string | null;
+  // DBにないプロパティ ここまで
 
-  status: string | null;             // ★追加
-  status_reason: string | null;      // ★追加
-  status_changed_at: string | null;  // ★追加
+  act_id: string | null
+  booking_id: string | null
+  created_at: string | null
+  event_date: string
+  event_id: string | null
+  id: string
+  memo: string | null
+  offer_id: string | null
+  open_time: string | null
+  profile_id: string
+  start_time: string | null
+  status: string | null
+  status_changed_at: string | null
+  status_reason: string | null
+  venue_id: string | null
+  venue_name: string | null
 };
 
 /**
@@ -51,6 +58,11 @@ export function toPlainPerformance(row: any) {
     event_title: row.event_title ?? null,
     status_reason: row.status_reason ?? null,
     status_changed_at: row.status_changed_at ?? null,
+    booking_id: row.booking_id ?? null,
+    created_at: row.created_at ?? null,
+    offer_id: row.offer_id ?? null,
+    open_time: row.open_time ?? null,
+    start_time: row.start_time ?? null,
     acts: row.acts ? row.acts.map((a: { id: any; name: any; }) => {
       return {
         id: a.id,
@@ -89,7 +101,11 @@ export function toPerformanceRowPlain(p: any): PerformanceRow {
     event_date: toString(p?.event_date),
     venue_name: toStringOrNull(p?.venue_name),
     memo: toStringOrNull(p?.memo),
-
+    booking_id: (p?.booking_id) ,
+    created_at: (p?.created_at) ,
+    offer_id: (p?.offer_id) ,
+    open_time: (p?.open_time),
+    start_time: (p?.start_time),
     // DetailsRow の中身が不明なので “plain化”して保持（危険なプロトタイプ排除）
     details: p?.details == null ? null : toPlainJSON<DetailsRow>(p.details),
 
@@ -227,6 +243,11 @@ export async function getPerformances(): Promise<{ data: PerformanceWithActs[]; 
         profile_id,
         event_id,
         venue_id,
+        booking_id,
+        created_at,
+        offer_id,
+        open_time,
+        start_time,
         details:performance_details (
           performance_id,
           load_in_time,

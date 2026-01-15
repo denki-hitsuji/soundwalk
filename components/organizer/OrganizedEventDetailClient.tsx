@@ -460,6 +460,11 @@ export default function MusicianOrganizedEventDetailClient({ userId,
                   status_changed_at: null,
                   status_reason: null,
                   event_title: event.title,
+                  booking_id: b.id,
+                  created_at: b.created_at,
+                  offer_id: null,
+                  open_time: event.open_time,
+                  start_time: event.start_time,
                   acts: eventActs.find(a => a.id === b.act_id) ?? null
                 }}
                 prepDefs={PREP_DEFS}

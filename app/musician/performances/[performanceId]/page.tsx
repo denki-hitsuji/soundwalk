@@ -1,24 +1,72 @@
 // app/musician/performances/[performanceId]/page.tsx
-import { Suspense } from "react";
+import { getCurrentUser } from "@/lib/auth/session.server";
 import PerformanceDetailClient from "./PerformanceDetailClient";
-import Link from "next/link";
+import { getMyOwnerVenues } from "@/lib/api/venues";
+import { getPerformances } from "@/lib/utils/performance";
+import { EventRow } from "@/lib/utils/events";
+import { getEventById } from "@/lib/api/events";
+import { getActById } from "@/lib/api/acts";
+import { getDetailsForPerformance, getDetailsMapForPerformance, getDetailsMapForPerformances, getMyPerformanceById, getPerformanceAttachments, getPerformanceMessages } from "@/lib/api/performances";
 
-type Props = {
-  params: Promise<{ performanceId: string }>;
-};
+export default async function PerformanceDetailPage({ params }: {
+  params: { performanceId: string }
+}) {
+  const p = await params;
+  console.log(p);
+  const performanceId = p.performanceId;
 
-export default async function Page({ params }: Props) {
-  const { performanceId } = await params;
+  // current user
+  const user = await getCurrentUser();
+  const currentProfileId = user?.id ?? null;
+
+  // venues（個人登録編集で使う）
+  const venues = await getMyOwnerVenues();
+  // console.log(`venues: ${JSON.stringify(venues)}`);
+
+  // performance
+  // console.log(performanceId); 
+  const perfs = await getPerformances();
+  // console.log(JSON.stringify(perfs));
+  const perf = perfs.data.find(p => p.id === performanceId );
+  // console.log(JSON.stringify(perf));
+
+  if (!perf) {
+    return (
+      <main className="p-4">
+        <p className="text-sm text-red-600">ライブ情報が見つかりませんでした。</p>
+      </main>
+    );
+  }
+
+  // event（ある場合のみ）
+  // console.log("getting event");
+  let event = perf.event_id? await getEventById(perf?.event_id) : null;
+  // console.log(event);
+  // act（ある場合のみ）
+  let act: any = await getActById(perf.act_id! );
+  // console.log(act);
+
+  // details（無ければnull）
+  const details = await getDetailsForPerformance({ performanceId: performanceId });
+  console.log(details);
+  // attachments
+  const attachments = await getPerformanceAttachments({ performanceId: performanceId });
+  // console.log(attachments);
+  // messages
+  const messages = await getPerformanceMessages({ performanceId: performanceId });
+  // console.log(messages);
 
   return (
-    <Suspense fallback={<main className="text-sm text-gray-500">読み込み中…</main>}>
-      <PerformanceDetailClient performanceId={performanceId} />
-      <Link
-        href="/musician/performances"
-        className="shrink-0 inline-flex items-center rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white"
-      >
-        タイムラインへ
-      </Link>
-    </Suspense>
+    <PerformanceDetailClient
+      performanceId={performanceId}
+      currentProfileId={currentProfileId}
+      performance={perf as any}
+      act={act as any}
+      event={await event}
+      venues={venues}
+      details={(details ?? null) as any}
+      attachments={(attachments ?? []) as any}
+      messages={(messages ?? []) as any}
+    />
   );
 }
