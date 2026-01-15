@@ -323,7 +323,7 @@ export default function PerformanceDetailClient(props: {
                                 type="time"
                                 className="mt-1 w-full rounded border px-2 py-1 text-sm"
                                 value={performance.open_time ?? ""}
-                                onChange={(e) => setDetails((p) => ({ ...p, set_start_time: e.target.value || null }))}
+                                onChange={(e) => setDetails((p) => ({ ...p, open_time: e.target.value || null }))}
                             />
                         </label>
 
@@ -333,7 +333,7 @@ export default function PerformanceDetailClient(props: {
                                 type="time"
                                 className="mt-1 w-full rounded border px-2 py-1 text-sm"
                                 value={performance.start_time ?? ""}
-                                onChange={(e) => setDetails((p) => ({ ...p, set_end_time: e.target.value || null }))}
+                                onChange={(e) => setDetails((p) => ({ ...p, start_time: e.target.value || null }))}
                             />
                         </label>
                         <label className="block">
@@ -373,6 +373,96 @@ export default function PerformanceDetailClient(props: {
                     </div>
                 </div>
             </section>
+
+<section className="hidden rounded-xl border bg-white px-4 py-3 shadow-sm">
+  {/* ヘッダー：情報 / 開場開演 / 操作 */}
+{/* ヘッダー：情報 / 開場開演 / 操作（内側は透明） */}
+<div className="grid gap-3 md:grid-cols-[1fr,auto,auto] md:items-start">
+  {/* 左：日付・会場・名義 */}
+  <div className="min-w-0">
+    <div className="text-sm font-semibold">{titleLine}</div>
+    <div className="mt-0.5 text-base font-bold truncate">{actLabel}</div>
+  </div>
+
+  {/* 中央：開場・開演（透明、コンパクト） */}
+  <div className="md:pt-0.5">
+    <div className="grid grid-cols-2 gap-2">
+      <label className="block">
+        <span className="text-[11px] text-gray-500">開場</span>
+        <input
+          type="time"
+          className="mt-1 w-full rounded border bg-white px-2 py-1 text-sm disabled:bg-gray-50"
+          value={performance.open_time ?? ""}
+          disabled={!!performance.event_id} // ←仕様通り：イベント紐づきは編集不可
+          onChange={(e) => {
+            // あなたの改修済みロジックに合わせて
+          }}
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-[11px] text-gray-500">開演</span>
+        <input
+          type="time"
+          className="mt-1 w-full rounded border bg-white px-2 py-1 text-sm disabled:bg-gray-50"
+          value={performance.start_time ?? ""}
+          disabled={!!performance.event_id}
+          onChange={(e) => {
+            // あなたの改修済みロジックに合わせて
+          }}
+        />
+      </label>
+    </div>
+
+    {performance.event_id && (
+      <div className="mt-1 text-[11px] text-gray-500">
+        ※イベントに紐づく出演のため、時刻は編集できません
+      </div>
+    )}
+  </div>
+
+  {/* 右：操作ボタン（モバイル横 / md縦） */}
+  <div className="flex gap-2 md:flex-col md:items-stretch md:gap-2">
+    {performance.event_id && performance.status !== "canceled" && (
+      <>
+        {(performance.status === "offered" || performance.status === "pending_reconfirm") && (
+          <button
+            type="button"
+            onClick={() => void acceptOffer()}
+            disabled={accepting}
+            className="inline-flex flex-1 items-center justify-center rounded bg-emerald-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50 md:flex-none"
+          >
+            {accepting ? "受諾中…" : "受諾"}
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => void withdrawFromEvent()}
+          disabled={withdrawing}
+          className="inline-flex flex-1 items-center justify-center rounded border border-amber-300 bg-white px-3 py-2 text-xs font-medium text-amber-800 disabled:opacity-50 md:flex-none"
+        >
+          {withdrawing ? "辞退中…" : "辞退"}
+        </button>
+      </>
+    )}
+
+    {!performance.event_id && (
+      <button
+        type="button"
+        onClick={() => void deletePerformance()}
+        disabled={deleting}
+        className="inline-flex items-center justify-center rounded border border-red-300 bg-white px-3 py-2 text-xs font-medium text-red-700 disabled:opacity-50"
+      >
+        {deleting ? "削除中…" : "削除"}
+      </button>
+    )}
+  </div>
+</div>
+
+
+  {/* 以降もそのまま */}
+</section>
 
             {/* flyer */}
             <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">
