@@ -18,41 +18,16 @@ type Props = {
 
 export default function SongDetailClient({songId, song, act }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const [memo, setMemo] = useState("");
-  const didInit = useRef(false);
 
   const templateText = useMemo(() => makeSongMemoTemplate(), []);
   const [deleting, setDeleting] = useState(false);
   // setMemo(song.memo ?? "");
   // 空なら自動挿入（初回だけ）
   useEffect(() => {
-   if (!memo.trim()) {
-      setMemo(templateText);
+   if (!song.memo?.trim()) {
+      song.memo = templateText;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ templateText]);
-
-  const save = async () => {
-    if (!song) return;
-    setSaving(true);
-    try {
-      const trimmed = memo.trim();
-      const updated = await updateSong({ ...song, memo: trimmed ? trimmed : null});
-      song = updated; 
-
-      alert("保存しました。");
-    } catch (e: any) {
-      console.error(e);
-      alert(e?.message ?? "保存に失敗しました。");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) return <main className="text-sm text-gray-500">読み込み中…</main>;
 
   if (!song) {
     return (
@@ -66,10 +41,6 @@ export default function SongDetailClient({songId, song, act }: Props) {
   }
 
   const deleteSongLocally = async () => {
-    // songId が act_songs.id である設計ならそのまま使える
-    // もし songId が別キーなら、ここは song?.id を使う
-    const targetId = song.id;
-
     const ok = window.confirm(
       "この曲を削除します。\n譜面・音源などの添付（assets）がある場合、それも削除されます。\n本当に実行しますか？"
     );
@@ -77,19 +48,9 @@ export default function SongDetailClient({songId, song, act }: Props) {
 
     setDeleting(true);
     try {
-      // ✅ CASCADEが無い場合は先に assets を消す
-      // CASCADEがあるなら、このブロックは消してOK
-      // {
-      //   const { error: aErr } = await supabase
-      //     .from("act_song_assets")
-      //     .delete()
-      //     .eq("act_song_id", targetId);
-      //   if (aErr) throw new Error(aErr.message);
-      // }
-
       // ✅ 曲本体を削除
       {
-        deleteSong(song.id);
+        await deleteSong(song.id);
       }
 
       alert("削除しました。");
@@ -102,7 +63,6 @@ export default function SongDetailClient({songId, song, act }: Props) {
       setDeleting(false);
     }
   };
-  const changed = (song.memo ?? "") !== memo;
 
   return (
     <main className="flex flex-col gap-4 min-h-[calc(100vh-64px)]">
@@ -118,7 +78,7 @@ export default function SongDetailClient({songId, song, act }: Props) {
       </header>
 
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
-        <SongMemoEditor initialText={memo} />
+        <SongMemoEditor initialText={song.memo} />
       </section>
 
       <SongAssetsBox actSongId={song.id} />
