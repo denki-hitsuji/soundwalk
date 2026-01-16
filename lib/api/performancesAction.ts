@@ -42,14 +42,16 @@ export async function upsertPerformanceDetails(params: {
 const BUCKET = "performance-attachments";
 
 export async function savePerformanceDetailsFullAction(params: {
-  performanceId: string;
-  load_in_time: string | null;
-  set_start_time: string | null;
-  set_end_time: string | null;
-  set_minutes: number | null;
-  customer_charge_yen: number | null;
-  one_drink_required: boolean | null;
-  notes: string | null;
+    performanceId: string;
+    load_in_time: string | null;
+    set_start_time: string | null;
+    set_end_time: string | null;
+    set_minutes: number | null;
+    customer_charge_yen: number | null;
+    one_drink_required: boolean | null;
+    notes: string | null;
+    open_time: string | null;
+    start_time: string | null;
 }) {
     return await savePerformanceDetailsFullDb(params);
 }

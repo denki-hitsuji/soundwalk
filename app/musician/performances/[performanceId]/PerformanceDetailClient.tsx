@@ -34,10 +34,12 @@ export default function PerformanceDetailClient(props: {
   details: DetailsRow | null;
   attachments: AttachmentRow[];
   messages: MessageRow[];
+    open_time: string | null;
+    start_time: string | null;
 }) {
   const router = useRouter();
 
-  const { performanceId, performance, act, event, venues, currentProfileId } = props;
+  const { performanceId, act, event, venues, currentProfileId } = props;
 
   const isOrganizer = useMemo(() => {
     return !!event && !!currentProfileId && event.organizer_profile_id === currentProfileId;
@@ -55,7 +57,19 @@ export default function PerformanceDetailClient(props: {
         customer_charge_yen: null,
         one_drink_required: null,
         notes: null,
+            open_time: null,
+        srart_ttime: null
       }
+    );
+  });
+    const [performance, setPerformance] = useState<PerformanceRow>(() => {
+    return (
+        props.performance ?? {
+            performance_id: performanceId,
+            act_id: act?.id,
+            open_time: null,
+            srart_ttime: null
+        }
     );
   });
 
@@ -83,14 +97,16 @@ export default function PerformanceDetailClient(props: {
     setSavingDetails(true);
     try {
       await savePerformanceDetailsFullAction({
-        performanceId,
-        load_in_time: details.load_in_time,
-        set_start_time: details.set_start_time,
-        set_end_time: details.set_end_time,
-        set_minutes: details.set_minutes,
-        customer_charge_yen: details.customer_charge_yen,
-        one_drink_required: details.one_drink_required,
-        notes: details.notes,
+          performanceId,
+          load_in_time: details.load_in_time,
+          set_start_time: details.set_start_time,
+          set_end_time: details.set_end_time,
+          set_minutes: details.set_minutes,
+          customer_charge_yen: details.customer_charge_yen,
+          one_drink_required: details.one_drink_required,
+          notes: details.notes,
+          open_time: performance.open_time,
+          start_time: performance.start_time
       });
       router.refresh();
     } catch (e: any) {
@@ -323,7 +339,7 @@ export default function PerformanceDetailClient(props: {
                                 type="time"
                                 className="mt-1 w-full rounded border px-2 py-1 text-sm"
                                 value={performance.open_time ?? ""}
-                                onChange={(e) => setDetails((p) => ({ ...p, open_time: e.target.value || null }))}
+                                onChange={(e) => setPerformance((p) => ({ ...p, open_time: e.target.value || null }))}
                             />
                         </label>
 
@@ -333,7 +349,7 @@ export default function PerformanceDetailClient(props: {
                                 type="time"
                                 className="mt-1 w-full rounded border px-2 py-1 text-sm"
                                 value={performance.start_time ?? ""}
-                                onChange={(e) => setDetails((p) => ({ ...p, start_time: e.target.value || null }))}
+                                onChange={(e) => setPerformance((p) => ({ ...p, start_time: e.target.value || null }))}
                             />
                         </label>
                         <label className="block">

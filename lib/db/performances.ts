@@ -354,10 +354,16 @@ export async function savePerformanceDetailsFullDb(params: {
   customer_charge_yen: number | null;
   one_drink_required: boolean | null;
   notes: string | null;
+    open_time: string | null;
+    start_time: string | null;
 }) {
   const supabase = await createSupabaseServerClient();
-
-  const { error } = await supabase.from("performance_details").upsert({
+  const { error :p_error } = await supabase.from("musician_performances").update({
+    open_time: params.open_time,
+    start_time: params.start_time
+  }).eq("id", params.performanceId);
+  
+  const { error:d_error } = await supabase.from("performance_details").upsert({
     performance_id: params.performanceId,
     load_in_time: params.load_in_time,
     set_start_time: params.set_start_time,
@@ -368,7 +374,8 @@ export async function savePerformanceDetailsFullDb(params: {
     notes: params.notes,
   });
 
-  if (error) throw new Error(error.message);
+  if (p_error) throw new Error(p_error.message);
+  if (d_error) throw new Error(d_error.message);
 }
 
 export async function postPerformanceMessageDb(params: {

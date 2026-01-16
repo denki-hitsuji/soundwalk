@@ -67,6 +67,8 @@ export default async function PerformanceDetailPage({ params }: {
       details={(details ?? null) as any}
       attachments={(attachments ?? []) as any}
       messages={(messages ?? []) as any}
+        open_time= {(perf.open_time ?? null) as any}
+    start_time= {(perf.start_time ?? null) as any}
     />
   );
 }
