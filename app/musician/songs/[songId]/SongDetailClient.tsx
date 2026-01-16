@@ -37,10 +37,6 @@ export default function SongDetailClient({songId, song, act }: Props) {
 
       alert("保存しました。");
     } catch (e: any) {
-      // redirect() は内部的に例外を投げるので、ここに来ることがある
-      if (typeof e?.digest === "string" && e.digest.startsWith("NEXT_REDIRECT")) {
-        return; // 何もしない
-      }
       console.error(e);
       alert(e?.message ?? "保存に失敗しました。");
     } finally {
@@ -68,12 +64,13 @@ export default function SongDetailClient({songId, song, act }: Props) {
     setDeleting(true);
     try {
       // ✅ 曲本体を削除
-      {
-        await deleteSong(song.id);
-      }
-
+      await deleteSong(song.id);
       alert("削除しました。");
     } catch (e: any) {
+      // redirect() は内部的に例外を投げるので、ここに来ることがある
+      if (typeof e?.digest === "string" && e.digest.startsWith("NEXT_REDIRECT")) {
+        return; // 何もしない
+      }
       console.error(e);
       alert(e?.message ?? "削除に失敗しました");
     } finally {
