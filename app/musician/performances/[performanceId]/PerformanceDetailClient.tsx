@@ -247,14 +247,16 @@ export default function PerformanceDetailClient(props: {
 
     setDeleting(true);
     try {
-      await deletePersonalPerformanceAction({ performanceId });
-      router.push("/musician/performances");
-      router.refresh();
-    } catch (e: any) {
-      alert(e?.message ?? "削除に失敗しました。");
-    } finally {
-      setDeleting(false);
-    }
+        await deletePersonalPerformanceAction({ performanceId });
+      } catch (e: any) {
+          // redirect() は内部的に例外を投げるので、ここに来ることがある
+          if (typeof e?.digest === "string" && e.digest.startsWith("NEXT_REDIRECT")) {
+              return; // 何もしない
+          }
+          alert(e?.message ?? "削除に失敗しました。");
+      } finally {
+          setDeleting(false);
+      }
   };
 
   // --- UIは現状ほぼそのまま（props.attachments/messages をそのまま使う） ---

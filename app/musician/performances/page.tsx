@@ -1,7 +1,4 @@
-"use server";
-
 import Link from "next/link";
-import {  useMemo } from "react";
 import {
   PREP_DEFS,
   type PerformanceWithActs,
@@ -79,6 +76,7 @@ export default async function PerformancesPage() {
     .filter((p) => p.event_date >= todayStr && p.act_id && p.status !== "cancelled")
     .flatMap((p) => {
       const eventDate = parseYmdLocal(p.event_date);
+      console.log(p.event_date);  
       return PREP_DEFS.map((def) => {
         const due = addDays(eventDate, def.offsetDays);
         const dueStr = due.toISOString().slice(0, 10);
@@ -90,23 +88,21 @@ export default async function PerformancesPage() {
         };
       });
     });
- console.log("PerformancesPage: preps got");
-
-  const { data: prepMap, error: upErr } = await ensureAndFetchPrepMapDb({
-    performances: performances.filter((p) => p.event_date >= todayStr && p.act_id && p.status !== "cancelled"),
+  console.log("PerformancesPage: preps got");
+const activePerformances = performances.filter(
+  (p) =>
+    p.event_date >= todayStr &&
+    p.act_id &&
+    p.status !== "cancelled"
+);
+prepByPerformanceId = {};
+if (activePerformances.length > 0) {
+  const  prepMap  = await ensureAndFetchPrepMapDb({
+    performances: activePerformances,
   });
-
-  if (upErr) {
-    console.error("prep upsert error", upErr);
-  } else {
-    const pm: PrepMap = {};
-    for (const t of Object.values(prepMap ?? {})) {
-      const row = t as PrepTaskRow;
-      pm[row.performance_id] ??= {};
-      pm[row.performance_id][row.task_key] = row;
-    }
-    prepByPerformanceId = pm;
-  }
+  prepByPerformanceId = prepMap ?? {};
+}
+  console.log("PerformancesPage: preps ensured");
 
   return (
     <main className="space-y-6">

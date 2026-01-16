@@ -136,24 +136,28 @@ export async function getDetailsMapForPerformancesDb(performanceIds: string[]) :
  */
 export async function ensureAndFetchPrepMapDb(params: {
   performances: Array<{ id: string; event_date: string; act_id: string | null }>;
-}) {
+}):Promise<PrepMap> {
   const supabase = await createSupabaseServerClient();
-  const { performances } = params;
-  if (performances.length === 0) return {} as PrepMap;
 
-  const desired = performances.flatMap((p) => {
-    const eventDate = parseYmdLocal(p.event_date);
-    return PREP_DEFS.map((def) => {
-      const due = addDays(eventDate, def.offsetDays);
-      const dueStr = due.toISOString().slice(0, 10);
-      return {
-        performance_id: p.id,
-        task_key: def.key,
-        act_id: p.act_id,
-        due_date: dueStr,
-      };
-    });
+  const performancesWithAct = params.performances.filter(
+    (p): p is { id: string; event_date: string; act_id: string } =>
+      typeof p.act_id === "string" && p.act_id.length > 0
+  );
+
+  if (performancesWithAct.length === 0) return {} as PrepMap;
+const desired = performancesWithAct.flatMap((p) => {
+  const eventDate = parseYmdLocal(p.event_date);
+  return PREP_DEFS.map((def) => {
+    const due = addDays(eventDate, def.offsetDays);
+    const dueStr = due.toISOString().slice(0, 10);
+    return {
+      performance_id: p.id,
+      task_key: def.key,
+      act_id: p.act_id, // ← ここは string で確定
+      due_date: dueStr,
+    };
   });
+});
 
   const { error: upErr } = await supabase
     .from("performance_prep_tasks")
@@ -161,7 +165,7 @@ export async function ensureAndFetchPrepMapDb(params: {
 
   if (upErr) throw upErr;
 
-  const ids = performances.map((p) => p.id);
+  const ids = performancesWithAct.map((p) => p.id);
   const { data, error } = await supabase
     .from("performance_prep_tasks")
     .select("id, performance_id, task_key, act_id, due_date, is_done, done_at, done_by_profile_id")
@@ -170,10 +174,11 @@ export async function ensureAndFetchPrepMapDb(params: {
   if (error) throw error;
 
   const pm: PrepMap = {};
-  for (const t of (data ?? []) as unknown as PrepTaskRow[]) {
+  for (const t of data ?? []) {
     pm[t.performance_id] ??= {};
     pm[t.performance_id][t.task_key] = t;
   }
+
   return pm;
 }
 

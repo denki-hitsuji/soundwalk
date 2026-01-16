@@ -1,5 +1,7 @@
 "use server"
+import { revalidatePath } from "next/cache";
 import { acceptOfferDb, deletePerformanceAttachmentDb, deletePerformanceMemoDb, deletePersonalPerformanceDb, ensureAndFetchPrepMapDb, postPerformanceMessageDb, savePerformanceDetailsFullDb, updatePerformanceMemoDb, updatePrepTaskDoneDb, uploadPerformanceFlyerDb, upsertPerformanceDb, upsertPerformanceDetailsDb, withdrawFromEventDb } from "../db/performances";
+import { redirect } from "next/navigation";
 
 export async function updatePrepTaskDone(params: { taskId: string; nextDone: boolean; userId: string | null; }) {
     return await updatePrepTaskDoneDb(params);
@@ -91,5 +93,9 @@ export async function withdrawFromEventAction(params: {
 }
 
 export async function deletePersonalPerformanceAction(params: { performanceId: string }) {
-    return await deletePersonalPerformanceDb(params);
+    await deletePersonalPerformanceDb(params);
+    revalidatePath("/musician/performances");
+
+    // 遷移をサーバー側で確定
+    redirect("/musician/performances")
 }
