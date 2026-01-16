@@ -3,8 +3,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { getEventActs } from "@/lib/api/events";
-import { EventWithAct, EventRow, EventWithVenue } from "@/lib/utils/events";
+import { EventRow, EventWithVenue, EventActRow } from "@/lib/utils/events";
 type EventWithCount = EventRow & {
   acceptedCount: number;
 };
@@ -12,18 +11,20 @@ type EventWithCount = EventRow & {
 type Props = {
   userId: string;
   events: EventWithVenue[];
-  eventActs: EventWithAct[];
+  eventActs: EventActRow[];
 }
 export default function MusicianOrganizedEventsPage({ userId, events, eventActs }:Props) {
   const eventIds = events.map((e) => e.id);
 
   // 2. event_acts から acceptedCount を集計
   const countMap = new Map<string, number>();
-  eventActs.map(act => {
+  // console.log("event acts: " + JSON.stringify(eventActs));
+  eventIds.map(id => {
     countMap.set(
-      act.event_act.event_id as string,
-      (countMap.get(act.event_act.event_id as string) ?? 0) + 1,
+      id as string,
+      eventActs.filter(ea => ea.status==="accepted" && ea.event_id === id).length ?? 0 ,
     ); });
+  // console.log(countMap);
 
   const withCount: EventWithCount[] = events.map((e) => ({
     ...e,

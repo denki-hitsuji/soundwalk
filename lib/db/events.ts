@@ -2,7 +2,7 @@ import "server-only"
 import { actionAsyncStorage } from "next/dist/server/app-render/action-async-storage.external";
 import { getCurrentUser } from "../auth/session.server";
 import { createSupabaseServerClient } from "../supabase/server";
-import { EventWithAct, EventRow, EventStatus, EventWithVenue, toPlainEventWithVenue } from "../utils/events";
+import { EventWithAct, EventRow, EventStatus, EventWithVenue, toPlainEventWithVenue, EventActRow } from "../utils/events";
 import { ActRow } from "../utils/acts";
 import { PerformanceRow, toPlainPerformance } from "../utils/performance";
 
@@ -361,7 +361,7 @@ export async function updateEventStatusDb(params: {
 
 export async function getEventActsDb(params: {
   eventId: string;
-}): Promise<EventWithAct[]> {
+}): Promise<EventActRow[]> {
   const supabase = await createSupabaseServerClient();
   const { eventId } = params;
 
@@ -370,7 +370,7 @@ export async function getEventActsDb(params: {
     .select("*")
     .eq("event_id", eventId)
   if (error) throw error;
-  return ea as EventWithAct[];
+  return ea satisfies EventActRow[];
 }
 
 export async function getEventPerformancesDb(params: {

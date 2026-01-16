@@ -33,7 +33,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ ev
     throw new Error("Couldn't get all acts");
   }
   const eventActs = await getEventActs({ eventId: eventId });
-  const actsForTheEvent = allActs.filter(a => eventActs.find(ea => ea.event_act?.act_id === a.id));
+  const actsForTheEvent = allActs.filter(a => eventActs.find(ea => ea.act_id === a.id));
 
   if (!eventActs) {
     throw new Error("Couldn't get event acts");

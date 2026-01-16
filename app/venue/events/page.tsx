@@ -1,6 +1,6 @@
 // app/venue/events/page.tsx
 "use server"
-import { EventRow, EventWithAct, EventWithCount } from "@/lib/utils/events";
+import { EventActRow, EventRow, EventWithAct, EventWithCount } from "@/lib/utils/events";
 import { getEventActs, getMyEvents } from "@/lib/api/events";
 import Link from "next/link";
 
@@ -15,13 +15,13 @@ export default async function VenueEventsPage() {
     const eventIds = eventList.map((e) => e.id);
 
     // 2. event_acts から acceptedCount を集計
-    const actRows: EventWithAct[] = [];
+    const actRows: EventActRow[] = [];
     eventIds.map(async id => actRows.concat(await getEventActs({ eventId: id })));
     const countMap = new Map<string, number>();
     for (const row of actRows ?? []) {
       countMap.set(
-        row.id,
-        (countMap.get(row.id) ?? 0) + 1,
+        row.event_id,
+        (countMap.get(row.event_id) ?? 0) + 1,
       );
     }
 
