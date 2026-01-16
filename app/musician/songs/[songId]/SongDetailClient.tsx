@@ -22,13 +22,9 @@ export default function SongDetailClient({songId, song, act }: Props) {
   const templateText = useMemo(() => makeSongMemoTemplate(), []);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
-  // setMemo(song.memo ?? "");
-  // 空なら自動挿入（初回だけ）
-  useEffect(() => {
-   if (!song.memo?.trim()) {
-      song.memo = templateText;
-    }
-  }, [ templateText]);
+  const initialMemo = useMemo(() => {
+    return song.memo?.trim() ? song.memo : templateText;
+  }, [song.memo, templateText]);
 
   const save = async (text:string) => {
     if (!song) return;
@@ -41,6 +37,10 @@ export default function SongDetailClient({songId, song, act }: Props) {
 
       alert("保存しました。");
     } catch (e: any) {
+      // redirect() は内部的に例外を投げるので、ここに来ることがある
+      if (typeof e?.digest === "string" && e.digest.startsWith("NEXT_REDIRECT")) {
+        return; // 何もしない
+      }
       console.error(e);
       alert(e?.message ?? "保存に失敗しました。");
     } finally {
@@ -74,8 +74,6 @@ export default function SongDetailClient({songId, song, act }: Props) {
       }
 
       alert("削除しました。");
-      router.push("/musician/songs");
-      router.refresh();
     } catch (e: any) {
       console.error(e);
       alert(e?.message ?? "削除に失敗しました");
@@ -98,7 +96,7 @@ export default function SongDetailClient({songId, song, act }: Props) {
       </header>
 
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
-        <SongMemoEditor initialText={song.memo} onSave={save}/>
+        <SongMemoEditor initialText={initialMemo} onSave={save}/>
       </section>
 
       <SongAssetsBox actSongId={song.id} />

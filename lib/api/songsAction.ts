@@ -1,3 +1,6 @@
+"use server"
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { addSongDb, deleteSongDb, updateSongDb } from "../db/songs";
 import { SongRow } from "./songs";
 
@@ -6,7 +9,9 @@ export async function addSong(actId: string , title: string) {
 }
 
 export async function deleteSong(songId: string) {
-    return await deleteSongDb(songId);
+    await deleteSongDb(songId);
+    revalidatePath("/musician/songs");
+    redirect("/musician/songs");
 }
 
 export async function updateSong(song: SongRow) {
