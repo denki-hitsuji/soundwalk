@@ -60,7 +60,6 @@ export default function SongDetailClient({songId, song, act }: Props) {
   }
 
   const deleteSongLocally = async () => {
-    window.alert("tap"); // これが出ないなら「クリックが届いてない」
     const ok = window.confirm(
       "この曲を削除します。\n譜面・音源などの添付（assets）がある場合、それも削除されます。\n本当に実行しますか？"
     );
