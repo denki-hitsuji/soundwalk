@@ -65,10 +65,10 @@ export default function SongDetailClient({songId, song, act }: Props) {
     try {
       // ✅ 曲本体を削除
       await deleteSong(song.id);
-      alert("削除しました。");
     } catch (e: any) {
       // redirect() は内部的に例外を投げるので、ここに来ることがある
       if (typeof e?.digest === "string" && e.digest.startsWith("NEXT_REDIRECT")) {
+        alert("削除しました。");
         return; // 何もしない
       }
       console.error(e);
