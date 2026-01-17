@@ -1,4 +1,6 @@
 "use server"
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { uploadActPhotoDb, deletePhotoDataAndStorageDb, createActInviteDb, deleteActByIdDb, ensureMyDefaultActDb, insertActDb, updateActDb } from "../db/acts";
 import { ActRow } from "../utils/acts";
 import { BookingWithDetails } from "../utils/bookings";
@@ -20,8 +22,14 @@ export async function createActInvite(params: {
   return await createActInviteDb(params);
 }
 export async function deleteActById(actId: string) {
-  return await deleteActByIdDb(actId);
+  await deleteActByIdDb(actId);
 }
+
+export async function serverRedirectTo(path: string) {
+  revalidatePath(path);
+  redirect(path);
+}
+
 export async function insertAct(params: {
   name: string,
   act_type: string,

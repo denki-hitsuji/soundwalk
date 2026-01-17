@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ActProfileEditor } from "@/components/acts/ActProfileEditor";
 import { ActInviteBox } from "@/components/acts/ActInviteBox";
 import ActPublicPageEditor from "@/components/acts/ActPublicPageEditor";
-import { deleteActById } from "@/lib/api/actsAction";
+import { deleteActById, serverRedirectTo } from "@/lib/api/actsAction";
 import { PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
@@ -106,9 +106,13 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
       if (currentAct?.id === act.id) setCurrentAct(null);
 
       notifyActsUpdated();
-      router.push("/musician/acts");
-      router.refresh();
+      serverRedirectTo("/musician/acts");
     } catch (e: any) {
+      // redirect() は内部的に例外を投げるので、ここに来ることがある
+      if (typeof e?.digest === "string" && e.digest.startsWith("NEXT_REDIRECT")) {
+        alert("削除しました。");
+        return; // 何もしない
+      }
       console.error("delete act error", e);
       alert(e?.message ?? "削除に失敗しました");
     }

@@ -3,7 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { addSongAction } from "@/lib/db/songAction";
+import { addSongAction } from "@/lib/api/songsAction";
 
 export function ActsUpdateRefresher({ eventName }: { eventName: string }) {
   const router = useRouter();

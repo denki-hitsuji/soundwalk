@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { deletePhotoDataAndStorage, uploadActPhoto } from "@/lib/api/actsAction";
 import { ActRow} from "@/lib/utils/acts";
 import { updateAct } from "@/lib/api/actsAction";
+import { useRouter } from 'next/navigation';
 
 type Props = {
   act: ActRow;
@@ -11,8 +12,10 @@ type Props = {
 };
 
 export function ActProfileEditor({ act, onUpdated }: Props) {
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
+  const [actName, setActName] = useState(act.name ?? "");
   const [photoUrl, setPhotoUrl] = useState(act.photo_url ?? "");
   const [desc, setDesc] = useState(act.description ?? "");
   const [link, setLink] = useState(act.profile_link_url ?? "");
@@ -26,8 +29,8 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
 
   // 写真は即反映するので、changed判定からは外す（保存ボタンで扱うのは desc/link のみ）
   const changed = useMemo(() => {
-    return norm(desc) !== norm(act.description) || norm(link) !== norm(act.profile_link_url);
-  }, [desc, link, act.description, act.profile_link_url]);
+    return norm(actName) !== act.name || norm(desc) !== norm(act.description) || norm(link) !== norm(act.profile_link_url);
+  }, [actName, desc, link, act.description, act.profile_link_url]);
 
   const cacheBust = (url: string) => {
     const v = `v=${Date.now()}`;
@@ -96,14 +99,17 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
     setSaving(true);
     try {
       const patch = {
+        name: actName.trim() ,
         description: desc.trim() ? desc.trim() : null,
         profile_link_url: link.trim() ? link.trim() : null,
       };
 
       await updateAct({ id: act.id, ...patch });
 
+      setActName(patch.name);
       setDesc(patch.description ?? "");
       setLink(patch.profile_link_url ?? "");
+      router.refresh();
       onUpdated?.(patch);
     } catch (e: any) {
       console.error(e);
@@ -161,6 +167,16 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
         </div>
       </div>
 
+      {/* アクト名 */}
+      <label className="block text-[11px] text-gray-600">
+        アーティスト名
+        <input
+          value={actName}
+          onChange={(e) => setActName(e.target.value)}
+          placeholder="例：ザ・ホリデイズ"
+          className="mt-1 w-full rounded border bg-white px-3 py-2 text-sm"
+        />
+      </label>
       {/* プロフィール文 */}
       <label className="block text-[11px] text-gray-600">
         プロフィール文（短くてOK）

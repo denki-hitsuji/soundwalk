@@ -251,7 +251,8 @@ export default function PerformanceDetailClient(props: {
       } catch (e: any) {
           // redirect() は内部的に例外を投げるので、ここに来ることがある
           if (typeof e?.digest === "string" && e.digest.startsWith("NEXT_REDIRECT")) {
-              return; // 何もしない
+            alert("削除しました。");
+            return; // 何もしない
           }
           alert(e?.message ?? "削除に失敗しました。");
       } finally {

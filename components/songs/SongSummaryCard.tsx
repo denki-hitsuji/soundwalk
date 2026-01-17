@@ -1,11 +1,10 @@
-// SongSummaryCard.tsx
 import Link from "next/link";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
-import { createSupabaseServerClient } from "@/lib/supabase/server"; // ←あなたの実装に合わせてパス調整
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMyActs, getMyMemberActs } from "@/lib/api/acts";
-import { SongRow, updateSongDb } from "@/lib/db/songs";
+import type { SongRow } from "@/lib/db/songs";
 
-// ✅ Client部品（イベント受信して refresh するだけ）
+// Client bits（別ファイル想定）
 import { ActsUpdateRefresher, AddSongForm } from "./SongSummaryClientBits";
 
 type ActRow = {
@@ -29,15 +28,10 @@ function typeLabel(actType: string | null) {
   return actType;
 }
 
-
-
 async function getSongsByActIds(actIds: string[]): Promise<SongRow[]> {
   if (actIds.length === 0) return [];
 
   const supabase = await createSupabaseServerClient();
-
-  // ✅ N+1 を避けてまとめて取る（テーブル名はあなたの実体に合わせて調整）
-  // もし songs がビュー/別名ならここを変える
   const { data, error } = await supabase
     .from("act_songs")
     .select("*")
@@ -59,7 +53,6 @@ function ActSongsCard({
 }) {
   return (
     <section className="rounded-xl border bg-white p-4 space-y-3">
-      {/* 名義ラベル + リンク */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm font-semibold truncate">{act.name}</div>
@@ -77,7 +70,6 @@ function ActSongsCard({
         </Link>
       </div>
 
-      {/* 曲一覧 */}
       {songs.length === 0 ? (
         <div className="text-sm text-gray-600">まだ曲が登録されていません。</div>
       ) : (
@@ -93,7 +85,6 @@ function ActSongsCard({
         </ul>
       )}
 
-      {/* 追加（カード下） */}
       <div className="pt-2 border-t">
         {canEdit ? (
           <AddSongForm actId={act.id} />
@@ -107,25 +98,17 @@ function ActSongsCard({
   );
 }
 
-/**
- * ✅ Server Component: 初期表示は全てサーバーで確定させる
- */
 export async function SongSummaryCard() {
   const supabase = await createSupabaseServerClient();
 
-  // ✅ ログイン判定：ここはあなたの supabase helper に合わせて調整
   const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError) {
-    // auth取得が壊れてたら、まずここで落とす（原因が見える）
-    throw userError;
-  }
+  if (userError) throw userError;
 
   const userId = userData?.user?.id ?? null;
 
   if (!userId) {
     return (
       <main className="py-4 space-y-2">
-        {/* ✅ acts更新イベントで refresh できるように ClientBits は置いておく */}
         <ActsUpdateRefresher eventName={ACTS_UPDATED_EVENT} />
 
         <h1 className="text-xl font-bold">演奏できる曲</h1>
@@ -136,18 +119,15 @@ export async function SongSummaryCard() {
     );
   }
 
-  // 参加名義（権限判定用）
   const mem = (await getMyMemberActs()) as unknown as MemberRow[] | null;
   const memberActIdSet = new Set((mem ?? []).map((m) => m.act_id));
 
-  // 名義一覧（RLSで owner+member が見える前提）
   const actsData = (await getMyActs()) as unknown as ActRow[] | null;
   const acts = actsData ?? [];
 
   const actIds = acts.map((a) => a.id);
   const songs = await getSongsByActIds(actIds);
 
-  // songsByActId をプレーンに組む（RSC境界安全）
   const songsByActId: Record<string, SongRow[]> = {};
   for (const s of songs) {
     (songsByActId[s.act_id] ??= []).push(s);
@@ -155,7 +135,7 @@ export async function SongSummaryCard() {
 
   const canEdit = (act: ActRow) => {
     if (act.owner_profile_id === userId) return true;
-    if (memberActIdSet.has(act.id)) return true; // ←メンバーも編集可、の方針
+    if (memberActIdSet.has(act.id)) return true;
     return false;
   };
 
