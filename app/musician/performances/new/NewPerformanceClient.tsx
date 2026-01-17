@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
-import { getMyActs } from "@/lib/api/acts";
-import { useCurrentUser } from "@/lib/auth/session.client";
 import { upsertPerformance } from "@/lib/api/performancesAction";
 import { ActRow } from "@/lib/utils/acts";
 
@@ -37,7 +35,9 @@ export default function NewPerformanceClient({ userId, myActs }: Props) {
 
   const list = (myActs ?? []) as ActOption[];
   // actId が空なら先頭を自動選択（クイックバー未使用時の体験UP）
-  if (!actId && list.length > 0) setActId(list[0].id);
+  useEffect(() => {
+    if (!actId && list.length > 0) setActId(list[0].id);
+  }, [actId, list.length]);
   const noActs = myActs.length === 0;
 
   const handleSave = async () => {

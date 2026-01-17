@@ -2,7 +2,7 @@
 import { Suspense } from "react";
 import NewPerformanceClient from "./NewPerformanceClient";
 import { getCurrentUser } from "@/lib/auth/session.server";
-import { getMyActs } from "@/lib/api/acts";
+import { getMyActs, getMyMemberActs } from "@/lib/api/acts";
 import { redirect } from "next/navigation";
 
 export default async function Page() {
