@@ -1,18 +1,30 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { deletePhotoDataAndStorage, uploadActPhoto } from "@/lib/api/actsAction";
-import { ActRow} from "@/lib/utils/acts";
-import { updateAct } from "@/lib/api/actsAction";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
+
+import { deletePhotoDataAndStorage, uploadActPhoto, updateAct } from "@/lib/api/actsAction";
+import type { ActRow } from "@/lib/utils/acts";
+
+// ✅ 共通部品（作った前提）
+import { RequiredLabel } from "@/components/forms/RequiredLabel";
+import { hasMissingRequired } from "@/lib/forms/required";
 
 type Props = {
   act: ActRow;
   onUpdated?: (patch: Partial<ActRow>) => void;
 };
 
+const fields = {
+  name: { label: "アーティスト名", required: true },
+  description: { label: "プロフィール文（短くてOK）", required: false },
+  profile_link_url: { label: "プロフィールリンク（1つ）", required: false },
+} as const;
+
+type FieldKey = keyof typeof fields;
+
 export function ActProfileEditor({ act, onUpdated }: Props) {
-  const router = useRouter();
+  const router = useRouter(); // 使わなくてもOKだが、今後の戻り導線などに使う可能性があるので残す
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [actName, setActName] = useState(act.name ?? "");
@@ -27,10 +39,33 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
 
   const norm = (v: string | null | undefined) => (v ?? "").trim();
 
-  // 写真は即反映するので、changed判定からは外す（保存ボタンで扱うのは desc/link のみ）
+  // 「必須不足」判定（表示とボタン制御を同じ情報源で）
+  const requiredKeys = useMemo(
+    () => (Object.keys(fields) as FieldKey[]).filter((k) => fields[k].required),
+    []
+  );
+
+  const formValues = useMemo(
+    () => ({
+      name: actName,
+      description: desc,
+      profile_link_url: link,
+    }),
+    [actName, desc, link]
+  );
+
+  const missingRequired = hasMissingRequired(formValues, requiredKeys);
+
+  // 写真は即反映するので、changed判定からは外す（保存ボタンで扱うのは name/desc/link）
   const changed = useMemo(() => {
-    return norm(actName) !== act.name || norm(desc) !== norm(act.description) || norm(link) !== norm(act.profile_link_url);
-  }, [actName, desc, link, act.description, act.profile_link_url]);
+    return (
+      norm(actName) !== norm(act.name) ||
+      norm(desc) !== norm(act.description) ||
+      norm(link) !== norm(act.profile_link_url)
+    );
+  }, [actName, desc, link, act.name, act.description, act.profile_link_url]);
+
+  const canSave = changed && !saving && !uploading && !deleting && !missingRequired;
 
   const cacheBust = (url: string) => {
     const v = `v=${Date.now()}`;
@@ -46,19 +81,16 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
     setPhotoUrl(localPreview);
 
     try {
-      const ext = file.name.split(".").pop() || "png";
-      const filename = `${crypto.randomUUID()}.${ext}`;
-      const path = `${act.id}/${filename}`;
-
+      // uploadActPhoto の内部で path を決めてるはずなので、ここで filename/path を作る必要はない
       const publicUrl = await uploadActPhoto(act.id, file);
 
       // CDNキャッシュ避け（更新が反映しない時の定番原因）
       const busted = cacheBust(publicUrl);
 
-      // ★ここが本命：DBにも即反映
+      // DBにも即反映
       await updateAct({ id: act.id, photo_url: publicUrl });
 
-      // UIは bust 付きで表示、DBは素のURL（次回ロードで二重?が付かない）
+      // UIは bust 付きで表示、DBは素のURL
       setPhotoUrl(busted);
       onUpdated?.({ photo_url: publicUrl });
     } catch (e: any) {
@@ -68,13 +100,10 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
       setPhotoUrl(act.photo_url ?? "");
     } finally {
       setUploading(false);
-      // input をリセット（同じファイルを選び直せるように）
       if (fileRef.current) fileRef.current.value = "";
-      // プレビューURL解放
       URL.revokeObjectURL(localPreview);
     }
   };
-
 
   const deletePhoto = async () => {
     if (!act.photo_url && !photoUrl) return;
@@ -83,7 +112,6 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
     setDeleting(true);
     try {
       await deletePhotoDataAndStorage(act);
-
       setPhotoUrl("");
       onUpdated?.({ photo_url: null });
     } catch (e: any) {
@@ -96,21 +124,32 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
 
   const saveText = async () => {
     setErr(null);
+
+    // 最終防衛（UIで disable していても server 呼び出しは信用しない）
+    if (!norm(actName)) {
+      setErr("アーティスト名は必須です");
+      return;
+    }
+
     setSaving(true);
     try {
-      const patch = {
-        name: actName.trim() ,
-        description: desc.trim() ? desc.trim() : null,
-        profile_link_url: link.trim() ? link.trim() : null,
+      const patch: Partial<ActRow> = {
+        name: norm(actName),
+        description: norm(desc) ? norm(desc) : null,
+        profile_link_url: norm(link) ? norm(link) : null,
       };
 
       await updateAct({ id: act.id, ...patch });
 
-      setActName(patch.name);
+      // state 正規化（trimやnull化）
+      setActName(patch.name ?? "");
       setDesc(patch.description ?? "");
       setLink(patch.profile_link_url ?? "");
-      router.refresh();
+
+      // ✅ refresh はしない（不安定要因になりやすい）
       onUpdated?.(patch);
+
+      alert("保存しました。");
     } catch (e: any) {
       console.error(e);
       setErr(e?.message ?? "保存に失敗しました");
@@ -121,7 +160,6 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
 
   return (
     <div className="mt-3 rounded-lg border bg-gray-50 p-3 space-y-3">
-
       {/* 写真 */}
       <div className="flex items-start gap-3">
         <div className="h-20 w-20 rounded border bg-white overflow-hidden flex items-center justify-center text-[11px] text-gray-400">
@@ -167,9 +205,9 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
         </div>
       </div>
 
-      {/* アクト名 */}
+      {/* アクト名（必須） */}
       <label className="block text-[11px] text-gray-600">
-        アーティスト名
+        <RequiredLabel label={fields.name.label} required={fields.name.required} />
         <input
           value={actName}
           onChange={(e) => setActName(e.target.value)}
@@ -177,9 +215,10 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
           className="mt-1 w-full rounded border bg-white px-3 py-2 text-sm"
         />
       </label>
+
       {/* プロフィール文 */}
       <label className="block text-[11px] text-gray-600">
-        プロフィール文（短くてOK）
+        <RequiredLabel label={fields.description.label} required={fields.description.required} />
         <textarea
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
@@ -190,7 +229,7 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
 
       {/* リンク */}
       <label className="block text-[11px] text-gray-600">
-        プロフィールリンク（1つ）
+        <RequiredLabel label={fields.profile_link_url.label} required={fields.profile_link_url.required} />
         <input
           value={link}
           onChange={(e) => setLink(e.target.value)}
@@ -199,17 +238,21 @@ export function ActProfileEditor({ act, onUpdated }: Props) {
         />
       </label>
 
+      {missingRequired && (
+        <div className="text-[11px] text-red-600">※ アーティスト名は必須です</div>
+      )}
+
       {err && <div className="text-[11px] text-red-600">{err}</div>}
 
       <div className="flex items-center justify-end gap-2">
         {changed && <span className="text-[11px] text-gray-500">未保存の変更があります</span>}
         <button
           type="button"
-          disabled={!changed || saving || uploading || deleting}
+          disabled={!canSave}
           onClick={() => void saveText()}
           className="rounded bg-gray-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
         >
-          {saving ? "保存中…" : "保存（文/リンク）"}
+          {saving ? "保存中…" : "保存"}
         </button>
       </div>
     </div>
