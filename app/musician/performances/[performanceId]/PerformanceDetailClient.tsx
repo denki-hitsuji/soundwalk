@@ -23,6 +23,7 @@ import {
 } from "@/lib/api/performancesAction";
 import { EventRow } from "@/lib/utils/events";
 import { VenueRow } from "@/lib/utils/venues";
+import { buildPerformancePost } from "@/lib/utils/buildPerformancePost";
 
 export default function PerformanceDetailClient(props: {
   performanceId: string;
@@ -92,6 +93,45 @@ export default function PerformanceDetailClient(props: {
     if (!act) return "出演名義：なし";
     return act.act_type ? `${act.name}（${act.act_type}）` : act.name;
   }, [act]);
+  const shareText = useMemo(() => {
+    return buildPerformancePost({
+      performance,
+      act,
+      event,
+      details,
+      attachments: props.attachments,
+      publicUrl: null, // 将来「公開ページURL」ができたら入れる
+    });
+  }, [performance, act, event, details, props.attachments]);
+
+  const copyToClipboard = async (text: string) => {
+    // iOS Safari でもなるべく堅牢に
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+  };
+
+  const onCopyShare = async () => {
+    const ok = await copyToClipboard(shareText);
+    alert(ok ? "告知文をコピーしました。" : "コピーに失敗しました。");
+  };
 
   const saveDetails = async () => {
     setSavingDetails(true);
@@ -271,6 +311,13 @@ export default function PerformanceDetailClient(props: {
           </div>
 
           <div className="grid gap-2">
+            <button
+  type="button"
+  onClick={() => void onCopyShare()}
+  className="shrink-0 inline-flex items-center justify-center rounded bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
+>
+  告知文をコピー
+</button>
             {performance.event_id && performance.status !== "canceled" && (
               <>
                 {(performance.status === "offered" || performance.status === "pending_reconfirm") && (
