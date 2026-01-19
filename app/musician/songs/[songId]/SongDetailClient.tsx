@@ -9,6 +9,7 @@ import SongAssetsBox from "@/components/songs/SongAssetsBox";
 import { deleteSong, updateSong } from "@/lib/api/songsAction";
 import type { SongRow } from "@/lib/db/songs";
 import type { ActRow } from "@/lib/utils/acts";
+import { useRef } from "react";
 
 type Props = {
   songId: string;
@@ -33,6 +34,7 @@ export default function SongDetailClient({ songId, song, act }: Props) {
   const [titleDraft, setTitleDraft] = useState(localSong.title ?? "");
   const [savingTitle, setSavingTitle] = useState(false);
 
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
   if (!localSong) {
     return (
       <main className="space-y-2">
@@ -68,6 +70,7 @@ export default function SongDetailClient({ songId, song, act }: Props) {
   };
 
   const cancelEditTitle = () => {
+    titleInputRef.current?.blur(); // ★ 重要
     setTitleDraft(localSong.title ?? "");
     setIsEditingTitle(false);
   };
@@ -79,7 +82,7 @@ export default function SongDetailClient({ songId, song, act }: Props) {
       return;
     }
     if (next === (localSong.title ?? "")) {
-      // 変更なし
+      titleInputRef.current?.blur(); // ★ 重要
       setIsEditingTitle(false);
       return;
     }
@@ -150,6 +153,7 @@ export default function SongDetailClient({ songId, song, act }: Props) {
               <div className="flex items-center gap-2">
                 <input
                   value={titleDraft}
+                  ref={titleInputRef}
                   onChange={(e) => setTitleDraft(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") void saveTitle();
