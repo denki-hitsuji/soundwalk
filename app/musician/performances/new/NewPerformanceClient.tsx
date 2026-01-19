@@ -1,61 +1,78 @@
-// app/musician/performances/new/NewPerformanceClient.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal } from "@/lib/utils/date";
+import { toYmdLocal } from "@/lib/utils/date";
 import { upsertPerformance } from "@/lib/api/performancesAction";
 import { ActRow } from "@/lib/utils/acts";
+import { hasMissingRequired } from "@/lib/forms/required";
+import { RequiredLabel } from "@/components/forms/RequiredLabel";
 
-type ActOption = {
-  id: string;
-  name: string;
-  act_type: string | null;
-};
+/** -------------------------
+ * 必須項目定義（ここが唯一の真実）
+ * ------------------------ */
+const fields = {
+  event_date: { label: "日付", required: true },
+  act_id: { label: "出演名義", required: true },
+  venue_name: { label: "会場", required: false },
+  memo: { label: "メモ", required: false },
+} as const;
+
+type FieldKey = keyof typeof fields;
 
 type Props = {
-  userId: string | null;  
+  userId: string | null;
   myActs: ActRow[];
-}
+};
 
 export default function NewPerformanceClient({ userId, myActs }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
 
-  // クエリから初期値（クイックバーから渡される）
-  const [eventDate, setEventDate] = useState(
-    sp.get("date") ?? toYmdLocal(),
-  );
+  // 初期値（クイックバー対応）
+  const [eventDate, setEventDate] = useState(sp.get("date") ?? toYmdLocal());
   const [actId, setActId] = useState(sp.get("actId") ?? "");
   const [venueName, setVenueName] = useState(sp.get("venue") ?? "");
   const [memo, setMemo] = useState("");
-
   const [saving, setSaving] = useState(false);
 
-  const list = (myActs ?? []) as ActOption[];
-  // actId が空なら先頭を自動選択（クイックバー未使用時の体験UP）
-  useEffect(() => {
-    if (!actId && list.length > 0) setActId(list[0].id);
-  }, [actId, list.length]);
   const noActs = myActs.length === 0;
+
+  // actId が空なら先頭を自動選択
+  // useEffect(() => {
+  //   if (!actId && myActs.length > 0) {
+  //     setActId(myActs[0].id);
+  //   }
+  // }, [actId, myActs]);
+
+  const formValues = useMemo(
+    () => ({
+      event_date: eventDate,
+      act_id: actId,
+      venue_name: venueName,
+      memo,
+    }),
+    [eventDate, actId, venueName, memo]
+  );
+
+  const requiredKeys = useMemo(
+    () =>
+      (Object.keys(fields) as FieldKey[]).filter(
+        (k) => fields[k].required
+      ),
+    []
+  );
+
+  const missingRequired = hasMissingRequired(formValues, requiredKeys);
 
   const handleSave = async () => {
     if (!userId) {
-      alert("ログイン情報を取得できませんでした。いったんログインし直してください。");
-      return;
-    }
-    if (!eventDate) {
-      alert("日付は必須です。");
-      return;
-    }
-    if (!actId) {
-      alert("出演名義を選択してください。");
+      alert("ログイン情報を取得できませんでした。");
       return;
     }
 
     setSaving(true);
-
     try {
       await upsertPerformance({
         id: null,
@@ -65,13 +82,12 @@ export default function NewPerformanceClient({ userId, myActs }: Props) {
         venue_name: venueName || null,
         memo: memo || null,
       });
-    }
-    catch (error) {
-      console.error("insert performance error", error);
-      alert("保存に失敗しました。コンソールを確認してください。");
+    } catch (e) {
+      console.error(e);
+      alert("保存に失敗しました。");
+      setSaving(false);
       return;
     }
-    setSaving(false);
 
     router.push("/musician/performances");
   };
@@ -83,7 +99,12 @@ export default function NewPerformanceClient({ userId, myActs }: Props) {
       <div className="space-y-3 max-w-md">
         {/* 日付 */}
         <label className="block">
-          <span className="text-sm font-medium">日付（必須）</span>
+          <span className="text-sm font-medium">
+            <RequiredLabel
+              label={fields.event_date.label}
+              required={fields.event_date.required}
+            />
+          </span>
           <input
             type="date"
             className="mt-1 border rounded px-2 py-1 w-full"
@@ -95,7 +116,12 @@ export default function NewPerformanceClient({ userId, myActs }: Props) {
         {/* 出演名義 */}
         <div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">出演名義（必須）</span>
+            <span className="text-sm font-medium">
+              <RequiredLabel
+                label={fields.act_id.label}
+                required={fields.act_id.required}
+              />
+            </span>
             <Link
               href="/musician/acts"
               className="text-[11px] text-blue-600 hover:underline"
@@ -112,7 +138,7 @@ export default function NewPerformanceClient({ userId, myActs }: Props) {
                 <Link href="/musician/acts" className="text-blue-600 underline">
                   出演名義
                 </Link>{" "}
-                を1つ作成してください。
+                を作成してください。
               </p>
             </div>
           ) : (
@@ -134,7 +160,9 @@ export default function NewPerformanceClient({ userId, myActs }: Props) {
 
         {/* 会場 */}
         <label className="block">
-          <span className="text-sm font-medium">会場</span>
+          <span className="text-sm font-medium">
+            <RequiredLabel label={fields.venue_name.label} />
+          </span>
           <input
             type="text"
             className="mt-1 border rounded px-2 py-1 w-full"
@@ -146,19 +174,27 @@ export default function NewPerformanceClient({ userId, myActs }: Props) {
 
         {/* メモ */}
         <label className="block">
-          <span className="text-sm font-medium">メモ</span>
+          <span className="text-sm font-medium">
+            <RequiredLabel label={fields.memo.label} />
+          </span>
           <textarea
             className="mt-1 border rounded px-2 py-1 w-full h-24"
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
-            placeholder="出演時間、共演者、イベント名、セットリストのメモなど"
+            placeholder="出演時間、共演者、イベント名など"
           />
         </label>
+
+        {missingRequired && (
+          <div className="text-xs text-red-600">
+            ※ 必須項目を入力してください
+          </div>
+        )}
 
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving || noActs}
+          disabled={saving || noActs || missingRequired}
           className="mt-2 bg-blue-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
         >
           {saving ? "保存中…" : "このライブを記録する"}
