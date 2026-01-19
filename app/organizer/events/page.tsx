@@ -1,4 +1,5 @@
-"use server"
+"use server";
+
 import OrganizedEventsListClient from "@/components/organizer/OrganizedEventsListClient";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { redirect } from "next/navigation";
@@ -6,11 +7,19 @@ import { getEventActs, getMyEvents } from "@/lib/api/events";
 
 export default async function OrganizerEventsPage() {
   const user = await getCurrentUser();
-  const eventWithVenues = await getMyEvents(); 
-  const redundantEventActs =  eventWithVenues.map(async e => await getEventActs({ eventId: e.id }));
-  const eventActs = 0 < redundantEventActs.length ? (await redundantEventActs?.reduce(async (a, b) => (await a).concat(await b))) : [];
-  console.log(JSON.stringify(eventActs));
   if (!user) redirect("/login");
-  
-  return <OrganizedEventsListClient userId={user?.id} events={eventWithVenues} eventActs={eventActs}/>;
+
+  const events = await getMyEvents();
+
+  const eventActs = (
+    await Promise.all(events.map((e) => getEventActs({ eventId: e.id })))
+  ).flat();
+
+  return (
+    <OrganizedEventsListClient
+      userId={user.id}
+      events={events}
+      eventActs={eventActs}
+    />
+  );
 }

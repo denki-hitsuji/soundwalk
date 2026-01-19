@@ -118,12 +118,6 @@ export default function MusicianOrganizedEventsPage({ userId, events, eventActs 
           );
         })}
       </ul>
-      <Link
-          href="/organizer/"
-          className="text-xs text-blue-600 underline"
-        >
-          ダッシュボードに戻る
-        </Link>
     </main>
   );
 }
