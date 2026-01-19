@@ -126,7 +126,7 @@ export default function NewEventPage() {
 
       const newId = data?.id as string;
       // 自分が企画したイベントの詳細へ
-      router.push(`/musician/organized-events/${newId}`);
+      router.push(`/musician/organizer/eventss/${newId}`);
       router.refresh();
     } catch (e: any) {
       console.error(e);

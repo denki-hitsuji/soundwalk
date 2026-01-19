@@ -1,4 +1,4 @@
-// app/musician/organized-events/[eventId]/page.tsx
+// app/organizer/events/[eventId]/page.tsx
 "use client";
 
 import { useState, useMemo } from "react";
@@ -275,7 +275,7 @@ export default function MusicianOrganizedEventDetailClient({ userId,
           {error ?? "イベントが見つかりませんでした。"}
         </p>
         <Link
-          href="/musician/organized-events"
+          href="/organizer/events"
           className="inline-flex text-xs text-blue-600 underline"
         >
           自分が企画したイベント一覧に戻る
@@ -335,7 +335,7 @@ export default function MusicianOrganizedEventDetailClient({ userId,
 
         <div className="flex flex-col items-end gap-2">
           <Link
-            href="/musician/organized-events"
+            href="/organizer/events"
             className="text-xs text-blue-600 underline"
           >
             一覧に戻る

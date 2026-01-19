@@ -7,7 +7,7 @@ import { getEventActs, getMyEvents } from "@/lib/api/events";
 export default async function OrganizerEventsPage() {
   const user = await getCurrentUser();
   const eventWithVenues = await getMyEvents(); 
-  const redundantEventActs = eventWithVenues.map(async e => await getEventActs({ eventId: e.id }));
+  const redundantEventActs =  eventWithVenues.map(async e => await getEventActs({ eventId: e.id }));
   const eventActs = (await redundantEventActs.reduce(async (a, b) => (await a).concat(await b)));
   console.log(JSON.stringify(eventActs));
   if (!user) redirect("/login");

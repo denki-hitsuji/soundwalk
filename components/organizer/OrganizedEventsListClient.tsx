@@ -1,4 +1,3 @@
-// app/musician/organized-events/page.tsx
 "use client";
 
 import { useMemo } from "react";
