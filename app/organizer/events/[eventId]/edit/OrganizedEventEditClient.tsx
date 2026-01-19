@@ -201,7 +201,7 @@ export default function OrganizedEventEditClient({ userId, event, allVenues }: P
       alert("中止にしました。");
 
       // ✅ organizer → musician に揃える（あなたのルーティング方針に合わせる）
-      router.push(`/musician/organizer/events/${eventId}`);
+      router.push(`/organizer/events/${eventId}`);
     } catch (e: any) {
       console.error(e);
       setError(e?.message ?? "中止に失敗しました。");
@@ -216,7 +216,7 @@ export default function OrganizedEventEditClient({ userId, event, allVenues }: P
     return (
       <main className="space-y-2">
         <p className="text-sm text-red-600">{error ?? "イベントが見つかりませんでした。"}</p>
-        <Link href="/musician/organizer/events" className="text-sm text-blue-700 underline">
+        <Link href="/organizer/events" className="text-sm text-blue-700 underline">
           一覧へ
         </Link>
       </main>
@@ -235,7 +235,7 @@ export default function OrganizedEventEditClient({ userId, event, allVenues }: P
         </div>
 
         <Link
-          href={`/musician/organizer/events/${eventId}`}
+          href={`/organizer/events/${eventId}`}
           className="text-xs text-blue-700 underline underline-offset-2"
         >
           詳細へ戻る
