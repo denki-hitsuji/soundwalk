@@ -20,8 +20,9 @@ const fields = {
   title: { label: "タイトル", required: true },
   venueId: { label: "会場", required: true },
   eventDate: { label: "日付", required: true },
+  openTime: { label: "Open", required: true },
   startTime: { label: "Start", required: true },
-  endTime: { label: "End", required: true },
+  endTime: { label: "End", required: false},
   maxArtists: { label: "最大組数（act枠）", required: true },
   // openTime / charge / conditions は任意
 } as const;
@@ -78,6 +79,7 @@ export default function NewEventPage() {
       title,
       venueId,
       eventDate,
+      openTime,
       startTime,
       endTime,
       maxArtists,
@@ -248,7 +250,7 @@ export default function NewEventPage() {
           </label>
 
           <label className="block text-sm">
-            Open（任意）
+            <RequiredLabel label={fields.openTime.label} required />
             <input
               type="time"
               className="mt-1 w-full border rounded px-2 py-1 text-sm"

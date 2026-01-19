@@ -3,28 +3,49 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCurrentUser } from "@/lib/auth/session.client";
-import { getEventById } from "@/lib/api/events";
-import { getAllVenues } from "@/lib/api/venues";
-import { EventRow } from "@/lib/utils/events";
-import { VenueRow } from "@/lib/utils/venues";
+
 import { updateEvent, updateEventStatus } from "@/lib/api/eventsAction";
+import type { EventRow } from "@/lib/utils/events";
+import type { VenueRow } from "@/lib/utils/venues";
+
+// ✅ 共通部品（あなたが切り出す前提）
+import { RequiredLabel } from "@/components/forms/RequiredLabel";
+import { hasMissingRequired } from "@/lib/forms/required";
+
 type Props = {
   userId: string;
   event: EventRow;
-  allVenues: VenueRow[]
-}
-export default function OrganizedEventEditClient({userId, event , allVenues}: Props) {
-  
+  allVenues: VenueRow[];
+};
+
+/** -------------------------
+ * 必須項目定義（ここが唯一の真実）
+ * ------------------------ */
+const fields = {
+  title: { label: "タイトル", required: true },
+  venueId: { label: "会場", required: true },
+  eventDate: { label: "日程", required: true },
+
+  openTime: { label: "Open", required: true },   // ★ 必須に変更
+  startTime: { label: "Start", required: true }, // ★ 必須に変更
+  endTime: { label: "End", required: false },    // 任意のまま
+
+  maxArtists: { label: "最大組数", required: false },
+  charge: { label: "チャージ", required: false },
+  conditions: { label: "条件", required: false },
+} as const;
+
+
+type FieldKey = keyof typeof fields;
+
+export default function OrganizedEventEditClient({ userId, event, allVenues }: Props) {
   const router = useRouter();
   const eventId = event.id;
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [canceling, setCanceling] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
-
-  const [venues, setVenues] = useState<VenueRow[]>([]);
 
   // form state
   const [title, setTitle] = useState("");
@@ -37,21 +58,16 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
   const [charge, setCharge] = useState<string>("");
   const [conditions, setConditions] = useState("");
 
-  const load = async () => {
+  // init（props由来なので1回でOK）
+  useEffect(() => {
     setLoading(true);
     setError(null);
 
     try {
-      // organizer check
       if (event.organizer_profile_id !== userId) {
         throw new Error("このイベントはあなたの企画ではありません。");
       }
 
-      // venues（選択肢）
-      const venues = await getAllVenues();
-      setVenues(venues as VenueRow[]);
-
-      // init form
       setTitle(event.title ?? "");
       setVenueId(event.venue_id ?? "");
       setEventDate(event.event_date ?? "");
@@ -67,25 +83,76 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
     } finally {
       setLoading(false);
     }
-  };
+    // eventId が変わる画面ではないので deps はこれでOK
+  }, [eventId, event.organizer_profile_id, userId]);
 
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [] );
+  // ✅ 必須不足判定（fields定義を唯一の情報源に）
+  const formValues = useMemo(
+    () => ({
+      title,
+      venueId,
+      eventDate,
+      openTime,
+      startTime,
+      endTime,
+      maxArtists,
+      charge,
+      conditions,
+    }),
+    [title, venueId, eventDate, openTime, startTime, endTime, maxArtists, charge, conditions]
+  );
+
+  const requiredKeys = useMemo(
+    () => (Object.keys(fields) as FieldKey[]).filter((k) => fields[k].required),
+    []
+  );
+
+  const missingRequired = hasMissingRequired(formValues, requiredKeys);
+
+  // 数値妥当性（任意欄だが、入力された場合は正しい値にする）
+  const parsedMaxArtists = useMemo(() => {
+    const s = maxArtists.trim();
+    if (!s) return null;
+    const n = Number(s);
+    if (Number.isNaN(n)) return NaN;
+    return n;
+  }, [maxArtists]);
+
+  const maxArtistsInvalid = useMemo(() => {
+    if (parsedMaxArtists === null) return false; // 任意
+    if (Number.isNaN(parsedMaxArtists)) return true;
+    return parsedMaxArtists < 0;
+  }, [parsedMaxArtists]);
+
+  const parsedCharge = useMemo(() => {
+    const s = charge.trim();
+    if (!s) return null;
+    const n = Number(s);
+    if (Number.isNaN(n)) return NaN;
+    return n;
+  }, [charge]);
+
+  const chargeInvalid = useMemo(() => {
+    if (parsedCharge === null) return false; // 任意
+    if (Number.isNaN(parsedCharge)) return true;
+    return parsedCharge < 0;
+  }, [parsedCharge]);
 
   const canSave = useMemo(() => {
     if (!event) return false;
-    if (!title.trim()) return false;
-    if (!venueId) return false;
-    if (!eventDate) return false;
+    if (saving || canceling) return false;
+    if (missingRequired) return false;
+    if (maxArtistsInvalid || chargeInvalid) return false;
     return true;
-  }, [event, title, venueId, eventDate]);
+  }, [event, saving, canceling, missingRequired, maxArtistsInvalid, chargeInvalid]);
 
   const save = async () => {
     if (!event) return;
     if (!canSave) return;
-
+    if (!openTime || !startTime) {
+      setError("Open と Start は必須です。");
+      return;
+    }
     const ok = window.confirm("基本情報を保存しますか？");
     if (!ok) return;
 
@@ -95,20 +162,21 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
     try {
       const payload = {
         title: title.trim(),
-        venue_id: venueId ,
+        venue_id: venueId,
         event_date: eventDate,
         open_time: openTime ? openTime : null,
         start_time: startTime ? startTime : null,
         end_time: endTime ? endTime : null,
-        max_artists: maxArtists === "" ? null : Number(maxArtists),
-        charge: charge === "" ? null : Number(charge),
+        max_artists: parsedMaxArtists === null ? null : parsedMaxArtists,
+        charge: parsedCharge === null ? null : parsedCharge,
         conditions: conditions.trim() ? conditions.trim() : null,
       };
 
-      await updateEvent(eventId,  payload );
+      await updateEvent(eventId, payload);
 
       alert("保存しました。");
-      router.refresh();
+      // ✅ refresh で再現しづらい不安定が出がち。ここは戻る遷移に寄せる方が安全。
+      router.push(`/organizer/events/${eventId}`);
     } catch (e: any) {
       console.error(e);
       setError(e?.message ?? "保存に失敗しました。");
@@ -120,7 +188,9 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
   const cancelEvent = async () => {
     if (!event) return;
 
-    const ok = window.confirm("この企画を中止（cancelled）にしますか？\n※参加者がいる場合は別途連絡が必要です。");
+    const ok = window.confirm(
+      "この企画を中止（cancelled）にしますか？\n※参加者がいる場合は別途連絡が必要です。"
+    );
     if (!ok) return;
 
     setCanceling(true);
@@ -129,8 +199,9 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
     try {
       await updateEventStatus({ eventId, status: "cancelled" });
       alert("中止にしました。");
-      router.push(`/organizer/events/${eventId}`);
-      router.refresh();
+
+      // ✅ organizer → musician に揃える（あなたのルーティング方針に合わせる）
+      router.push(`/musician/organizer/events/${eventId}`);
     } catch (e: any) {
       console.error(e);
       setError(e?.message ?? "中止に失敗しました。");
@@ -145,7 +216,7 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
     return (
       <main className="space-y-2">
         <p className="text-sm text-red-600">{error ?? "イベントが見つかりませんでした。"}</p>
-        <Link href="/organizer/events" className="text-sm text-blue-700 underline">
+        <Link href="/musician/organizer/events" className="text-sm text-blue-700 underline">
           一覧へ
         </Link>
       </main>
@@ -164,7 +235,7 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
         </div>
 
         <Link
-          href={`/organizer/events/${eventId}`}
+          href={`/musician/organizer/events/${eventId}`}
           className="text-xs text-blue-700 underline underline-offset-2"
         >
           詳細へ戻る
@@ -177,7 +248,7 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
         <h2 className="text-sm font-semibold">基本情報</h2>
 
         <label className="block text-sm">
-          タイトル
+          <RequiredLabel label={fields.title.label} required={fields.title.required} />
           <input
             className="mt-1 w-full rounded border px-3 py-2 text-sm"
             value={title}
@@ -187,14 +258,14 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm">
-            会場
+            <RequiredLabel label={fields.venueId.label} required={fields.venueId.required} />
             <select
               className="mt-1 w-full rounded border px-3 py-2 text-sm"
               value={venueId}
               onChange={(e) => setVenueId(e.target.value)}
             >
               <option value="">選択してください</option>
-              {venues.map((v) => (
+              {allVenues.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name}
                 </option>
@@ -203,7 +274,7 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
           </label>
 
           <label className="block text-sm">
-            日程
+            <RequiredLabel label={fields.eventDate.label} required={fields.eventDate.required} />
             <input
               type="date"
               className="mt-1 w-full rounded border px-3 py-2 text-sm"
@@ -213,37 +284,35 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
           </label>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <label className="block text-sm">
-            Open（任意）
-            <input
-              type="time"
-              className="mt-1 w-full rounded border px-3 py-2 text-sm"
-              value={openTime}
-              onChange={(e) => setOpenTime(e.target.value)}
-            />
-          </label>
+        <label className="block text-sm">
+  <RequiredLabel label={fields.openTime.label} required={fields.openTime.required} />
+  <input
+    type="time"
+    className="mt-1 w-full rounded border px-3 py-2 text-sm"
+    value={openTime}
+    onChange={(e) => setOpenTime(e.target.value)}
+  />
+</label>
 
-          <label className="block text-sm">
-            Start（任意）
-            <input
-              type="time"
-              className="mt-1 w-full rounded border px-3 py-2 text-sm"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
-          </label>
+<label className="block text-sm">
+  <RequiredLabel label={fields.startTime.label} required={fields.startTime.required} />
+  <input
+    type="time"
+    className="mt-1 w-full rounded border px-3 py-2 text-sm"
+    value={startTime}
+    onChange={(e) => setStartTime(e.target.value)}
+  />
+</label>
 
-          <label className="block text-sm">
-            End（任意）
-            <input
-              type="time"
-              className="mt-1 w-full rounded border px-3 py-2 text-sm"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-            />
-          </label>
-        </div>
+<label className="block text-sm">
+  <RequiredLabel label={fields.endTime.label} required={fields.endTime.required} />
+  <input
+    type="time"
+    className="mt-1 w-full rounded border px-3 py-2 text-sm"
+    value={endTime}
+    onChange={(e) => setEndTime(e.target.value)}
+  />
+</label>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm">
@@ -255,6 +324,9 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
               value={maxArtists}
               onChange={(e) => setMaxArtists(e.target.value)}
             />
+            {maxArtistsInvalid && maxArtists.trim() !== "" && (
+              <div className="mt-1 text-xs text-red-600">0以上の数値で入力してください</div>
+            )}
           </label>
 
           <label className="block text-sm">
@@ -266,6 +338,9 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
               value={charge}
               onChange={(e) => setCharge(e.target.value)}
             />
+            {chargeInvalid && charge.trim() !== "" && (
+              <div className="mt-1 text-xs text-red-600">0以上の数値で入力してください</div>
+            )}
           </label>
         </div>
 
@@ -278,11 +353,23 @@ export default function OrganizedEventEditClient({userId, event , allVenues}: Pr
           />
         </label>
 
+        {!canSave && (
+          <div className="text-xs text-gray-600">
+            {missingRequired ? (
+              <span className="text-red-600">※ 必須項目を入力してください</span>
+            ) : maxArtistsInvalid ? (
+              <span className="text-red-600">※ 最大組数は0以上で入力してください</span>
+            ) : chargeInvalid ? (
+              <span className="text-red-600">※ チャージは0以上で入力してください</span>
+            ) : null}
+          </div>
+        )}
+
         <div className="flex justify-end">
           <button
             type="button"
             onClick={save}
-            disabled={!canSave || saving}
+            disabled={!canSave}
             className="rounded bg-gray-900 px-4 py-2 text-xs font-medium text-white disabled:opacity-40"
           >
             {saving ? "保存中…" : "保存"}
