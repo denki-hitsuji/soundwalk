@@ -60,7 +60,7 @@ export default function MusicianOrganizedEventsPage({ userId, events, eventActs 
       {events.length === 0 && (
         <p className="text-sm text-gray-500">
           まだあなたが企画したイベントはありません。
-          「企画管理 → 新しいイベントを企画する」から作成できます。
+          「新規登録」から作成できます。
         </p>
       )}
 
