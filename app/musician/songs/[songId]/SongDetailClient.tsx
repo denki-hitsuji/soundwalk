@@ -160,7 +160,7 @@ export default function SongDetailClient({ songId, song, act }: Props) {
                     if (e.key === "Escape") cancelEditTitle();
                   }}
                   autoFocus
-                  className="w-full max-w-md rounded border px-3 py-2 text-sm"
+                  className="w-full max-w-md rounded border px-3 py-2 text-base"
                   placeholder="曲名"
                 />
                 <button
