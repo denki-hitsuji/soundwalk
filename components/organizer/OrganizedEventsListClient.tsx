@@ -49,11 +49,12 @@ export default function MusicianOrganizedEventsPage({ userId, events, eventActs 
           </p>
         </div>
         <Link
-          href="/musician"
-          className="text-xs text-blue-600 underline"
+          href="/organizer/events/new"
+          className="shrink-0 inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white"
         >
-          ダッシュボードに戻る
+          + 新規登録
         </Link>
+        
       </div>
 
       {events.length === 0 && (
@@ -117,6 +118,12 @@ export default function MusicianOrganizedEventsPage({ userId, events, eventActs 
           );
         })}
       </ul>
+      <Link
+          href="/organizer/"
+          className="text-xs text-blue-600 underline"
+        >
+          ダッシュボードに戻る
+        </Link>
     </main>
   );
 }
