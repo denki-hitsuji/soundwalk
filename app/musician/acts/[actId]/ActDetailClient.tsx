@@ -15,6 +15,8 @@ import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { SongRow } from "@/lib/api/songs";
 import { User } from "@supabase/auth-js";
 import { ActRow, MemberRow } from "@/lib/utils/acts";
+import { ActMemberRow } from "@/lib/db/acts";
+import { ActMembersList } from "@/components/acts/ActMembersList";
 
 const statusBadge: Record<string, { label: string; cls: string }> = {
   offered: { label: "🟡 オファー", cls: "bg-blue-100 text-blue-800" },
@@ -33,10 +35,11 @@ type Props = {
   performances: PerformanceWithActs[],
   nextPerformance: PerformanceRow | null,
   songs: SongRow[],
-  member: MemberRow
+  member: MemberRow,
+  bandMembers: ActMemberRow[]
 }
 
-export default function ActDetailClient({user, act, performances, nextPerformance, songs, member }: Props) {
+export default function ActDetailClient({user, act, performances, nextPerformance, songs, member,bandMembers }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
   const { currentAct, setCurrentAct } = useCurrentAct();
@@ -315,6 +318,8 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
 
       {/* 本体 */}
       {isEdit ? EditPanel : ViewPanel}
+
+      <ActMembersList members={bandMembers} />
 
       {/* 編集モードに直リンクしたとき権限なしの場合の注意 */}
       {isEdit && !canEdit ? (

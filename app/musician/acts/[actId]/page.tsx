@@ -1,6 +1,6 @@
 // app/musician/acts/[actId]/page.tsx
 "use server"
-import { getActById, getMyMemberActs  } from "@/lib/api/acts";
+import { getActById, getActMembers, getMyMemberActs  } from "@/lib/api/acts";
 import ActDetailClient from "./ActDetailClient";
 import { getMyUpcomingPerformances, PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
 import { getMySongs } from "@/lib/api/songs";
@@ -77,6 +77,7 @@ export default async function Page({ params }: { params: Promise<{ actId: string
   const memberAct = (await getMyMemberActs()).find(a => a.id === myAct.id);
   const judgeAdmin = (a : ActRow) => !!(a && user?.id && a.owner_profile_id === user?.id);
   const member = { act_id: memberAct?.id, is_admin: judgeAdmin(myAct), status: "active" } as MemberRow;
+  const bandMembers = await getActMembers({ actId: actId });
  
   return <ActDetailClient
     user={user}
@@ -85,5 +86,6 @@ export default async function Page({ params }: { params: Promise<{ actId: string
     nextPerformance={nextPerformance}
     songs={songs}
     member={member}
+    bandMembers={ bandMembers}
     />;
 }

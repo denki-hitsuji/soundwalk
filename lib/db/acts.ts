@@ -276,3 +276,34 @@ export async function updateActDb(act : Partial<ActRow> & { id: string }) {
 
   return inserted;
 }
+export type ActMemberRow = {
+  act_id: string;
+  profile_id: string;
+  display_name: string | null;
+  role: string;
+  is_owner: boolean;
+  is_admin: boolean;
+};
+
+export async function getActMembersDb(params: { actId: string }) {
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("v_act_members")
+    .select("act_id, profile_id, display_name, role, is_owner, is_admin")
+    .eq("act_id", params.actId);
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as ActMemberRow[];
+
+  // 並び順をここで確定（UIにロジックを持たせない）
+  rows.sort((a, b) => {
+    const pa = (a.is_owner ? 2 : 0) + (a.is_admin ? 1 : 0);
+    const pb = (b.is_owner ? 2 : 0) + (b.is_admin ? 1 : 0);
+    if (pa !== pb) return pb - pa;
+    return (a.display_name ?? "").localeCompare(b.display_name ?? "", "ja");
+  });
+
+  return rows;
+}

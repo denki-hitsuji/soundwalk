@@ -181,26 +181,37 @@ export function padTimeHHMM(t: string | null) {
   return t.slice(0, 5);
 }
 
-export function detailsSummary(d?: DetailsRow) {
-  if (!d) return "未登録（入り/出番/チャージ）";
+export function detailsSummary(d?: DetailsRow | null, p?: PerformanceRow | null) {
+  if (!p) return "未登録（開場/開演/チャージ）";
 
-  const loadIn = padTimeHHMM(d.load_in_time);
-  const start = padTimeHHMM(d.set_start_time);
-  const end = padTimeHHMM(d.set_end_time);
-  const minutes = d.set_minutes ?? null;
-  const charge = d.customer_charge_yen ?? null;
-  const oneDrink = d.one_drink_required;
+  if (d && p.id !== d.performance_id) {
+    throw Error("ライブと詳細のIDが相違しています。");
+  }
+
+  const open = padTimeHHMM(p.open_time);
+  const start = padTimeHHMM(p.start_time);
+
+  const set_start = d ? padTimeHHMM(d.set_start_time) : null;
+  const minutes = d?.set_minutes ?? null;
+  const charge = d?.customer_charge_yen ?? null;
+  const oneDrink = d?.one_drink_required ?? null;
 
   const parts: string[] = [];
-  if (loadIn) parts.push(`入り ${loadIn}`);
-  if (start && end) parts.push(`出番 ${start}-${end}`);
-  else if (start) parts.push(`出番 ${start}`);
+
+  // Performance由来（dが無くてもOK）
+  if (open) parts.push(`開場 ${open}`);
+  if (start) parts.push(`開演 ${start}`);
+
+  // Details由来（あれば）
+  if (set_start) parts.push(`出演 ${set_start}`);
   if (minutes !== null) parts.push(`${minutes}分`);
   if (charge !== null) parts.push(`¥${charge.toLocaleString()}`);
   if (oneDrink === true) parts.push("1Dあり");
   if (oneDrink === false) parts.push("1Dなし");
 
-  return parts.length > 0 ? parts.join(" / ") : "未登録（入り/出番/チャージ）";
+  return parts.length > 0
+    ? parts.join(" / ")
+    : "未登録（開場/開演/チャージ）";
 }
 
 export function statusText(target: Date, today: Date) {

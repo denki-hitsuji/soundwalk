@@ -21,7 +21,7 @@ export type PerformanceCardProps = {
 
   // 既存関数を流用（ページ側から渡す）
   normalizeAct: (p: PerformanceWithActs) => ActRow | null;
-  detailsSummary: (d?: DetailsRow) => string;
+  detailsSummary: (d?: DetailsRow, p?: PerformanceRow) => string;
 
   // 既存 util を流用（ページ側から渡す）
   parseYmdLocal: (s: string) => Date;
@@ -51,7 +51,7 @@ export function BookingCard({
   const venue = p.venue_name ? `@ ${p.venue_name}` : "@（未設定）";
   const act = normalizeAct(p);
   const actName = p.act_name ?? "出演名義：なし";
-  const summary = detailsSummary(details);
+  const summary = detailsSummary(details, p);
   const status = p.status ?? "confirmed";
   const isMusician = false; // 仮の条件
   const clickable = Boolean(isMusician);
