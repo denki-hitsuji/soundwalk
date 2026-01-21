@@ -52,11 +52,11 @@ function ActSongsCard({
   canEdit: boolean;
 }) {
   return (
-    <section className="rounded-xl border bg-white p-4 space-y-3">
-      <div className="flex items-start justify-between gap-3">
+    <section className="rounded-xl border bg-white p-4 space-y-3 truncate">
+      <div className="flex items-start justify-between gap-3 truncate text-sm min-w-0">
         <div className="min-w-0">
           <div className="text-sm font-semibold truncate">{act.name}</div>
-          <div className="text-[11px] text-gray-500">
+          <div className="text-[11px] text-gray-500 tru">
             {typeLabel(act.act_type)} / {songs.length}曲
           </div>
         </div>
@@ -73,7 +73,7 @@ function ActSongsCard({
       {songs.length === 0 ? (
         <div className="text-sm text-gray-600">まだ曲が登録されていません。</div>
       ) : (
-        <ul className="space-y-1 text-sm">
+        <ul className="space-y-1 text-sm min-w-0">
           {songs.map((s) => (
             <li key={s.id} className="flex items-start gap-2">
               <Link href="/musician/songs" className="min-w-0">
@@ -151,7 +151,7 @@ export async function SongSummaryCard() {
       </header>
 
       {acts.length === 0 ? (
-        <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">
+        <div className="rounded-lg border bg-white p-4 text-sm text-gray-600 ">
           まずは名義（アクト）を作成してください。
           <Link href="/musician/acts" className="ml-2 text-blue-700 hover:underline">
             名義を作る

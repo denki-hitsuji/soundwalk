@@ -9,12 +9,12 @@ export async function DashboardSongsSection() {
   }
 
   return (
-    <section className="space-y-2">
+    <section className="space-y-2 truncate">
       <h2 className="text-sm font-semibold text-gray-700">曲目</h2>
 
       <ul className="divide-y rounded border bg-white">
         {songs.map((song) => (
-          <li key={song.id} className="px-3 py-2 text-sm">
+          <li key={song.id} className="px-3 py-2 truncate text-sm font-medium  ">
             <Link href={`/musician/songs/${song.id}`} className="hover:underline">
               {song.title}
             </Link>
