@@ -179,7 +179,7 @@ const supabase = await createSupabaseServerClient();
 
   if (actsError) throw actsError;
 
-  console.log(acts);
+  // console.log(acts);
   const actMap = new Map(acts?.map((a) => [a.id, a]) ?? []);
 
   // 3. EventAct 型として返す

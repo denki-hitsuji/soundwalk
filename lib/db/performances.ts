@@ -54,7 +54,7 @@ export async function getMyUpcomingPerformancesDb(todayStr?: string) {
     .neq("status", "canceled")   
     .order("event_date", { ascending: true })
 
-  console.log(`data : ${data}`);
+  // console.log(`data : ${data}`);
   if (error) throw error;
   return toPerformanceWithActsArrayPlain(data);
 }
