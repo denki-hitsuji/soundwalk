@@ -2,8 +2,9 @@
 import { toYmdLocal } from "@/lib/utils/date";
 
 import { NextPerformanceSectionClient } from "./NextPerformanceSectionClient";
-import { ensureAndFetchPrepMapDb, getDetailsMapForPerformancesDb, getFlyerMapForPerformancesDb } from "@/lib/db/performances";
+import { ensureAndFetchPrepMapDb, getFlyerMapForPerformancesDb } from "@/lib/db/performances";
 import { getMyActsServer, getNextPerformanceServer } from "@/lib/utils/performance";
+import { getDetailsForPerformance } from "@/lib/api/performances";
 
 export async function NextPerformanceSectionServer() {
   const todayStr = toYmdLocal();
@@ -21,7 +22,7 @@ export async function NextPerformanceSectionServer() {
   // ※あなたの既存関数に合わせて server 版を用意してここで呼ぶ
   const [flyers, dets, preps] = await Promise.all([
     getFlyerMapForPerformancesDb(ids),
-    getDetailsMapForPerformancesDb(ids),
+    getDetailsForPerformance({ performanceId: next.id }),
     ensureAndFetchPrepMapDb({ performances: [{ id: next.id, event_date: next.event_date, act_id: next.act_id }] }),
   ]);
   // console.log(`flyers.values: ${JSON.stringify(Object.values(flyers).shift())}`);

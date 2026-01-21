@@ -656,6 +656,7 @@ export async function getDetailsForPerformanceDb(params: { performanceId: string
     .from("performance_details")
     .select(`*` )
     .eq("performance_id", performanceId)
+    .maybeSingle()
 
   if (error) throw new Error(error.message);
   return data;
