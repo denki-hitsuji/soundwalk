@@ -159,6 +159,12 @@ export default function PerformanceDetailClient(props: {
   const onUploadFlyer = async (file: File) => {
     if (!file) return;
 
+    const MILLION = 1024 * 1024;
+    if (5 * MILLION < file.size) {
+      alert("ファイルサイズが5ＭBを超過しているため、アップロードできません。ファイルサイズを縮小してください。");
+      return;
+    }
+
     if (!performance.act_id) {
       alert("このライブに出演名義（act）が設定されていません。共有アップロードできません。");
       return;
