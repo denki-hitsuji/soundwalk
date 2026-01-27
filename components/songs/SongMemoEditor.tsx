@@ -154,7 +154,7 @@ export default function SongMemoEditor({ initialText, onSave }: Props) {
       <TemplateAssist templateText={templateText} getValue={() => text} setValue={setText} />
 
       <textarea
-        className="w-full rounded border px-3 py-2 text-sm min-h-[240px] max-h-[50vh"
+        className="w-full rounded border px-3 py-2 text-sm min-h-60 max-h-[50vh]"
         value={text}
         onChange={(e) => setText(e.target.value)}
       />

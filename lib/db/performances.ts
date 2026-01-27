@@ -51,10 +51,48 @@ export async function getMyUpcomingPerformancesDb(todayStr?: string) {
     )
     .in("act_id", myActs)
     .gte("event_date", t)
-    .neq("status", "canceled")   
+    .neq("status", "canceled")
     .order("event_date", { ascending: true })
 
   // console.log(`data : ${data}`);
+  if (error) throw error;
+  return toPerformanceWithActsArrayPlain(data);
+}
+
+export async function getPerformancesInRangeDb(params: {
+  startDate: string;  // YYYY-MM-DD
+  endDate: string;    // YYYY-MM-DD
+}) {
+  const supabase = await createSupabaseServerClient();
+  const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
+
+  if (myActs.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("musician_performances")
+    .select(
+      `
+      id,
+      event_date,
+      event_id,
+      venue_name,
+      memo,
+      act_id,
+      status,
+      status_reason,
+      status_changed_at,
+      start_time,
+      open_time,
+      acts:acts ( id, name, act_type ),
+      events:events ( title )
+    `
+    )
+    .in("act_id", myActs)
+    .gte("event_date", params.startDate)
+    .lte("event_date", params.endDate)
+    .neq("status", "canceled")
+    .order("event_date", { ascending: true });
+
   if (error) throw error;
   return toPerformanceWithActsArrayPlain(data);
 }
