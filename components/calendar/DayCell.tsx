@@ -44,7 +44,11 @@ export function DayCell({ day, performances, isSelected, onClick }: DayCellProps
       <div
         key={i}
         className={`px-1.5 py-0.5 rounded text-[10px] md:text-xs font-medium truncate ${style.bg} ${style.text}`}
-        title={`${displayName} - ${perf.acts?.name || "名義未設定"}`}
+        title={`${displayName} - ${
+          Array.isArray(perf.acts)
+            ? perf.acts.map((act) => act.name).join(", ") || "名義未設定"
+            : perf.acts?.name || "名義未設定"
+        }`}
       >
         {displayName}
       </div>
