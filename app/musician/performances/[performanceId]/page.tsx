@@ -7,6 +7,8 @@ import { EventRow } from "@/lib/utils/events";
 import { getEventById } from "@/lib/api/events";
 import { getActById } from "@/lib/api/acts";
 import { getDetailsForPerformance, getDetailsMapForPerformance, getDetailsMapForPerformances, getMyPerformanceById, getPerformanceAttachments, getPerformanceMessages } from "@/lib/api/performances";
+import { getSetlistByPerformanceId, getSetlistItems } from "@/lib/api/setlistsAction";
+import { getSongsByActIdsDb } from "@/lib/db/songs";
 
 export default async function PerformanceDetailPage({ params }: {
   params: { performanceId: string }
@@ -56,6 +58,11 @@ export default async function PerformanceDetailPage({ params }: {
   const messages = await getPerformanceMessages({ performanceId: performanceId });
   // console.log(messages);
 
+  // setlist
+  const setlist = await getSetlistByPerformanceId(performanceId);
+  const setlistItems = setlist ? await getSetlistItems(setlist.id) : [];
+  const actSongs = perf.act_id ? await getSongsByActIdsDb([perf.act_id]) : [];
+
   return (
     <PerformanceDetailClient
       performanceId={performanceId}
@@ -67,8 +74,11 @@ export default async function PerformanceDetailPage({ params }: {
       details={(details ?? null) as any}
       attachments={(attachments ?? []) as any}
       messages={(messages ?? []) as any}
-        open_time= {(perf.open_time ?? null) as any}
-    start_time= {(perf.start_time ?? null) as any}
+      open_time={(perf.open_time ?? null) as any}
+      start_time={(perf.start_time ?? null) as any}
+      setlist={setlist}
+      setlistItems={setlistItems}
+      actSongs={actSongs}
     />
   );
 }

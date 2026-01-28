@@ -7,9 +7,12 @@ import Link from "next/link";
 import { PerformanceMemoEditor } from "@/components/performances/PerformanceMemoEditor";
 import { CoreInfoEditor } from "@/components/CoreInfoEditor";
 import { PersonalPerformanceCoreEditor } from "@/components/PersonalPerformanceCoreEditor";
+import { SetlistSection } from "@/components/setlist/SetlistSection";
 
 import type { PerformanceRow } from "@/lib/utils/performance";
 import type { ActRow, AttachmentRow, DetailsRow, MessageRow } from "@/lib/utils/acts";
+import type { SetlistRow, SetlistItemView } from "@/lib/utils/setlist";
+import type { SongRow } from "@/lib/db/songs";
 
 // ★ server actions
 import {
@@ -35,8 +38,11 @@ export default function PerformanceDetailClient(props: {
   details: DetailsRow | null;
   attachments: AttachmentRow[];
   messages: MessageRow[];
-    open_time: string | null;
-    start_time: string | null;
+  open_time: string | null;
+  start_time: string | null;
+  setlist: SetlistRow | null;
+  setlistItems: SetlistItemView[];
+  actSongs: SongRow[];
 }) {
   const router = useRouter();
 
@@ -535,6 +541,14 @@ export default function PerformanceDetailClient(props: {
 
   {/* 以降もそのまま */}
 </section>
+
+            {/* setlist */}
+            <SetlistSection
+              performanceId={performanceId}
+              setlist={props.setlist}
+              items={props.setlistItems}
+              actSongs={props.actSongs}
+            />
 
             {/* flyer */}
             <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">
