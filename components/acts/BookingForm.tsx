@@ -7,7 +7,7 @@ import { ensureMyDefaultAct } from "@/lib/api/actsAction";
 import { createBooking } from "@/lib/api/bookingsAction";
 import { EventRow } from "@/lib/utils/events";
 import { ActRow } from "@/lib/utils/acts";
-;
+import { Spinner } from "@/components/ui/Spinner";
 
 type Props = {
   userId: string;
@@ -114,9 +114,10 @@ export function BookingForm({ userId, event, act }: Props) {
         <button
           type="submit"
           disabled={submitting || !act}
-          className="px-4 py-2 border rounded text-sm font-semibold disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 border rounded text-sm font-semibold disabled:opacity-50"
         >
-          {submitting ? "送信中..." : "この名義で応募する"}
+          {submitting && <Spinner size="sm" />}
+          <span>{submitting ? "送信中..." : "この名義で応募する"}</span>
         </button>
       </form>
     </section>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { addSongDb } from "@/lib/db/songs";
+import { Spinner } from "@/components/ui/Spinner";
 
 export function QuickAddSong({
   actId,
@@ -38,9 +39,10 @@ export function QuickAddSong({
       <button
         type="submit"
         disabled={loading}
-        className="rounded bg-gray-800 px-3 py-1.5 text-sm text-white"
+        className="inline-flex items-center gap-2 rounded bg-gray-800 px-3 py-1.5 text-sm text-white disabled:opacity-60"
       >
-        追加
+        {loading && <Spinner size="sm" />}
+        <span>{loading ? "追加中…" : "追加"}</span>
       </button>
     </form>
   );
