@@ -65,7 +65,7 @@ export function AppShellClient({
   const shouldShowInvite = !isAuthed && pathname !== "/login" && pathname !== "/";
 
   return (
-    <div className="min-h-dvh bg-gray-50">
+    <div className="min-h-dvh bg-gray-50 overflow-x-hidden">
       <NavigationProgress />
       <header className="sticky top-0 z-20 border-b bg-white">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
@@ -129,7 +129,7 @@ export function AppShellClient({
           )}
         </aside>
 
-        <main className="p-4 w-full max-w-full overflow-x-hidden">
+        <main className="p-4 w-full max-w-full min-w-0 overflow-x-hidden">
           <div className="mx-auto max-w-3xl min-w-0 md:hidden space-y-2">
             {shouldShowInvite && <AuthInviteBanner />}
           </div>
