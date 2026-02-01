@@ -18,9 +18,9 @@ export default async function Page({ params }: { params: Promise<{ actId: string
 
   const today = new Date();
   const todayYmd = today.toISOString().slice(0, 10);
-  console.log("performanceの直前");
+  // console.log("performanceの直前");
   const performances = await getMyUpcomingPerformances(todayYmd);
-  console.log("performanceの直後");
+  // console.log("performanceの直後");
 
   const performs : PerformanceWithActs[] = (performances ?? []) as any[];
   const list = performs.filter(p => p.act_id === actId)
@@ -36,7 +36,7 @@ export default async function Page({ params }: { params: Promise<{ actId: string
   // event_title を表示したいなら events から引く（1件だけなので追加クエリでOK）
   let eventTitle: string | null = null;
   if (top?.event_id) {
-    console.log("getEventByIdの直前");
+    // console.log("getEventByIdの直前");
     const ev: EventRow | null = await getEventById(top.event_id) as EventRow;
     eventTitle = ev?.title ?? null;
   }
@@ -76,7 +76,7 @@ export default async function Page({ params }: { params: Promise<{ actId: string
   const user = await getCurrentUser();
   const memberAct = (await getMyMemberActs()).find(a => a.id === myAct.id);
   const judgeAdmin = (a : ActRow) => !!(a && user?.id && a.owner_profile_id === user?.id);
-  const member = { act_id: memberAct?.id, is_admin: memberAct?is_admin, status: "active" } as MemberRow;
+  const member = { act_id: memberAct?.id, is_admin: memberAct?.is_admin, status: "active" } as MemberRow;
   const bandMembers = await getActMembers({ actId: actId });
  
   return <ActDetailClient
