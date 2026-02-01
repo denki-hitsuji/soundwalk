@@ -76,7 +76,7 @@ export default async function Page({ params }: { params: Promise<{ actId: string
   const user = await getCurrentUser();
   const memberAct = (await getMyMemberActs()).find(a => a.id === myAct.id);
   const judgeAdmin = (a : ActRow) => !!(a && user?.id && a.owner_profile_id === user?.id);
-  const member = { act_id: memberAct?.id, is_admin: judgeAdmin(myAct), status: "active" } as MemberRow;
+  const member = { act_id: memberAct?.id, is_admin: memberAct?is_admin, status: "active" } as MemberRow;
   const bandMembers = await getActMembers({ actId: actId });
  
   return <ActDetailClient
