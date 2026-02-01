@@ -307,3 +307,32 @@ export async function getActMembersDb(params: { actId: string }) {
 
   return rows;
 }
+
+export async function updateActMemberAdminDb(params: {
+  actId: string;
+  profileId: string;
+  isAdmin: boolean;
+}): Promise<void> {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("act_members")
+    .update({ is_admin: params.isAdmin })
+    .eq("act_id", params.actId)
+    .eq("profile_id", params.profileId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function removeActMemberDb(params: {
+  actId: string;
+  profileId: string;
+}): Promise<void> {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("act_members")
+    .delete()
+    .eq("act_id", params.actId)
+    .eq("profile_id", params.profileId);
+
+  if (error) throw new Error(error.message);
+}

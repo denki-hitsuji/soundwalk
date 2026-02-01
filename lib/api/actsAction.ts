@@ -1,7 +1,7 @@
 "use server"
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { uploadActPhotoDb, deletePhotoDataAndStorageDb, createActInviteDb, deleteActByIdDb, ensureMyDefaultActDb, insertActDb, updateActDb } from "../db/acts";
+import { uploadActPhotoDb, deletePhotoDataAndStorageDb, createActInviteDb, deleteActByIdDb, ensureMyDefaultActDb, insertActDb, updateActDb, updateActMemberAdminDb, removeActMemberDb } from "../db/acts";
 import { ActRow } from "../utils/acts";
 import { BookingWithDetails } from "../utils/bookings";
 
@@ -49,4 +49,21 @@ export async function ensureMyDefaultAct(): Promise<ActRow> {
 }
 export async function updateAct(act: Partial<ActRow> & { id: string }) {
   return await updateActDb(act);
+}
+
+export async function updateActMemberAdminAction(params: {
+  actId: string;
+  profileId: string;
+  isAdmin: boolean;
+}) {
+  await updateActMemberAdminDb(params);
+  revalidatePath(`/musician/acts/${params.actId}`);
+}
+
+export async function removeActMemberAction(params: {
+  actId: string;
+  profileId: string;
+}) {
+  await removeActMemberDb(params);
+  revalidatePath(`/musician/acts/${params.actId}`);
 }

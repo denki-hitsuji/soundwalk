@@ -49,12 +49,13 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
   const userId = user?.id;
   // 表示モード用：直近ライブ + 曲20件
 
-  // 権限（最低限：owner/adminだけ編集を見せたいならここで制御）
-  const canEdit = () => isOwner ;
+  // 権限（owner/adminが編集モードに入れる）
   const isOwner = !!(act && userId && act.owner_profile_id === userId);
   const isAdminMember = (member?.is_admin === true);
-  const canInvite =  isOwner || isAdminMember;
-  const canDelete =  isOwner;
+  const canEdit = isOwner || isAdminMember;
+  const canInvite = isOwner || isAdminMember;
+  const canDelete = isOwner;
+  const canManageMembers = isOwner; // メンバー権限変更・削除はOwnerのみ
   function Badge({ children }: { children: React.ReactNode }) {
     return <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{children}</span>;
   }
@@ -284,7 +285,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
         </div>
 
         {/* 右上：閲覧/編集切替 */}
-        {canEdit() ? (
+        {canEdit ? (
           !isEdit ? (
             <button
               type="button"
@@ -308,10 +309,16 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
       {/* 本体 */}
       {isEdit ? EditPanel : ViewPanel}
 
-      <ActMembersList members={bandMembers} />
+      <ActMembersList
+        actId={act.id}
+        members={bandMembers}
+        isOwner={isOwner}
+        canEdit={isEdit && canManageMembers}
+        currentUserId={userId}
+      />
 
-      {/* 招待 */}
-      {canInvite && (
+      {/* 招待（編集モード時のみ） */}
+      {canInvite && isEdit && (
           <ActInviteBox actId={act.id} />
       )}
       {/* 編集モードに直リンクしたとき権限なしの場合の注意 */}
