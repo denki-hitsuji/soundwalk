@@ -50,7 +50,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
   // 表示モード用：直近ライブ + 曲20件
 
   // 権限（最低限：owner/adminだけ編集を見せたいならここで制御）
-  const canEdit = () => isOwner;
+  const canEdit = () => isOwner ;
   const isOwner = !!(act && userId && act.owner_profile_id === userId);
   const isAdminMember = (member?.is_admin === true);
   const canInvite =  isOwner || isAdminMember;
@@ -245,17 +245,6 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
         <ActPublicPageEditor actId={act.id} actName={act.name} />
       </section>
 
-      {/* 招待 */}
-      {canInvite && (
-        <section className="rounded border bg-white p-4 space-y-2">
-          <h2 className="text-sm font-semibold text-gray-800">メンバー招待</h2>
-          <p className="text-xs text-gray-600">
-            招待リンクを作って共有できます（owner / admin のみ）。
-          </p>
-          <ActInviteBox actId={act.id} />
-        </section>
-      )}
-
       {/* 削除 */}
       <section className="rounded border bg-white p-4 space-y-2">
         <h2 className="text-sm font-semibold text-gray-800">危険な操作</h2>
@@ -321,6 +310,10 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
 
       <ActMembersList members={bandMembers} />
 
+      {/* 招待 */}
+      {canInvite && (
+          <ActInviteBox actId={act.id} />
+      )}
       {/* 編集モードに直リンクしたとき権限なしの場合の注意 */}
       {isEdit && !canEdit ? (
         <div className="rounded-lg border bg-white p-3 text-sm text-gray-600">

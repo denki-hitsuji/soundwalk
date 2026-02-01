@@ -74,10 +74,9 @@ export default async function Page({ params }: { params: Promise<{ actId: string
 
   // membership (owner でも取れるが、owner の場合は判定に使わないのでOK)
   const user = await getCurrentUser();
-  const memberAct = (await getMyMemberActs()).find(a => a.id === myAct.id);
-  const judgeAdmin = (a : ActRow) => !!(a && user?.id && a.owner_profile_id === user?.id);
-  const member = { act_id: memberAct?.id, is_admin: memberAct?.is_admin, status: "active" } as MemberRow;
   const bandMembers = await getActMembers({ actId: actId });
+  const myMemberAct = bandMembers.find(a => a.act_id === myAct.id);
+  const member = { act_id: myMemberAct?.act_id, is_admin: myMemberAct?.is_admin, status: "active" } as MemberRow;
  
   return <ActDetailClient
     user={user}
