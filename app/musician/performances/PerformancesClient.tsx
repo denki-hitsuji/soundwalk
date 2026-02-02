@@ -101,7 +101,7 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
             </section>
 
             {/* 過去 */}
-            <section className="space-y-2">
+            <section className="space-y-2 mt-4">
                 <h2 className="text-sm font-semibold text-gray-800">過去のライブ</h2>
 
                 {pastPerformances.length === 0 ? (

@@ -4,7 +4,7 @@ import { useTransition, useState } from "react";
 import {
   reconfirmPerformance,
   declineReconfirmPerformance,
-} from "@/app/actions/reconfirmPerformance";
+} from "@/lib/actions/reconfirmPerformance";
 
 type Props = {
   performanceId: string;

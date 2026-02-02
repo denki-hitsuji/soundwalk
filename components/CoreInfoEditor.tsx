@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateEventCore } from "@/app/actions/updateEventCore";
+import { updateEventCore } from "@/lib/actions/updateEventCore";
 
 type Venue = { id: string; name: string };
 

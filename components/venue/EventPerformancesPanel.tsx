@@ -2,7 +2,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { organizerCancelPerformance } from "@/app/actions/organizerCancelPerformance";
+import { organizerCancelPerformance } from "@/lib/actions/organizerCancelPerformance";
 import { useRouter } from "next/navigation";
 import { PerformanceRow } from "@/lib/utils/performance";
 export function EventPerformancesPanel(props: {
