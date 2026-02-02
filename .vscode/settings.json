@@ -1,5 +1,7 @@
 {
     "claudeCode.useCtrlEnterToSend": true,
     "claudeCode.preferredLocation": "sidebar",
-    "claudeCode.initialPermissionMode": "acceptEdits"
+    "claudeCode.initialPermissionMode": "acceptEdits",
+    "claudeCode.allowDangerouslySkipPermissions": false,
+    "claudeCodeChat.permissions.yoloMode": true
 }
