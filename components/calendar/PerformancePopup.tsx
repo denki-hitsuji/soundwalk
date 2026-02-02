@@ -8,6 +8,7 @@ type PerformancePopupProps = {
   date: string; // YYYY-MM-DD
   performances: PerformanceWithActs[];
   onClose: () => void;
+  onAddClick?: () => void;
 };
 
 const statusLabelMap: Record<string, string> = {
@@ -28,6 +29,7 @@ export function PerformancePopup({
   date,
   performances,
   onClose,
+  onAddClick,
 }: PerformancePopupProps) {
   const dateObj = new Date(date + "T00:00:00");
   const formattedDate = `${dateObj.getFullYear()}年${
@@ -98,6 +100,16 @@ export function PerformancePopup({
         <p className="text-sm text-gray-500 text-center py-4">
           この日のライブはありません
         </p>
+      )}
+
+      {/* 予定追加ボタン */}
+      {onAddClick && (
+        <button
+          onClick={onAddClick}
+          className="mt-3 w-full py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+        >
+          + この日に予定を追加
+        </button>
       )}
     </div>
   );

@@ -1,17 +1,28 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { PerformanceWithActs } from "@/lib/db/performances";
+import { ActRow } from "@/lib/utils/acts";
 import { MonthView } from "@/components/calendar/MonthView";
 import { PerformancePopup } from "@/components/calendar/PerformancePopup";
+import { InlinePerformanceForm } from "@/components/calendar/InlinePerformanceForm";
 
 type CalendarClientProps = {
   performances: PerformanceWithActs[];
+  myActs: ActRow[];
+  userId: string;
 };
 
-export default function CalendarClient({ performances }: CalendarClientProps) {
+export default function CalendarClient({
+  performances,
+  myActs,
+  userId,
+}: CalendarClientProps) {
+  const router = useRouter();
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   // パフォーマンスを日付でグルーピング
   const performancesByDate = useMemo(() => {
@@ -32,6 +43,35 @@ export default function CalendarClient({ performances }: CalendarClientProps) {
       return newDate;
     });
     setSelectedDate(null);
+    setShowAddForm(false);
+  };
+
+  // 日付クリック時の処理
+  const handleDateClick = (date: string) => {
+    setSelectedDate(date);
+    // 予定がない日はフォームを表示、ある日はポップアップを表示
+    const hasPerformances = performancesByDate[date]?.length > 0;
+    setShowAddForm(!hasPerformances);
+  };
+
+  // フォームから追加ボタンをクリック
+  const handleShowAddForm = () => {
+    setShowAddForm(true);
+  };
+
+  // 保存完了時
+  const handleSaved = () => {
+    setShowAddForm(false);
+    setSelectedDate(null);
+    router.refresh();
+  };
+
+  // キャンセル時
+  const handleCancel = () => {
+    setShowAddForm(false);
+    if (!performancesByDate[selectedDate || ""]?.length) {
+      setSelectedDate(null);
+    }
   };
 
   const year = currentMonth.getFullYear();
@@ -64,15 +104,29 @@ export default function CalendarClient({ performances }: CalendarClientProps) {
         month={month}
         performancesByDate={performancesByDate}
         selectedDate={selectedDate}
-        onDateClick={setSelectedDate}
+        onDateClick={handleDateClick}
       />
 
-      {/* 選択日のパフォーマンス一覧 */}
-      {selectedDate && performancesByDate[selectedDate] && (
-        <PerformancePopup
+      {/* 選択日のパフォーマンス一覧（予定がある日で、フォーム非表示時） */}
+      {selectedDate &&
+        performancesByDate[selectedDate]?.length > 0 &&
+        !showAddForm && (
+          <PerformancePopup
+            date={selectedDate}
+            performances={performancesByDate[selectedDate]}
+            onClose={() => setSelectedDate(null)}
+            onAddClick={handleShowAddForm}
+          />
+        )}
+
+      {/* インライン予定追加フォーム */}
+      {selectedDate && showAddForm && (
+        <InlinePerformanceForm
           date={selectedDate}
-          performances={performancesByDate[selectedDate]}
-          onClose={() => setSelectedDate(null)}
+          myActs={myActs}
+          userId={userId}
+          onSaved={handleSaved}
+          onCancel={handleCancel}
         />
       )}
     </div>

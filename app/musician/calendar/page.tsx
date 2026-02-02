@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { getPerformancesInRangeDb } from "@/lib/db/performances";
+import { getMyActs } from "@/lib/api/acts";
 import { toYmdLocal } from "@/lib/utils/date";
 import CalendarClient from "./CalendarClient";
 
@@ -17,8 +18,17 @@ export default async function CalendarPage() {
     new Date(today.getFullYear(), today.getMonth() + 3, 0)
   );
 
-  // パフォーマンスデータ取得
-  const performances = await getPerformancesInRangeDb({ startDate, endDate });
+  // パフォーマンスデータと出演名義を取得
+  const [performances, myActs] = await Promise.all([
+    getPerformancesInRangeDb({ startDate, endDate }),
+    getMyActs(),
+  ]);
 
-  return <CalendarClient performances={performances} />;
+  return (
+    <CalendarClient
+      performances={performances}
+      myActs={myActs}
+      userId={user.id}
+    />
+  );
 }
