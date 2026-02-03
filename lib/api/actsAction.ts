@@ -1,7 +1,7 @@
 "use server"
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { uploadActPhotoDb, deletePhotoDataAndStorageDb, createActInviteDb, deleteActByIdDb, ensureMyDefaultActDb, insertActDb, updateActDb, updateActMemberAdminDb, removeActMemberDb } from "../db/acts";
+import { uploadActPhotoDb, deletePhotoDataAndStorageDb, createActInviteDb, softDeleteActDb, ensureMyDefaultActDb, insertActDb, updateActDb, updateActMemberAdminDb, removeActMemberDb } from "../db/acts";
 import { ActRow } from "../utils/acts";
 import { BookingWithDetails } from "../utils/bookings";
 
@@ -21,8 +21,11 @@ export async function createActInvite(params: {
 }): Promise<any> {
   return await createActInviteDb(params);
 }
+/**
+ * アクトを論理削除する（関連データのクリーンアップ含む）
+ */
 export async function deleteActById(actId: string) {
-  await deleteActByIdDb(actId);
+  await softDeleteActDb(actId);
 }
 
 export async function serverRedirectTo(path: string) {

@@ -136,6 +136,7 @@ export async function getActByIdDb(actId: string): Promise<ActRow | null> {
     .from("acts")
     .select("*")
     .eq("id", actId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) throw error;
@@ -185,11 +186,27 @@ export async function deleteActByIdDb(actId: string) {
   if (error) throw error;
 }
 
+/**
+ * アクトを論理削除する
+ * - offers: statusをcanceledに更新
+ * - bookings: 物理削除
+ * - musician_performances (event_id無し): 物理削除（関連テーブル含む）
+ * - act_songs, act_members, act_invites等: 物理削除
+ * - acts: deleted_atを設定（論理削除）
+ */
+export async function softDeleteActDb(actId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("soft_delete_act", { p_act_id: actId });
+
+  if (error) throw error;
+}
+
 export async function getAllActsDb(): Promise<ActRow[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("acts")
     .select("*")
+    .is("deleted_at", null)
     .order("name", { ascending: true });
 
   if (error) throw error;
