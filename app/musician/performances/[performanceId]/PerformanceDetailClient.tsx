@@ -89,6 +89,7 @@ export default function PerformanceDetailClient(props: {
 
   const [newMessage, setNewMessage] = useState("");
   const [newMessageSource, setNewMessageSource] = useState("LINE");
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const titleLine = useMemo(() => {
     const venue = performance.venue_name ? ` @ ${performance.venue_name}` : "";
@@ -109,6 +110,62 @@ export default function PerformanceDetailClient(props: {
       publicUrl: null, // 将来「公開ページURL」ができたら入れる
     });
   }, [performance, act, event, details, props.attachments]);
+
+  // 時刻文字列("HH:MM")を分に変換
+  const timeToMinutes = (time: string | null): number | null => {
+    if (!time) return null;
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  // 日跨ぎを考慮した時刻比較
+  // 翌日と解釈するのは 0:00〜6:00（0〜360分）の範囲のみ（オールナイト対応）
+  const adjustForOvernight = (current: number, prev: number): number => {
+    const isEarlyMorning = current >= 0 && current <= 360; // 0:00〜6:00
+    if (current < prev && isEarlyMorning) {
+      return current + 1440; // 翌日として扱う
+    }
+    return current; // それ以外はそのまま（エラーになる可能性あり）
+  };
+
+  // バリデーションを実行し、エラーメッセージの配列を返す
+  const validateTimes = (): string[] => {
+    const errors: string[] = [];
+
+    const loadInMin = timeToMinutes(details.load_in_time);
+    const openMin = timeToMinutes(performance.open_time);
+    const startMin = timeToMinutes(performance.start_time);
+    const setMinutes = details.set_minutes;
+
+    // 持ち時間のチェック（1〜480分）
+    if (setMinutes !== null && setMinutes !== undefined) {
+      if (setMinutes < 1) {
+        errors.push("持ち時間は1分以上にしてください");
+      } else if (setMinutes > 480) {
+        errors.push("持ち時間は480分（8時間）以内にしてください");
+      }
+    }
+
+    // 入り時間 <= 開場
+    if (loadInMin !== null && openMin !== null) {
+      // 日跨ぎ考慮：入り→開場の順で、開場が小さければ翌日
+      const adjustedOpen = adjustForOvernight(openMin, loadInMin);
+      if (loadInMin > adjustedOpen) {
+        errors.push("入り時間は開場時間より前にしてください");
+      }
+    }
+
+    // 開場 <= 開演
+    if (openMin !== null && startMin !== null) {
+      // 日跨ぎ考慮：開場→開演の順で、開演が小さければ翌日
+      const adjustedStart = adjustForOvernight(startMin, openMin);
+      if (openMin > adjustedStart) {
+        errors.push("開演時間は、開場時間以降にしてください");
+      }
+    }
+
+    return errors;
+  };
 
   const copyToClipboard = async (text: string) => {
     // iOS Safari でもなるべく堅牢に
@@ -140,6 +197,13 @@ export default function PerformanceDetailClient(props: {
   };
 
   const saveDetails = async () => {
+    // バリデーション実行
+    const errors = validateTimes();
+    setValidationErrors(errors);
+    if (errors.length > 0) {
+      return; // エラーがあれば保存しない
+    }
+
     setSavingDetails(true);
     try {
       await savePerformanceDetailsFullAction({
@@ -440,6 +504,14 @@ export default function PerformanceDetailClient(props: {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
+                        {/* バリデーションエラー表示 */}
+                        {validationErrors.length > 0 && (
+                            <div className="col-span-2 rounded bg-red-50 border border-red-200 px-3 py-2">
+                                {validationErrors.map((error, index) => (
+                                    <p key={index} className="text-xs text-red-600">{error}</p>
+                                ))}
+                            </div>
+                        )}
                         <button
                             type="button"
                             onClick={saveDetails}
