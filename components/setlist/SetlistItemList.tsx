@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { SetlistItemView } from "@/lib/utils/setlist";
 import {
@@ -17,18 +17,32 @@ type Props = {
 
 export function SetlistItemList({ performanceId, setlistId, items }: Props) {
   const router = useRouter();
+  // ローカルstateでitemsを管理（楽観的更新のため）
+  const [localItems, setLocalItems] = useState<SetlistItemView[]>(items);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
   const [memoText, setMemoText] = useState("");
 
+  // propsが変わったらローカルstateを更新
+  useEffect(() => {
+    setLocalItems(items);
+  }, [items]);
+
   const handleDelete = async (itemId: string) => {
     if (!confirm("この曲を削除しますか？")) return;
     setDeletingId(itemId);
+
+    // 楽観的更新：即座にUIから削除
+    const previousItems = localItems;
+    setLocalItems((prev) => prev.filter((i) => i.item_id !== itemId));
+
     try {
       await deleteSetlistItemAction({ itemId, performanceId });
       router.refresh();
     } catch (e: any) {
+      // エラー時はロールバック
+      setLocalItems(previousItems);
       alert(e?.message ?? "削除に失敗しました");
     } finally {
       setDeletingId(null);
@@ -36,18 +50,22 @@ export function SetlistItemList({ performanceId, setlistId, items }: Props) {
   };
 
   const handleMove = async (itemId: string, direction: "up" | "down") => {
-    const currentIndex = items.findIndex((i) => i.item_id === itemId);
+    const currentIndex = localItems.findIndex((i) => i.item_id === itemId);
     if (currentIndex === -1) return;
 
     const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex < 0 || targetIndex >= items.length) return;
+    if (targetIndex < 0 || targetIndex >= localItems.length) return;
 
     // Create new order
-    const newItems = [...items];
+    const newItems = [...localItems];
     const [removed] = newItems.splice(currentIndex, 1);
     newItems.splice(targetIndex, 0, removed);
 
     const orderedItemIds = newItems.map((i) => i.item_id);
+
+    // 楽観的更新
+    const previousItems = localItems;
+    setLocalItems(newItems);
 
     setMovingId(itemId);
     try {
@@ -58,6 +76,8 @@ export function SetlistItemList({ performanceId, setlistId, items }: Props) {
       });
       router.refresh();
     } catch (e: any) {
+      // エラー時はロールバック
+      setLocalItems(previousItems);
       alert(e?.message ?? "並び替えに失敗しました");
     } finally {
       setMovingId(null);
@@ -88,7 +108,7 @@ export function SetlistItemList({ performanceId, setlistId, items }: Props) {
     setMemoText("");
   };
 
-  if (items.length === 0) {
+  if (localItems.length === 0) {
     return (
       <div className="text-xs text-gray-500 py-2">
         曲がありません。下のフォームから追加してください。
@@ -98,7 +118,7 @@ export function SetlistItemList({ performanceId, setlistId, items }: Props) {
 
   return (
     <div className="space-y-2">
-      {items.map((item, index) => (
+      {localItems.map((item, index) => (
         <div
           key={item.item_id}
           className="flex flex-col gap-1 rounded border p-2 bg-gray-50"
@@ -133,10 +153,10 @@ export function SetlistItemList({ performanceId, setlistId, items }: Props) {
             </button>
             <button
               onClick={() => handleMove(item.item_id, "down")}
-              disabled={index === items.length - 1 || movingId === item.item_id}
+              disabled={index === localItems.length - 1 || movingId === item.item_id}
               className={[
                 "px-1.5 py-0.5 text-xs rounded",
-                index === items.length - 1
+                index === localItems.length - 1
                   ? "text-gray-300 cursor-not-allowed"
                   : "text-gray-600 hover:bg-gray-200",
               ].join(" ")}
