@@ -134,46 +134,27 @@ export default function MusicianOrganizedEventDetailClient({ userId,
       return;
     }
 
-    setInviting(true);
-
-    // 1. 自分が企画したイベントかつ指定IDのものを取得
-    const data = await getMyEvents();
-    const eventRow = data.find((e) => e.id === event.id);
-    if (!eventRow) {
-      setError("このイベントは見つからないか、あなたの企画ではありません。");
-      return;
-    }
-    // 2. event_acts から accepted の出演名義を取得
-    setInviteError(null);
-
-    if (!inviteActId) {
-      setInviteError("招待するミュージシャン（名義）を選択してください。");
+    // すでにこのイベントに紐づく booking がないか簡易チェック
+    const existing = eventBookings.find(b => b.act_id === inviteActId);
+    if (existing) {
+      setInviteError("このミュージシャンはすでにこのイベントに紐づいています。");
       return;
     }
 
     setInviting(true);
     try {
-      // すでにこのイベントに紐づく booking がないか簡易チェック
-      const existing = eventBookings.find(b => b.act_id === inviteActId);
-
-      if (existing) {
-        setInviteError("このミュージシャンはすでにこのイベントに紐づいています。");
-        return;
-      }
-
-      // 招待も応募もひとまず pending として venue に流す
-      eventActs.map(a =>
-        createOfferAndInboxPerformance({ eventId: event.id, actId: a.id })
-      );
+      // 選択されたミュージシャンに招待を送る
+      await createOfferAndInboxPerformance({ eventId: event.id, actId: inviteActId });
 
       setInviteActId("");
       setInviteMessage("");
+      router.refresh();
     } catch (e: any) {
       console.error(e);
       setInviteError(e.message ?? "招待の作成に失敗しました。");
     } finally {
       setInviting(false);
-    };
+    }
   }
 
 
