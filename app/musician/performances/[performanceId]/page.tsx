@@ -9,6 +9,7 @@ import { getActById } from "@/lib/api/acts";
 import { getDetailsForPerformance, getDetailsMapForPerformance, getDetailsMapForPerformances, getMyPerformanceById, getPerformanceAttachments, getPerformanceMessages } from "@/lib/api/performances";
 import { getSetlistByPerformanceId, getSetlistItems } from "@/lib/api/setlistsAction";
 import { getSongsByActIdsDb } from "@/lib/db/songs";
+import { getEventAttachmentsDb } from "@/lib/db/eventAttachments";
 
 export default async function PerformanceDetailPage({ params }: {
   params: { performanceId: string }
@@ -63,6 +64,11 @@ export default async function PerformanceDetailPage({ params }: {
   const setlistItems = setlist ? await getSetlistItems(setlist.id) : [];
   const actSongs = perf.act_id ? await getSongsByActIdsDb([perf.act_id]) : [];
 
+  // イベントフライヤー（event_idがあれば取得）
+  const eventAttachments = perf.event_id
+    ? await getEventAttachmentsDb({ eventId: perf.event_id })
+    : [];
+
   return (
     <PerformanceDetailClient
       performanceId={performanceId}
@@ -79,6 +85,7 @@ export default async function PerformanceDetailPage({ params }: {
       setlist={setlist}
       setlistItems={setlistItems}
       actSongs={actSongs}
+      eventAttachments={eventAttachments}
     />
   );
 }

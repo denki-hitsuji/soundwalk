@@ -20,9 +20,12 @@ import { BookingRow } from "@/lib/utils/bookings";
 import { EventWithVenue } from "@/lib/utils/events";
 import { createBooking, createOfferAndInboxPerformance, updateBookingStatus } from "@/lib/api/bookingsAction";
 import { BookingCard } from "./BookingCard";
+import { FlyerSection } from "@/components/flyers/FlyerSection";
+import { uploadEventFlyerAction, deleteEventAttachmentAction } from "@/lib/api/eventAttachmentsAction";
+import { EventAttachmentRow, FlyerItem } from "@/lib/utils/eventAttachments";
 
 type Props = {
-  userId: string; 
+  userId: string;
   // イベント情報（会場情報付き)
   event: EventWithVenue;
   // 決定済み出演者（event_acts.status = accepted）
@@ -31,9 +34,11 @@ type Props = {
   eventBookings: BookingRow[];
   // オファー可能な全アーティスト
   allActs: ActRow[];
+  // イベントのフライヤー
+  eventAttachments: EventAttachmentRow[];
 };
 export default function MusicianOrganizedEventDetailClient({ userId,
-  event, eventActs , eventBookings, allActs }: Props) {
+  event, eventActs , eventBookings, allActs, eventAttachments }: Props) {
   const router = useRouter();
 
 
@@ -54,6 +59,9 @@ export default function MusicianOrganizedEventDetailClient({ userId,
 
   const [error, setError] = useState<string | null>(null);
 
+  // フライヤー関連
+  const [uploading, setUploading] = useState(false);
+
   // acceptedCount は決定済み（event_acts）から計算
   const acceptedCount = useMemo(() => eventActs.length, [eventActs]);
 
@@ -62,6 +70,58 @@ export default function MusicianOrganizedEventDetailClient({ userId,
 
   const formatTime = (t: string | null | undefined) =>
     t ? t.slice(0, 5) : null;
+
+  // フライヤーをFlyerItem形式に変換
+  const flyers: FlyerItem[] = useMemo(() =>
+    eventAttachments.map((a) => ({
+      id: a.id,
+      file_url: a.file_url,
+      created_at: a.created_at,
+      source: "event" as const,
+    })),
+    [eventAttachments]
+  );
+
+  // フライヤーアップロード
+  const handleUploadFlyer = async (file: File) => {
+    if (!event) return;
+
+    const MILLION = 1024 * 1024;
+    if (5 * MILLION < file.size) {
+      alert("ファイルサイズが5MBを超えています。");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set("eventId", event.id);
+      fd.set("file", file);
+      await uploadEventFlyerAction(fd);
+      router.refresh();
+    } catch (e: any) {
+      alert(e?.message ?? "アップロードに失敗しました。");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // フライヤー削除
+  const handleDeleteFlyer = async (flyer: FlyerItem) => {
+    if (!event) return;
+    const ok = window.confirm("このフライヤーを削除しますか？");
+    if (!ok) return;
+
+    try {
+      await deleteEventAttachmentAction({
+        eventId: event.id,
+        attachmentId: flyer.id,
+      });
+      router.refresh();
+    } catch (e: any) {
+      alert(e?.message ?? "削除に失敗しました。");
+    }
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -382,6 +442,16 @@ export default function MusicianOrganizedEventDetailClient({ userId,
           )}
         </div>
       </section>
+
+      {/* フライヤー */}
+      <FlyerSection
+        flyers={flyers}
+        canUpload={true}
+        uploading={uploading}
+        onUpload={handleUploadFlyer}
+        onDelete={handleDeleteFlyer}
+        emptyMessage="フライヤーを登録すると、参加ミュージシャンのパフォーマンスページにも表示されます。"
+      />
 
       {/* 出演名義（決定済み） */}
       <section className="border rounded bg-white shadow-sm p-4 space-y-2">

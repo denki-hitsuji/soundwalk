@@ -13,6 +13,8 @@ import type { PerformanceRow } from "@/lib/utils/performance";
 import type { ActRow, AttachmentRow, DetailsRow, MessageRow } from "@/lib/utils/acts";
 import type { SetlistRow, SetlistItemView } from "@/lib/utils/setlist";
 import type { SongRow } from "@/lib/db/songs";
+import type { EventAttachmentRow, FlyerItem } from "@/lib/utils/eventAttachments";
+import { FlyerSection } from "@/components/flyers/FlyerSection";
 
 // ★ server actions
 import {
@@ -43,6 +45,7 @@ export default function PerformanceDetailClient(props: {
   setlist: SetlistRow | null;
   setlistItems: SetlistItemView[];
   actSongs: SongRow[];
+  eventAttachments: EventAttachmentRow[];
 }) {
   const router = useRouter();
 
@@ -268,6 +271,41 @@ export default function PerformanceDetailClient(props: {
       router.refresh();
     } catch (e: any) {
       alert(e?.message ?? "削除に失敗しました。");
+    }
+  };
+
+  // フライヤーを統合（performance + event）
+  const allFlyers: FlyerItem[] = useMemo(() => {
+    const perfFlyers: FlyerItem[] = props.attachments.map((a) => ({
+      id: a.id,
+      file_url: a.file_url,
+      created_at: a.created_at,
+      source: "performance" as const,
+    }));
+
+    const eventFlyers: FlyerItem[] = props.eventAttachments.map((a) => ({
+      id: a.id,
+      file_url: a.file_url,
+      created_at: a.created_at,
+      source: "event" as const,
+    }));
+
+    // 作成日時の新しい順にソート
+    return [...perfFlyers, ...eventFlyers].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [props.attachments, props.eventAttachments]);
+
+  // FlyerSection用の削除ハンドラ
+  const handleDeleteFlyer = async (flyer: FlyerItem) => {
+    if (flyer.source === "event") {
+      alert("イベントのフライヤーは企画ページから削除できます。");
+      return;
+    }
+    // performance添付の場合
+    const att = props.attachments.find((a) => a.id === flyer.id);
+    if (att) {
+      await deleteAttachment(att);
     }
   };
 
@@ -623,52 +661,14 @@ export default function PerformanceDetailClient(props: {
             />
 
             {/* flyer */}
-            <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">フライヤー</h2>
-                    <label className="inline-flex items-center rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white cursor-pointer">
-                        {uploading ? "アップロード中…" : "画像を追加"}
-                        <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) void onUploadFlyer(file);
-                                e.currentTarget.value = "";
-                            }}
-                            disabled={uploading}
-                        />
-                    </label>
-                </div>
-
-                {props.attachments.length === 0 ? (
-                    <p className="text-xs text-gray-600">ここにフライヤー画像を入れておくと探す回数が激減します。</p>
-                ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                        {props.attachments.map((a) => (
-                            <div key={a.id} className="rounded border overflow-hidden">
-                                <a href={a.file_url} target="_blank" rel="noreferrer">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={a.file_url} alt="flyer" className="w-full h-40 object-cover" />
-                                </a>
-                                <div className="p-2 flex items-center justify-between">
-                                    <span className="text-[11px] text-gray-500">
-                                        追加: {new Date(a.created_at).toLocaleDateString()}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => void deleteAttachment(a)}
-                                        className="text-[11px] text-red-600 hover:underline"
-                                    >
-                                        削除
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section>
+            <FlyerSection
+              flyers={allFlyers}
+              canUpload={!!performance.act_id}
+              uploading={uploading}
+              onUpload={onUploadFlyer}
+              onDelete={handleDeleteFlyer}
+              emptyMessage="フライヤー画像を登録しておくと探す手間が省けます。"
+            />
 
             {/* messages */}
             <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">

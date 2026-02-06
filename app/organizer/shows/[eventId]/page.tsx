@@ -1,12 +1,10 @@
-// app/events/[eventId]/page.tsx
+// app/organizer/shows/[showId]/page.tsx
 import { getEventBookings, getPublicEventForBooking } from "@/lib/api/venues";
-import { BookingForm } from "../../../../components/acts/BookingForm";
 import { getCurrentUser } from "@/lib/auth/session.server";
-import { ensureMyDefaultAct } from "@/lib/api/actsAction";
 import OrganizedEventDetailClient from "@/components/organizer/OrganizedEventDetailClient";
 import { getEventActs, getEventById } from "@/lib/api/events";
-import { kMaxLength } from "buffer";
 import { getAllActs } from "@/lib/api/acts";
+import { getEventAttachmentsDb } from "@/lib/db/eventAttachments";
 
 export const dynamic = "force-dynamic"; // ★ビルド時の静的評価を避ける
 export default async function PublicEventPage({ params }: { params: Promise<{ eventId : string }> }) {
@@ -39,15 +37,18 @@ export default async function PublicEventPage({ params }: { params: Promise<{ ev
     throw new Error("Couldn't get event acts");
   }
 
+  // フライヤー取得
+  const eventAttachments = await getEventAttachmentsDb({ eventId });
+
   return (
     <main className="space-y-6">
-      {/* ブッキングフォーム（クライアント側で書き込み） */}
       <OrganizedEventDetailClient
         userId={user?.id}
         event={eventWithVenue}
         eventBookings={eventBookings}
         eventActs={actsForTheEvent}
         allActs={allActs}
+        eventAttachments={eventAttachments}
       />
     </main>
   );
