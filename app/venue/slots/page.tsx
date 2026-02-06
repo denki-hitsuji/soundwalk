@@ -1,4 +1,4 @@
-// app/venue/events/page.tsx
+// app/venue/slots/page.tsx
 "use server"
 import { EventActRow, EventRow, EventWithAct, EventWithCount } from "@/lib/utils/events";
 import { getEventActs, getMyEvents } from "@/lib/api/events";
@@ -34,9 +34,9 @@ export default async function VenueEventsPage() {
 
   return (
     <main className="p-4 space-y-4">
-      <h1 className="text-xl font-bold mb-2">イベント一覧</h1>
+      <h1 className="text-xl font-bold mb-2">スロット一覧</h1>
       <p className="text-sm text-gray-600">
-        登録済みのイベント枠と、決定済みの組数を一覧で確認できます。
+        登録済みの開催枠と、決定済みの組数を一覧で確認できます。
       </p>
 
       {/* {error && <p className="text-sm text-red-500">{error}</p>} */}
@@ -49,7 +49,7 @@ export default async function VenueEventsPage() {
         {withCount.map((event) => (
           <li key={event.id}>
             <Link
-              href={`/venue/events/${event.id}`}
+              href={`/venue/slots/${event.id}`}
               className="block border rounded p-3 bg-white shadow-sm hover:bg-gray-50 transition"
             >
               <div className="flex items-center justify-between">

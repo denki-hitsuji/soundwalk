@@ -1,4 +1,4 @@
-// app/events/[eventId]/page.tsx
+// app/shows/[showId]/page.tsx
 import { getPublicEventForBooking } from "@/lib/api/venues";
 import { BookingForm } from "./BookingForm";
 import { getCurrentUser } from "@/lib/auth/session.server";

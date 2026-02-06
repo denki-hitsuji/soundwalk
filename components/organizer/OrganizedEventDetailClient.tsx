@@ -1,4 +1,4 @@
-// app/organizer/events/[eventId]/page.tsx
+// components/organizer/OrganizedEventDetailClient.tsx (used in /organizer/shows/[showId])
 "use client";
 
 import { useState, useMemo } from "react";
@@ -275,10 +275,10 @@ export default function MusicianOrganizedEventDetailClient({ userId,
           {error ?? "イベントが見つかりませんでした。"}
         </p>
         <Link
-          href="/organizer/events"
+          href="/organizer/shows"
           className="inline-flex text-xs text-blue-600 underline"
         >
-          自分が企画したイベント一覧に戻る
+          自分が企画したショー一覧に戻る
         </Link>
       </main>
     );
@@ -325,7 +325,7 @@ export default function MusicianOrganizedEventDetailClient({ userId,
             )}
           </p>
           <Link
-            href={`/organizer/events/${event.id}/edit`}
+            href={`/organizer/shows/${event.id}/edit`}
             className="text-xs rounded border px-3 py-1.5 hover:bg-gray-50"
           >
             編集
@@ -335,7 +335,7 @@ export default function MusicianOrganizedEventDetailClient({ userId,
 
         <div className="flex flex-col items-end gap-2">
           <Link
-            href="/organizer/events"
+            href="/organizer/shows"
             className="text-xs text-blue-600 underline"
           >
             一覧に戻る

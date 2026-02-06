@@ -92,10 +92,10 @@ export default function VenueDashboardClient({userId, venues }: Props) {
                   ミュージシャンを募集したりできるようにします。
                 </p>
                 <Link
-                  href="/venue/events"
+                  href="/venue/slots"
                   className="inline-flex items-center rounded bg-emerald-600 px-3 py-1.5 text-[11px] font-medium text-white"
                 >
-                  既存のイベント枠を管理する
+                  既存のスロットを管理する
                 </Link>
               </div>
             </div>

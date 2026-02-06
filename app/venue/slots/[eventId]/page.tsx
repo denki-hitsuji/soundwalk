@@ -1,4 +1,4 @@
-// app/venue/events/[eventId]/page.tsx
+// app/venue/slots/[slotId]/page.tsx
 import { notFound } from "next/navigation";
 import { EventPerformancesPanel } from "@/components/venue/EventPerformancesPanel";
 import { getCurrentUser } from "@/lib/auth/session.server";

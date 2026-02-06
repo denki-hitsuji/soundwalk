@@ -1,4 +1,4 @@
-// app/venue/events/[eventId]/BookingApprovalList.tsx
+// app/venue/slots/[slotId]/BookingApprovalList.tsx
 "use client";
 
 import { useEffect, useState, useMemo } from "react";

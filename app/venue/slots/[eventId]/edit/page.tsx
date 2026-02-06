@@ -1,4 +1,4 @@
-// app/venue/events/[eventId]/edit/page.tsx
+// app/venue/slots/[slotId]/edit/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -120,7 +120,7 @@ export default function EventEditPage() {
         conditions: null
       });
 
-      router.push(`/venue/events/${eventId}`);
+      router.push(`/venue/slots/${eventId}`);
       router.refresh();
     } catch (e: any) {
       console.error(e);
@@ -151,10 +151,10 @@ export default function EventEditPage() {
           </p>
         )}
         <Link
-          href="/venue/events"
+          href="/venue/slots"
           className="mt-3 inline-flex text-xs text-blue-600 underline"
         >
-          イベント一覧に戻る
+          スロット一覧に戻る
         </Link>
       </main>
     );
@@ -170,7 +170,7 @@ export default function EventEditPage() {
           </p>
         </div>
         <Link
-          href={`/venue/events/${eventId}`}
+          href={`/venue/slots/${eventId}`}
           className="text-xs text-blue-600 underline"
         >
           詳細に戻る
@@ -259,7 +259,7 @@ export default function EventEditPage() {
 
         <div className="flex justify-end gap-2">
           <Link
-            href={`/venue/events/${eventId}`}
+            href={`/venue/slots/${eventId}`}
             className="px-3 py-1.5 border rounded text-xs"
           >
             キャンセル

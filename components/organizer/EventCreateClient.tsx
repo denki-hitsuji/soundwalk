@@ -176,7 +176,7 @@ export default function NewEventPage() {
       const newId = data?.id as string;
 
       // ✅ typo 修正: eventss -> events
-      router.push(`/organizer/events/${newId}`);
+      router.push(`/organizer/shows/${newId}`);
       // ✅ refresh は競合しやすいので基本しない
     } catch (e: any) {
       console.error(e);
@@ -195,7 +195,7 @@ export default function NewEventPage() {
             会場・日付・時間・料金・条件を入力して、イベントの企画を作成します。
           </p>
         </div>
-        <Link href="/organizer/events" className="text-xs text-blue-600 underline">
+        <Link href="/organizer/shows" className="text-xs text-blue-600 underline">
           企画一覧へ戻る
         </Link>
       </div>
@@ -340,7 +340,7 @@ export default function NewEventPage() {
         )}
 
         <div className="flex justify-end gap-2">
-          <Link href="/organizer/events" className="px-3 py-1.5 border rounded text-xs">
+          <Link href="/organizer/shows" className="px-3 py-1.5 border rounded text-xs">
             キャンセル
           </Link>
 

@@ -1,20 +1,20 @@
-// app/musician/open_events/page.tsx
+// app/musician/open-calls/page.tsx
 import { getRecruitingEvents } from "@/lib/db/venues";
 
-export default async function OpenEventsPage() {
+export default async function OpenCallsPage() {
   const events = await getRecruitingEvents();
 
   return (
     <main className="space-y-4">
-      <h1 className="text-xl font-bold mb-4">募集中のイベント一覧</h1>
+      <h1 className="text-xl font-bold mb-4">公募中のショー一覧</h1>
 
       {events.length === 0 && (
-        <p className="text-sm text-gray-500">現在募集中のイベントはありません。</p>
+        <p className="text-sm text-gray-500">現在公募中のショーはありません。</p>
       )}
 
       <ul className="space-y-2">
         {events.map((event) => (
-          <a  href={`/events/${event.id}`}> 
+          <a  href={`/shows/${event.id}`}> 
           <li
             key={event.id}
             className="border rounded p-3 flex items-center justify-between"

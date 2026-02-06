@@ -49,7 +49,7 @@ export default function MusicianOrganizedEventsPage({ userId, events, eventActs 
           </p>
         </div>
         <Link
-          href="/organizer/events/new"
+          href="/organizer/shows/new"
           className="shrink-0 inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white"
         >
           + 新規登録
@@ -79,7 +79,7 @@ export default function MusicianOrganizedEventsPage({ userId, events, eventActs 
           return (
             <li key={event.id}>
               <Link
-                href={`/organizer/events/${event.id}`}
+                href={`/organizer/shows/${event.id}`}
                 className="block border rounded p-3 bg-white shadow-sm hover:bg-gray-50 transition"
               >
                 <div className="flex items-center justify-between">

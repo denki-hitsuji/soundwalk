@@ -1,7 +1,7 @@
-// app/events/layout.tsx
+// app/shows/layout.tsx
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 
-export default function EventsLayout({ children }: { children: ReactNode }) {
+export default function ShowsLayout({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
 }

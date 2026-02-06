@@ -13,7 +13,7 @@ import { PerformanceRow, toPlainPerformance } from "../utils/performance";
  */
 /**
  * 店舗側：自分のイベントを 1件取得
- * EventOffersPage (/venue/events/[eventId]) から使用
+ * EventOffersPage (/venue/slots/[slotId]) から使用
  */
 export async function getEventByIdDb(eventId: string): Promise<EventWithVenue | null> {
   const supabase = await createSupabaseServerClient();
