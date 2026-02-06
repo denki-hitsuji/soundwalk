@@ -12,8 +12,10 @@ type Props = {
   uploading: boolean;
   // アップロードハンドラ
   onUpload: (file: File) => Promise<void>;
-  // 削除ハンドラ（performanceフライヤーのみ削除可能）
+  // 削除ハンドラ
   onDelete?: (flyer: FlyerItem) => Promise<void>;
+  // 全てのフライヤーを削除可能にするか（企画ページ用）
+  canDeleteAll?: boolean;
   // 空の時のメッセージ
   emptyMessage?: string;
   // セクションタイトル
@@ -26,6 +28,7 @@ export function FlyerSection({
   uploading,
   onUpload,
   onDelete,
+  canDeleteAll = false,
   emptyMessage = "フライヤーはまだ登録されていません。",
   title = "フライヤー",
 }: Props) {
@@ -78,7 +81,7 @@ export function FlyerSection({
                     </span>
                   )}
                 </div>
-                {onDelete && f.source === "performance" && (
+                {onDelete && (canDeleteAll || f.source === "performance") && (
                   <button
                     type="button"
                     onClick={() => void onDelete(f)}

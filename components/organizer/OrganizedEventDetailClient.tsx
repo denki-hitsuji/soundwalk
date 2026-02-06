@@ -450,6 +450,7 @@ export default function MusicianOrganizedEventDetailClient({ userId,
         uploading={uploading}
         onUpload={handleUploadFlyer}
         onDelete={handleDeleteFlyer}
+        canDeleteAll={true}
         emptyMessage="フライヤーを登録すると、参加ミュージシャンのパフォーマンスページにも表示されます。"
       />
 
