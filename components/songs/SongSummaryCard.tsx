@@ -76,7 +76,7 @@ function ActSongsCard({
         <ul className="space-y-1 text-sm min-w-0">
           {songs.map((s) => (
             <li key={s.id} className="flex items-start gap-2">
-              <Link href="/musician/songs" className="min-w-0">
+              <Link href={`/musician/songs/${s.id}`} className="min-w-0 hover:underline">
                 <span className="text-gray-400">♪</span>{" "}
                 <span className="truncate">{s.title}</span>
               </Link>

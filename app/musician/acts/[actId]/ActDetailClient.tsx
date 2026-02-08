@@ -184,9 +184,9 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
               {songs.map((s) => (
                 <li key={s.id}>
                   <Link
-                    href={`/musician/songs?actId=${act.id}`}
+                    href={`/musician/songs/${s.id}`}
                     className="block px-2 py-2 text-sm hover:bg-gray-50"
-                    title="曲ページへ（この名義で絞り込み）"
+                    title={s.title}
                   >
                     {s.title}
                   </Link>
