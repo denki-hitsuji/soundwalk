@@ -38,7 +38,9 @@ export default function SongAssetsBox({ actSongId }: { actSongId: string }) {
       "image/png",
       "image/webp",
       "audio/mpeg",
-      ".pdf,.jpg,.jpeg,.png,.webp,.mp3",
+      "audio/mp4",
+      "audio/x-m4a",
+      ".pdf,.jpg,.jpeg,.png,.webp,.mp3,.m4a",
     ].join(","),
     [],
   );
@@ -91,6 +93,13 @@ const kindLabel: Record<string,string> = {
       setErr(msg);
       return;
     }
+
+    // m4aファイルの警告
+    if (f.name.toLowerCase().endsWith(".m4a")) {
+      setErr("⚠️ m4aファイルはAndroid端末で再生できない可能性があります。mp3への変換を推奨します。");
+      // ただしファイルは選択状態にする
+    }
+
     setFile(f);
   };
 
@@ -139,7 +148,7 @@ const kindLabel: Record<string,string> = {
         <div>
           <h2 className="text-sm font-semibold">譜面・音源（添付）</h2>
           <p className="text-[11px] text-gray-600 mt-1">
-            最大 {fmtBytes(SONG_ASSET_MAX_BYTES)} / 動画NG / 音声はmp3のみ
+            最大 {fmtBytes(SONG_ASSET_MAX_BYTES)} / 動画NG / 音声はmp3推奨（m4aも可）
           </p>
         </div>
       </div>
@@ -196,7 +205,7 @@ const kindLabel: Record<string,string> = {
         <ul className="space-y-2">
           {assets.map((a) => {
             const url = signedMap[a.id];
-            const isAudio = a.mime_type === "audio/mpeg";
+            const isAudio = a.mime_type.startsWith("audio/");
             const isImage = a.mime_type.startsWith("image/");
             const isPdf = a.mime_type === "application/pdf";
 
@@ -223,7 +232,7 @@ const kindLabel: Record<string,string> = {
 
                         {isAudio && (
                           <audio controls preload="none" className="w-full">
-                            <source src={url} type="audio/mpeg" />
+                            <source src={url} type={a.mime_type} />
                           </audio>
                         )}
 

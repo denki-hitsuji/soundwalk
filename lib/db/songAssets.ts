@@ -1,7 +1,17 @@
 // lib/songAssets.ts
 
-import { createSupabaseServerClient } from "@/lib/supabase/server"; 
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SONG_ASSET_MAX_BYTES, ALLOWED_MIME_TYPES } from "../utils/songAssets";
+
+// MIMEタイプの正規化（Supabase Storage対応）
+function normalizeMimeType(file: File): string {
+  // audio/x-m4a は Supabase Storage でサポートされていないため audio/mp4 に正規化
+  if (file.type === "audio/x-m4a" || (file.type === "" && file.name.toLowerCase().endsWith(".m4a"))) {
+    return "audio/mp4";
+  }
+  return file.type;
+}
+
 export type SongAssetRow = {
   id: string;
   act_song_id: string;
@@ -22,7 +32,10 @@ const BUCKET = "song-assets";
 export async function validateSongAssetFile({ file }: { file: File; }): Promise< string | null> {
   if (!file) return "ファイルが選択されていません。";
   if (file.size > SONG_ASSET_MAX_BYTES) return "ファイルサイズが10MBを超えています。";
-  if (!ALLOWED_MIME_TYPES.has(file.type)) {
+
+  // MIMEタイプを正規化してからチェック（m4aファイル対応）
+  const mimeType = normalizeMimeType(file);
+  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
     return `許可されていないファイル形式です: ${file.type || "unknown"}`;
   }
   // 動画をMIMEで弾けないケースにも備える（拡張子でも軽くガード）
@@ -30,8 +43,7 @@ export async function validateSongAssetFile({ file }: { file: File; }): Promise<
   if (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".m4v") || lower.endsWith(".avi")) {
     return "動画ファイルはアップロードできません。";
   }
-  // m4aは今回NG（方針）
-  if (lower.endsWith(".m4a")) return "m4aは共有事故が起きやすいので、mp3でアップしてください。";
+  // m4aは許可（警告はUI側で表示）
   return null;
 }
 
@@ -79,12 +91,21 @@ const supabase = await createSupabaseServerClient();
   const safeName = sanitizeFilename(file.name);
 
   const objectPath = `songs/${actSongId}/${assetId}_${safeName}`;
+  const mimeType = normalizeMimeType(file);
+
+  // MIMEタイプが変更された場合は新しいFileオブジェクトを作成
+  const uploadFile = file.type !== mimeType
+    ? new File([file], file.name, {
+        type: mimeType,
+        lastModified: file.lastModified,
+      })
+    : file;
 
   // 2) Storage upload
   const { error: upErr } = await supabase.storage
     .from(BUCKET)
-    .upload(objectPath, file, {
-      contentType: file.type,
+    .upload(objectPath, uploadFile, {
+      contentType: mimeType,
       upsert: false,
     });
 
@@ -100,7 +121,7 @@ const supabase = await createSupabaseServerClient();
       bucket: BUCKET,
       object_path: objectPath,
       original_filename: file.name,
-      mime_type: file.type,
+      mime_type: mimeType,
       size_bytes: file.size,
       asset_kind: assetKind,
     })

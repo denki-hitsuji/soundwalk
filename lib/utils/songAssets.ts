@@ -1,5 +1,27 @@
 import { supabase } from "../supabase/client";
 
+// UUID生成のpolyfill（crypto.randomUUID非対応環境用）
+function generateUUID(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for environments without crypto.randomUUID
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+// MIMEタイプの正規化（Supabase Storage対応）
+function normalizeMimeType(file: File): string {
+  // audio/x-m4a は Supabase Storage でサポートされていないため audio/mp4 に正規化
+  if (file.type === "audio/x-m4a" || (file.type === "" && file.name.toLowerCase().endsWith(".m4a"))) {
+    return "audio/mp4";
+  }
+  return file.type;
+}
+
 export type SongAssetRow = {
   id: string;
   act_song_id: string;
@@ -52,17 +74,26 @@ export async function uploadSongAsset(params: {
   const uid = u.user?.id;
   if (!uid) throw new Error("ログインが必要です。");
 
-  // 1) まずDB行を作るための asset id を生成（クライアントでUUID生成したいなら crypto.randomUUID）
-  const assetId = crypto.randomUUID();
+  // 1) まずDB行を作るための asset id を生成
+  const assetId = generateUUID();
   const safeName = sanitizeFilename(file.name);
 
   const objectPath = `songs/${actSongId}/${assetId}_${safeName}`;
+  const mimeType = normalizeMimeType(file);
+
+  // MIMEタイプが変更された場合は新しいFileオブジェクトを作成
+  const uploadFile = file.type !== mimeType
+    ? new File([file], file.name, {
+        type: mimeType,
+        lastModified: file.lastModified,
+      })
+    : file;
 
   // 2) Storage upload
   const { error: upErr } = await supabase.storage
     .from(BUCKET)
-    .upload(objectPath, file, {
-      contentType: file.type,
+    .upload(objectPath, uploadFile, {
+      contentType: mimeType,
       upsert: false,
     });
 
@@ -78,7 +109,7 @@ export async function uploadSongAsset(params: {
       bucket: BUCKET,
       object_path: objectPath,
       original_filename: file.name,
-      mime_type: file.type,
+      mime_type: mimeType,
       size_bytes: file.size,
       asset_kind: assetKind,
     })
@@ -111,7 +142,10 @@ export async function deleteSongAsset(asset: SongAssetRow) {
 export async function validateSongAssetFile({ file }: { file: File; }): Promise< string | null> {
   if (!file) return "ファイルが選択されていません。";
   if (file.size > SONG_ASSET_MAX_BYTES) return "ファイルサイズが10MBを超えています。";
-  if (!ALLOWED_MIME_TYPES.has(file.type)) {
+
+  // MIMEタイプを正規化してからチェック（m4aファイル対応）
+  const mimeType = normalizeMimeType(file);
+  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
     return `許可されていないファイル形式です: ${file.type || "unknown"}`;
   }
   // 動画をMIMEで弾けないケースにも備える（拡張子でも軽くガード）
@@ -119,11 +153,10 @@ export async function validateSongAssetFile({ file }: { file: File; }): Promise<
   if (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".m4v") || lower.endsWith(".avi")) {
     return "動画ファイルはアップロードできません。";
   }
-  // m4aは今回NG（方針）
-  if (lower.endsWith(".m4a")) return "m4aは共有事故が起きやすいので、mp3でアップしてください。";
+  // m4aは許可（警告はUI側で表示）
   return null;
 }
-// 方針：10MB、動画NG、whitelist、音声はmp3のみ
+// 方針：10MB、動画NG、whitelist、音声はmp3推奨（m4aも可）
 export const SONG_ASSET_MAX_BYTES = 10 * 1024 * 1024;
 
 export const ALLOWED_MIME_TYPES = new Set<string>([
@@ -132,4 +165,6 @@ export const ALLOWED_MIME_TYPES = new Set<string>([
   "image/png",
   "image/webp",
   "audio/mpeg", // mp3
+  "audio/mp4", // m4a
+  "audio/x-m4a", // m4a (alternative MIME)
 ]);
