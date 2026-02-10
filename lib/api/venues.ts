@@ -2,7 +2,7 @@
 "use server"
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "../auth/session.server";
-import { getAllVenuesDb, getEventBookingsDb, getMyOwnerVenuesDb, getPublicEventForBookingDb, getVenueByIdDb, getVenueEventsWithAcceptedCountDb, upsertMyVenueProfileDb } from "../db/venues";
+import { checkVenueAdminDb, getAllVenuesDb, getEventBookingsDb, getMyOwnerVenuesDb, getPublicEventForBookingDb, getVenueByIdDb, getVenueEventsWithAcceptedCountDb, getVenueProfileByIdDb, updateVenueDb, upsertMyVenueProfileDb } from "../db/venues";
 import { VenueRow } from "../utils/venues";
 export type VolumeLevel = 'quiet' | 'medium' | 'loud';
 
@@ -64,6 +64,10 @@ export async function getVenueEventsWithAcceptedCount(venueId: string) {
 
 export async function getVenueById(venueId: string): Promise<VenueRow | null> {
   return await getVenueByIdDb(venueId);
+}
+
+export async function getVenueProfileById(venueId: string): Promise<VenueProfile | null> {
+  return await getVenueProfileByIdDb(venueId);
 } 
 
 export async function getAllVenues() {
@@ -72,4 +76,36 @@ export async function getAllVenues() {
 
 export async function getMyOwnerVenues() {
   return await getMyOwnerVenuesDb();
+}
+
+/**
+ * 指定されたユーザーが指定された会場の管理者かどうかを確認
+ */
+export async function checkVenueAdmin(venueId: string): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  return await checkVenueAdminDb(venueId, user.id);
+}
+
+/**
+ * 会場情報を更新
+ */
+export async function updateVenue(
+  venueId: string,
+  input: {
+    name: string;
+    address: string;
+    capacity: number | null;
+    volumePreference: VolumeLevel;
+    hasPa: boolean;
+    photoUrl: string;
+  }
+): Promise<VenueProfile> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("ログインが必要です");
+
+  const isAdmin = await checkVenueAdminDb(venueId, user.id);
+  if (!isAdmin) throw new Error("この会場の編集権限がありません");
+
+  return await updateVenueDb(venueId, input);
 }

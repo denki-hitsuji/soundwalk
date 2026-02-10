@@ -82,12 +82,12 @@ export default async function VenueDashboardPage() {
                 <p className="text-[11px] text-gray-600 mb-2">
                   店舗の基本情報や写真・URL などを編集します。
                 </p>
-                <button
+                <Link
+                  href={`/venue/${v.id}/edit`}
                   className="inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white"
-                  disabled
                 >
-                  編集画面（準備中）
-                </button>
+                  編集画面を開く
+                </Link>
               </div>
 
               {/* イベント枠の作成 */}

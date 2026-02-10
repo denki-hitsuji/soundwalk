@@ -355,3 +355,75 @@ export async function getMyOwnerVenuesDb(){
 
   return list;
 }
+
+/**
+ * 会場のプロフィール情報を取得（VenueProfile型で返す）
+ */
+export async function getVenueProfileByIdDb(venueId: string): Promise<VenueProfile | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('venues')
+    .select('*')
+    .eq('id', venueId)
+    .single();
+
+  if (error && error.code === 'PGRST116') {
+    return null;
+  }
+  if (error) throw error;
+
+  return data as VenueProfile;
+}
+
+/**
+ * 指定されたユーザーが指定された会場の管理者かどうかを確認
+ */
+export async function checkVenueAdminDb(venueId: string, userId: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("venue_admins")
+    .select("venue_id")
+    .eq("venue_id", venueId)
+    .eq("profile_id", userId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return !!data;
+}
+
+/**
+ * 会場情報を更新
+ */
+export async function updateVenueDb(
+  venueId: string,
+  input: {
+    name: string;
+    address: string;
+    capacity: number | null;
+    volumePreference: VolumeLevel;
+    hasPa: boolean;
+    photoUrl: string;
+  }
+): Promise<VenueProfile> {
+  const supabase = await createSupabaseServerClient();
+
+  const payload = {
+    name: input.name,
+    address: input.address || null,
+    capacity: input.capacity,
+    volume_preference: input.volumePreference || null,
+    has_pa: input.hasPa,
+    photo_url: input.photoUrl || null,
+  };
+
+  const { data, error } = await supabase
+    .from('venues')
+    .update(payload)
+    .eq('id', venueId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as VenueProfile;
+}
