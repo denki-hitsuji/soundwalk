@@ -93,7 +93,6 @@ export default function SongMemoEditor({ initialText, onSave }: Props) {
   // ★ ここでは「保存＝コミット」まで（DB保存は親で繋ぐ想定）
   const saveEdit = async () => {
     // ここに onSave を繋ぐならここで await onSave(text)
-    console.log("before saveEdit: " + text);
     await onSave(text);
     setCommittedText(text);
     setMode("view");

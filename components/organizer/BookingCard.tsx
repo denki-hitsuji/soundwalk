@@ -72,7 +72,6 @@ export function BookingCard({
     "block p-2 rounded-xl border shadow-sm flex",
     clickable ? "hover:bg-gray-50 cursor-pointer" : "",
   ].join(" ");
-  console.log(`flyer on card: ${JSON.stringify(flyer)}`)
 
   const cardBody = (
     <div className="w-full">

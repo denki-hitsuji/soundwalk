@@ -198,7 +198,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
         )}
       </section>
 
-      {/* SNSシェア（とりあえずコピー） */}
+      {/* SNSシェア */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-gray-800">共有</h2>
 
@@ -324,7 +324,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
       {/* 編集モードに直リンクしたとき権限なしの場合の注意 */}
       {isEdit && !canEdit ? (
         <div className="rounded-lg border bg-white p-3 text-sm text-gray-600">
-          編集権限がありません（閲覧モードで表示しています）。{/* 実際はEditPanel出さずにViewPanelに落としてもOK */}
+          編集権限がありません（閲覧モードで表示しています）。
         </div>
       ) : null}
     </main>

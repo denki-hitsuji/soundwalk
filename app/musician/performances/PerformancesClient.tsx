@@ -16,24 +16,20 @@ type Prop = {
 
 export function PerformancesClient({ userId, performances, flyerByPerformanceId, detailsByPerformanceId, prep}: Prop) {
     // const [prepByPerformanceId, setPrepByPerformanceId ] = useState<PrepMap>({});
-    console.log("PerformancesClient: start");
 
     const prepByPerformanceId = prep;
     const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
     const todayStr = useMemo(() => toYmdLocal(), []);
     const todayDate = useMemo(() => parseYmdLocal(todayStr), [todayStr]);
-    console.log("PerformancesClient: preparing futurePerformances");
     const futurePerformances = useMemo(
         () => performances.filter((p) => p.event_date >= todayStr),
         [performances, todayStr],
     );
-    console.log("PerformancesClient: preparing pastPerformances");
     const pastPerformances = useMemo(
         () => performances.filter((p) => p.event_date < todayStr),
         [performances, todayStr],
     );
 
-    console.log("PerformancesClient: preparing toggle done function");
     const toggleDone = async (performanceId: string, taskKey: string) => {
         const row = prepByPerformanceId[performanceId]?.[taskKey];
         if (!row) return;
@@ -57,7 +53,6 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
         }
     };
 
-    console.log("PerformancesClient: rendering htmls");
     return (
         <div>
             {/* 未来 */}

@@ -21,9 +21,7 @@ export function ActSwitcher() {
       setLoading(false);
       return;
     }
-    console.log("ActSwitcher: load current user", user);
     const list = await getMyActs();
-    console.log("ActSwitcher: loaded acts", list);
     setActs(list);
 
     // もし currentAct が存在するのに、一覧の名前が更新されていたら追随させる（重要）

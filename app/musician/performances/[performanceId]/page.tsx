@@ -15,7 +15,6 @@ export default async function PerformanceDetailPage({ params }: {
   params: { performanceId: string }
 }) {
   const p = await params;
-  console.log(p);
   const performanceId = p.performanceId;
 
   // current user
@@ -51,7 +50,6 @@ export default async function PerformanceDetailPage({ params }: {
 
   // details（無ければnull）
   const details = await getDetailsForPerformance({ performanceId: performanceId });
-  console.log(details);
   // attachments
   const attachments = await getPerformanceAttachments({ performanceId: performanceId });
   // console.log(attachments);

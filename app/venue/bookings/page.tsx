@@ -69,7 +69,6 @@ export default function VenueBookingsPage() {
           const ev = b.events;
           const musician = b.musicians;
           const profile = musician?.profiles ?? null;
-            console.log(musician);
 
           const musicianName =
                 profile?.display_name ||

@@ -25,7 +25,6 @@ export default async function PublicEventPage({ params }: { params: Promise<{ ev
   if (!eventBookings) {
     throw new Error("Couldn't get event bookings");
   }
-  console.log(eventBookings);
   const allActs = await getAllActs();
   if (!allActs) {
     throw new Error("Couldn't get all acts");

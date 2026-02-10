@@ -206,7 +206,7 @@ export default function NewEventPage() {
 
       {!venuesLoading && venues.length === 0 && (
         <p className="text-sm text-gray-500">
-          会場がまだ登録されていません。開発側または店舗オーナーに登録してもらってください。
+          会場がまだ登録されていません。管理者にお問い合わせください。
         </p>
       )}
 

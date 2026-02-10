@@ -115,7 +115,6 @@ export default function ActsPage({userId, myActs, myOwnerActs, myMemberActs }: P
   }, []);
 
   const createSoloAct = async () => {
-    console.log("create solo act started");
     setCreateError(null);
 
     const name = soloName.trim();
@@ -149,7 +148,6 @@ export default function ActsPage({userId, myActs, myOwnerActs, myMemberActs }: P
       setCreateError(e?.message ?? "作成に失敗しました");
     } finally {
       setCreatingSolo(false);
-      console.log("create solo act end");
     }
   };
 

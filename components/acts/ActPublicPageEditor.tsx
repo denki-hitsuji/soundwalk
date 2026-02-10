@@ -182,7 +182,7 @@ export default function ActPublicPageEditor({
 
       {!row ? (
         <div className="space-y-2">
-          <div className="text-[11px] text-gray-600">URLの末尾を決めて、公開ページを作成します（後から変更不可）。</div>
+          <div className="text-[11px] text-gray-600">URLの末尾を決めて、公開ページを作成します。</div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex-1">

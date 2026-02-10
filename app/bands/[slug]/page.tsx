@@ -40,12 +40,8 @@ export default async function BandPublicPage({ params }: { params: Promise<{ slu
     }
     if (!data) notFound();
 
-    console.log("Loaded public page data:", data);
     const p = (data as unknown as Payload).payload;
 
-    console.log("Loaded public payload data:", p);
-    console.log("headline:", p.headline);
-    console.log("performances:", p.performances);
     return (
         <main className="mx-auto w-full max-w-2xl px-4 py-6 space-y-6">
             <header className="space-y-2">
