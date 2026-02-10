@@ -161,7 +161,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
             ) : null}
 
             <div className="text-xs text-gray-500">
-              ※ 未決定イベントも表示します（早く決める必要があるため）
+              ※ 未決定イベントも表示します
             </div>
           </div>
         )}
@@ -204,7 +204,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
 
         <div className="rounded-lg border bg-white p-3 space-y-2">
           <div className="text-xs text-gray-600">
-            告知文をコピーして共有できます（SNSボタンは後で強化できます）。
+            告知文をコピーして共有できます。
           </div>
 
           <button

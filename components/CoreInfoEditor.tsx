@@ -145,7 +145,6 @@ export function CoreInfoEditor(props: Props) {
 
           <div className="text-sm text-neutral-700">
             日付/会場を変更すると、現在の応募・オファー・承認はすべて無効になり、応募前の状態に戻ります。
-            （応募期限は自動では変更されません）
           </div>
 
           <div className="flex gap-2 justify-end">

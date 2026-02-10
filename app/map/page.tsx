@@ -128,7 +128,6 @@ export default function MapPage() {
 
       <div className="text-xs text-gray-500">
         ※ 座標が未設定の会場は地図に表示されません。
-        venues.csv に latitude / longitude を追加して seed し直すことで、ここにピンが増えていきます。
       </div>
     </main>
   );

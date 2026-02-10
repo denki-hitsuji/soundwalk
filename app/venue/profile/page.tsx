@@ -207,9 +207,6 @@ export default function VenueProfilePage() {
             placeholder="お店の外観や内装写真のURLがあれば"
             className="w-full rounded border px-3 py-2 text-sm"
           />
-          <p className="mt-1 text-xs text-gray-500">
-            MVPではURL欄だけにしておき、あとで画像アップロード機能をつける想定です。
-          </p>
         </div>
 
         {/* 保存ボタン */}

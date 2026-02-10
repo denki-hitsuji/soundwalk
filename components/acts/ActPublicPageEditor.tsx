@@ -174,14 +174,15 @@ export default function ActPublicPageEditor({
         <div className="min-w-0">
           <div className="text-sm font-semibold">公開ページ</div>
           <div className="text-[11px] text-gray-600">
-            プロフィールと今後のライブ予定を、URLで共有できます（offeredは公開ページでは除外）。
+            プロフィールと今後のライブ予定を、URLで共有できます。
+            （未確定のライブは公開されません）。
           </div>
         </div>
       </div>
 
       {!row ? (
         <div className="space-y-2">
-          <div className="text-[11px] text-gray-600">まず slug を決めて公開ページを作成します（後から変更不可）。</div>
+          <div className="text-[11px] text-gray-600">URLの末尾を決めて、公開ページを作成します（後から変更不可）。</div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex-1">
@@ -302,9 +303,6 @@ export default function ActPublicPageEditor({
             </button>
           </div>
 
-          <div className="text-[11px] text-gray-500">
-            ※ 公開ページは is_public=true のときだけ表示されます。
-          </div>
         </div>
       )}
     </section>

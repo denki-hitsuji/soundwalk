@@ -72,7 +72,7 @@ export function PerformanceCard({
     "block p-2 rounded-xl border shadow-sm flex",
     clickable ? "hover:bg-gray-50 cursor-pointer" : "",
   ].join(" ");
-  console.log(`flyer on card: ${JSON.stringify(flyer)}`)
+  // console.log(`flyer on card: ${JSON.stringify(flyer)}`)
 
   const cardBody = (
     <div className="w-full">
@@ -91,7 +91,6 @@ export function PerformanceCard({
           />
         ) : (
           <div className="h-24 w-24 rounded border bg-gray-50 flex items-center justify-center text-[11px] text-gray-400">
-            flyerなし
           </div>
         )}
 
@@ -170,7 +169,7 @@ export function PerformanceCard({
           {
             isMusician && (
               <div className="mt-1 text-[11px] text-gray-500">
-                タップで詳細（フライヤー/案内文/確認事項） / 段取りはここでチェック可
+                タップで詳細（フライヤー/案内文/確認事項）
               </div>
             )
           }

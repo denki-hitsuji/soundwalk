@@ -28,7 +28,6 @@ export default async function VenueDashboardPage() {
       {venues.length === 0 && (
         <p className="text-sm text-gray-500">
           まだ管理している会場が登録されていません。
-          開発側で venue_admins にレコードを追加すると、ここに表示されます。
         </p>
       )}
 
