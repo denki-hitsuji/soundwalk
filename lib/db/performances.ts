@@ -249,12 +249,22 @@ export async function upsertPerformanceDb(params: {
     if (error) throw error;
   } else {
     const { data, error } = await supabase
-      .from("musician_performances")     
+      .from("musician_performances")
       .insert(payload)
       .select("id");
 
     if (error) throw error;
     perfId = data?.[0]?.id;
+  }
+
+  // act_id がある場合、act_members に自動追加（未登録時のみ）
+  if (act_id && profile_id) {
+    await supabase
+      .from("act_members")
+      .upsert(
+        { act_id, profile_id, status: "active", is_admin: false },
+        { onConflict: "act_id,profile_id", ignoreDuplicates: true }
+      );
   }
 
   return perfId ?? "";

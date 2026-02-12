@@ -407,6 +407,61 @@ export async function getEventPerformancesDb(params: {
     .eq("event_id", eventId)
     .order("created_at", { ascending: true });
 
-  if (!data) throw Error("profile not found"); 
+  if (!data) throw Error("profile not found");
   return data?.map(d => toPlainPerformance(d));
-  } 
+}
+
+/**
+ * 店舗カレンダー用: 指定された会場のイベントを日付範囲で取得
+ */
+export async function getVenueEventsInRangeDb(
+  venueIds: string[],
+  startDate: string,
+  endDate: string
+) {
+  const supabase = await createSupabaseServerClient();
+
+  if (venueIds.length === 0) return [];
+
+  // 1. events 取得
+  const { data: events, error: eventsError } = await supabase
+    .from('events')
+    .select(`
+      *,
+      venues (
+        id,
+        name
+      )
+    `)
+    .in('venue_id', venueIds)
+    .gte('event_date', startDate)
+    .lte('event_date', endDate)
+    .order('event_date', { ascending: true })
+    .order('start_time', { ascending: true });
+
+  if (eventsError) throw eventsError;
+  if (!events || events.length === 0) return [];
+
+  // 2. event_acts から acceptedCount を集計
+  const eventIds = events.map(e => e.id);
+  const { data: eventActs, error: actsError } = await supabase
+    .from('event_acts')
+    .select('event_id, status')
+    .in('event_id', eventIds);
+
+  if (actsError) throw actsError;
+
+  const countMap = new Map<string, number>();
+  for (const ea of eventActs ?? []) {
+    if (ea.status === 'accepted') {
+      countMap.set(ea.event_id, (countMap.get(ea.event_id) ?? 0) + 1);
+    }
+  }
+
+  // 3. venue_name と acceptedCount を追加して返す
+  return events.map(e => ({
+    ...e,
+    venue_name: e.venues?.name ?? null,
+    acceptedCount: countMap.get(e.id) ?? 0,
+  }));
+} 

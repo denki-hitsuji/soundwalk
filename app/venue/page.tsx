@@ -56,14 +56,20 @@ export default async function VenueDashboardPage() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              {/* カレンダー形式（今後実装） */}
+              {/* カレンダー形式 */}
               <div className="rounded border px-3 py-3">
                 <h2 className="text-xs font-semibold mb-1">
-                  カレンダーで見る（準備中）
+                  カレンダーで見る
                 </h2>
-                <p className="text-[11px] text-gray-600">
+                <p className="text-[11px] text-gray-600 mb-2">
                   この会場のイベントをカレンダー形式で一覧表示します。
                 </p>
+                <Link
+                  href="/venue/calendar"
+                  className="inline-flex items-center rounded bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white"
+                >
+                  カレンダーを開く
+                </Link>
               </div>
 
               {/* 直近イベント一覧（今後実装） */}

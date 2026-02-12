@@ -1,6 +1,6 @@
 // lib/api/events.ts
 "use server";
-import { getEventActsDb, getEventByIdDb, getEventPerformancesDb, getMyEventsDb, getOpenEventsForMusicianDb } from "@/lib/db/events";
+import { getEventActsDb, getEventByIdDb, getEventPerformancesDb, getMyEventsDb, getOpenEventsForMusicianDb, getVenueEventsInRangeDb } from "@/lib/db/events";
 import { EventWithVenue } from "../utils/events";
 import { PerformanceRow } from "./performances";
 
@@ -55,4 +55,15 @@ export async function getEventPerformances(params: {
   eventId: string;
 }): Promise<PerformanceRow[]> {
   return await getEventPerformancesDb(params);
+}
+
+/**
+ * 店舗カレンダー用: 指定された会場のイベントを日付範囲で取得
+ */
+export async function getVenueEventsInRange(
+  venueIds: string[],
+  startDate: string,
+  endDate: string
+) {
+  return await getVenueEventsInRangeDb(venueIds, startDate, endDate);
 }
