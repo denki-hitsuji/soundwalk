@@ -14,12 +14,15 @@ import { toYmdLocal, parseYmdLocal, addDays } from "@/lib/utils/date";
 import { getFutureFlyers } from "@/lib/utils/performance";
 import { ensureAndFetchPrepMapDb, getDetailsMapForPerformancesDb } from "@/lib/db/performances";
 import { getCurrentUser } from "@/lib/auth/session.server";
+import { getProfileByUserId } from "@/lib/db/profiles";
 import { redirect } from "next/navigation";
 import { PerformancesClient } from "./PerformancesClient";
 
 export default async function PerformancesPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+
+  const profile = await getProfileByUserId(user.id);
 
   const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
   const todayStr = toYmdLocal();
@@ -116,7 +119,8 @@ if (activePerformances.length > 0) {
       <PerformancesClient userId={user?.id} performances={performances}
         flyerByPerformanceId={flyerByPerformanceId}
         detailsByPerformanceId={detailsByPerformanceId}
-        prep={prepByPerformanceId} />
+        prep={prepByPerformanceId}
+        profileName={profile.display_name} />
     </main>
   );
 }

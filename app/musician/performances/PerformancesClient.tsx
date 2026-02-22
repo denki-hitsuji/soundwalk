@@ -14,9 +14,10 @@ type Prop = {
     flyerByPerformanceId: FlyerMap;
     detailsByPerformanceId: DetailsMap;
     prep: PrepMap;
+    profileName: string;
 };
 
-export function PerformancesClient({ userId, performances, flyerByPerformanceId, detailsByPerformanceId, prep}: Prop) {
+export function PerformancesClient({ userId, performances, flyerByPerformanceId, detailsByPerformanceId, prep, profileName}: Prop) {
     // const [prepByPerformanceId, setPrepByPerformanceId ] = useState<PrepMap>({});
 
     const prepByPerformanceId = prep;
@@ -40,12 +41,18 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
         const sorted = [...futurePerformances]
             .filter((p) => p.status !== "canceled")
             .sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? ""));
-        const firstAct = normalizeAct(sorted[0]);
         return buildSchedulePost({
-            performances: sorted,
-            act: firstAct,
+            performances: sorted.map((p) => ({
+                event_date: p.event_date,
+                venue_name: p.venue_name,
+                open_time: p.open_time,
+                start_time: p.start_time,
+                event_title: p.event_title,
+                act_name: normalizeAct(p)?.name ?? null,
+            })),
+            profileName,
         });
-    }, [futurePerformances]);
+    }, [futurePerformances, profileName]);
 
     const toggleDone = async (performanceId: string, taskKey: string) => {
         const row = prepByPerformanceId[performanceId]?.[taskKey];

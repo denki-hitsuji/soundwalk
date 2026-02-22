@@ -1,11 +1,13 @@
-import type { PerformanceRow } from "@/lib/utils/performance";
-import type { ActRow } from "@/lib/utils/acts";
 import { fmtDateWithDay, fmtTime, normalizeHashtag } from "@/lib/utils/format";
 
-type PerformanceForSchedule = Pick<
-  PerformanceRow,
-  "event_date" | "venue_name" | "open_time" | "start_time" | "event_title"
->;
+type PerformanceForSchedule = {
+  event_date: string;
+  venue_name: string | null;
+  open_time: string | null;
+  start_time: string | null;
+  event_title: string | null;
+  act_name: string | null;
+};
 
 /**
  * ミュージシャンの「これからのライブ」をまとめた告知文を生成する。
@@ -13,25 +15,28 @@ type PerformanceForSchedule = Pick<
  */
 export function buildSchedulePost(params: {
   performances: PerformanceForSchedule[];
-  act: ActRow | null;
+  profileName: string;
 }) {
-  const { performances, act } = params;
+  const { performances, profileName } = params;
 
-  const actName = act?.name?.trim() ?? "";
   const lines: string[] = [];
 
-  // ヘッダー
-  lines.push(actName ? `【ライブスケジュール】${actName}` : "【ライブスケジュール】");
+  // ヘッダー（プロフィール名）
+  lines.push(profileName || "【ライブスケジュール】");
   lines.push("");
 
   for (const p of performances) {
     const date = fmtDateWithDay(p.event_date);
     lines.push(`■ ${date}`);
-    if (p.event_title) lines.push(p.event_title);
 
-    const venue = p.venue_name;
-    if (venue) lines.push(`@ ${venue}`);
+    // アクト名
+    if (p.act_name) lines.push(p.act_name);
 
+    // [企画名(あれば)] @ [会場名]
+    const venueParts = [p.event_title, p.venue_name ? `@ ${p.venue_name}` : ""].filter(Boolean);
+    if (venueParts.length) lines.push(venueParts.join(" "));
+
+    // OPEN / START
     const open = fmtTime(p.open_time);
     const start = fmtTime(p.start_time);
     const timeParts = [
@@ -45,7 +50,7 @@ export function buildSchedulePost(params: {
 
   // ハッシュタグ
   const tags: string[] = [];
-  if (actName) tags.push(`#${normalizeHashtag(actName)}`);
+  if (profileName) tags.push(`#${normalizeHashtag(profileName)}`);
   tags.push("#ライブ");
   tags.push("#soundwalk");
   lines.push(tags.join(" "));
