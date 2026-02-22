@@ -23,6 +23,8 @@ import { BookingCard } from "./BookingCard";
 import { FlyerSection } from "@/components/flyers/FlyerSection";
 import { uploadEventFlyerAction, deleteEventAttachmentAction } from "@/lib/api/eventAttachmentsAction";
 import { EventAttachmentRow, FlyerItem } from "@/lib/utils/eventAttachments";
+import { SharePostPreview } from "@/components/share/SharePostPreview";
+import { buildEventPost } from "@/lib/utils/buildEventPost";
 
 type Props = {
   userId: string;
@@ -64,6 +66,16 @@ export default function MusicianOrganizedEventDetailClient({ userId,
 
   // acceptedCount は決定済み（event_acts）から計算
   const acceptedCount = useMemo(() => eventActs.length, [eventActs]);
+
+  // 企画告知文
+  const eventShareText = useMemo(() => {
+    if (!event) return "";
+    return buildEventPost({
+      event,
+      venueName: event.venues?.name ?? "",
+      actNames: eventActs.map((a) => a.name),
+    });
+  }, [event, eventActs]);
 
   const maxArtists = event?.max_artists ?? null;
   const isFull = maxArtists != null && acceptedCount >= maxArtists;
@@ -434,6 +446,9 @@ export default function MusicianOrganizedEventDetailClient({ userId,
         canDeleteAll={true}
         emptyMessage="フライヤーを登録すると、参加ミュージシャンのパフォーマンスページにも表示されます。"
       />
+
+      {/* 企画告知文 */}
+      <SharePostPreview text={eventShareText} title="企画SNS告知文" />
 
       {/* 出演名義（決定済み） */}
       <section className="border rounded bg-white shadow-sm p-4 space-y-2">

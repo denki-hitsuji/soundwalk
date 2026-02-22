@@ -29,6 +29,8 @@ import {
 import { EventRow } from "@/lib/utils/events";
 import { VenueRow } from "@/lib/utils/venues";
 import { buildPerformancePost } from "@/lib/utils/buildPerformancePost";
+import { buildEventPost } from "@/lib/utils/buildEventPost";
+import { SharePostPreview } from "@/components/share/SharePostPreview";
 
 export default function PerformanceDetailClient(props: {
   performanceId: string;
@@ -46,6 +48,7 @@ export default function PerformanceDetailClient(props: {
   setlistItems: SetlistItemView[];
   actSongs: SongRow[];
   eventAttachments: EventAttachmentRow[];
+  eventActNames: string[];
 }) {
   const router = useRouter();
 
@@ -114,6 +117,18 @@ export default function PerformanceDetailClient(props: {
     });
   }, [performance, act, event, details, props.attachments]);
 
+  // 企画告知文（event_idがある場合のみ）
+  const eventShareText = useMemo(() => {
+    if (!event) return null;
+    return buildEventPost({
+      event,
+      venueName: performance.venue_name ?? "",
+      actNames: props.eventActNames,
+    });
+  }, [event, performance.venue_name, props.eventActNames]);
+
+  const [shareMode, setShareMode] = useState<"individual" | "event">("individual");
+
   // 時刻文字列("HH:MM")を分に変換
   const timeToMinutes = (time: string | null): number | null => {
     if (!time) return null;
@@ -170,34 +185,6 @@ export default function PerformanceDetailClient(props: {
     return errors;
   };
 
-  const copyToClipboard = async (text: string) => {
-    // iOS Safari でもなるべく堅牢に
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.left = "-9999px";
-        ta.style.top = "0";
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        const ok = document.execCommand("copy");
-        document.body.removeChild(ta);
-        return ok;
-      } catch {
-        return false;
-      }
-    }
-  };
-
-  const onCopyShare = async () => {
-    const ok = await copyToClipboard(shareText);
-    alert(ok ? "告知文をコピーしました。" : "コピーに失敗しました。");
-  };
 
   const saveDetails = async () => {
     // バリデーション実行
@@ -425,13 +412,6 @@ export default function PerformanceDetailClient(props: {
           </div>
 
           <div className="grid gap-2">
-            <button
-  type="button"
-  onClick={() => void onCopyShare()}
-  className="shrink-0 inline-flex items-center justify-center rounded bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
->
-  告知文をコピー
-</button>
             {performance.event_id && performance.status !== "canceled" && (
               <>
                 {(performance.status === "offered" || performance.status === "pending_reconfirm") && (
@@ -669,6 +649,43 @@ export default function PerformanceDetailClient(props: {
               onDelete={handleDeleteFlyer}
               emptyMessage="フライヤー画像を登録しておくと探す手間が省けます。"
             />
+
+            {/* 告知文プレビュー */}
+            {eventShareText ? (
+              <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">
+                <h2 className="text-sm font-semibold">SNS告知文</h2>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShareMode("individual")}
+                    className={`rounded px-3 py-1 text-xs font-medium ${
+                      shareMode === "individual"
+                        ? "bg-slate-900 text-white"
+                        : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    個別告知文
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShareMode("event")}
+                    className={`rounded px-3 py-1 text-xs font-medium ${
+                      shareMode === "event"
+                        ? "bg-slate-900 text-white"
+                        : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    企画全体の告知文
+                  </button>
+                </div>
+                <SharePostPreview
+                  text={shareMode === "event" ? eventShareText : shareText}
+                  bare
+                />
+              </section>
+            ) : (
+              <SharePostPreview text={shareText} title="SNS告知文" />
+            )}
 
             {/* messages */}
             <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-3">

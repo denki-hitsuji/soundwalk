@@ -4,6 +4,8 @@ import { PerformanceCard } from "@/components/performances/PerformanceCard";
 import { updatePrepTaskDone } from "@/lib/api/performancesAction";
 import { addDays, fmtMMdd, parseYmdLocal, toYmdLocal } from "@/lib/utils/date";
 import { DetailsMap, detailsSummary, FlyerMap, normalizeAct, PerformanceWithActs, PREP_DEFS, PrepMap, statusText } from "@/lib/utils/performance";
+import { buildSchedulePost } from "@/lib/utils/buildSchedulePost";
+import { SharePostPreview } from "@/components/share/SharePostPreview";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 type Prop = {
@@ -29,6 +31,21 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
         () => performances.filter((p) => p.event_date < todayStr),
         [performances, todayStr],
     );
+
+    const [showSchedulePost, setShowSchedulePost] = useState(false);
+
+    // まとめ告知文（日付昇順）
+    const schedulePostText = useMemo(() => {
+        if (futurePerformances.length === 0) return "";
+        const sorted = [...futurePerformances]
+            .filter((p) => p.status !== "canceled")
+            .sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? ""));
+        const firstAct = normalizeAct(sorted[0]);
+        return buildSchedulePost({
+            performances: sorted,
+            act: firstAct,
+        });
+    }, [futurePerformances]);
 
     const toggleDone = async (performanceId: string, taskKey: string) => {
         const row = prepByPerformanceId[performanceId]?.[taskKey];
@@ -57,7 +74,22 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
         <div>
             {/* 未来 */}
             <section className="space-y-2">
-                <h2 className="text-sm font-semibold text-gray-800">これからのライブ</h2>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-gray-800">これからのライブ</h2>
+                    {futurePerformances.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setShowSchedulePost((v) => !v)}
+                            className="inline-flex items-center rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                            {showSchedulePost ? "閉じる" : "まとめて告知文"}
+                        </button>
+                    )}
+                </div>
+
+                {showSchedulePost && schedulePostText && (
+                    <SharePostPreview text={schedulePostText} title="ライブスケジュール告知文" />
+                )}
 
                 {futurePerformances.length === 0 ? (
                     <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">未来のライブはまだありません。</div>

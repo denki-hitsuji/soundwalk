@@ -4,8 +4,8 @@ import PerformanceDetailClient from "./PerformanceDetailClient";
 import { getMyOwnerVenues } from "@/lib/api/venues";
 import { getPerformances } from "@/lib/utils/performance";
 import { EventRow } from "@/lib/utils/events";
-import { getEventById } from "@/lib/api/events";
-import { getActById } from "@/lib/api/acts";
+import { getEventActs, getEventById } from "@/lib/api/events";
+import { getActById, getAllActs } from "@/lib/api/acts";
 import { getDetailsForPerformance, getDetailsMapForPerformance, getDetailsMapForPerformances, getMyPerformanceById, getPerformanceAttachments, getPerformanceMessages } from "@/lib/api/performances";
 import { getSetlistByPerformanceId, getSetlistItems } from "@/lib/api/setlistsAction";
 import { getSongsByActIdsDb } from "@/lib/db/songs";
@@ -67,6 +67,16 @@ export default async function PerformanceDetailPage({ params }: {
     ? await getEventAttachmentsDb({ eventId: perf.event_id })
     : [];
 
+  // イベント出演者名一覧（企画告知文用）
+  let eventActNames: string[] = [];
+  if (perf.event_id) {
+    const eventActs = await getEventActs({ eventId: perf.event_id });
+    const allActs = await getAllActs();
+    eventActNames = eventActs
+      .map((ea) => allActs.find((a) => a.id === ea.act_id)?.name)
+      .filter((n): n is string => !!n);
+  }
+
   return (
     <PerformanceDetailClient
       performanceId={performanceId}
@@ -84,6 +94,7 @@ export default async function PerformanceDetailPage({ params }: {
       setlistItems={setlistItems}
       actSongs={actSongs}
       eventAttachments={eventAttachments}
+      eventActNames={eventActNames}
     />
   );
 }

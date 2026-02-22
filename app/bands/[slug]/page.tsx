@@ -1,6 +1,8 @@
 // app/bands/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fmtDateWithDay, fmtTime, fmtCharge } from "@/lib/utils/format";
+
 export const revalidate = 300; // 5分
 
 type Payload = {
@@ -25,6 +27,33 @@ type Payload = {
     };
 };
 
+function PerformanceCard({ x }: { x: Payload["payload"]["performances"][number] }) {
+    const date = fmtDateWithDay(x.event_date);
+    const open = fmtTime(x.open_time);
+    const start = fmtTime(x.start_time);
+    const charge = fmtCharge(x.charge);
+
+    return (
+        <div className="rounded-xl border bg-white p-4 space-y-1.5 shadow-sm">
+            <div className="flex items-baseline gap-2">
+                <span className="text-sm font-bold text-gray-900">{date}</span>
+                <span className="text-sm text-gray-600">@ {x.venue_name || "（未設定）"}</span>
+            </div>
+
+            {x.event_title && (
+                <div className="text-sm font-medium text-gray-800">{x.event_title}</div>
+            )}
+
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                {open && <span>OPEN {open}</span>}
+                {start && <span>START {start}</span>}
+                {charge && <span>CHARGE {charge}</span>}
+                {!open && !start && !charge && <span>詳細未定</span>}
+            </div>
+        </div>
+    );
+}
+
 export default async function BandPublicPage({ params }: { params: Promise<{ slug: string }> }) {
     const supabase = await createSupabaseServerClient();
     const { slug } = await params;
@@ -42,58 +71,84 @@ export default async function BandPublicPage({ params }: { params: Promise<{ slu
 
     const p = (data as unknown as Payload).payload;
 
+    // 未来・過去に分割
+    const today = new Date().toISOString().slice(0, 10);
+    const futurePerformances = p.performances
+        .filter((x) => x.event_date >= today)
+        .sort((a, b) => a.event_date.localeCompare(b.event_date));
+    const pastPerformances = p.performances
+        .filter((x) => x.event_date < today)
+        .sort((a, b) => b.event_date.localeCompare(a.event_date));
+
     return (
-        <main className="mx-auto w-full max-w-2xl px-4 py-6 space-y-6">
-            <header className="space-y-2">
-                <h1 className="text-2xl font-bold">{p.act_name}</h1>
-                {p.headline && <p className="text-sm text-gray-600">{p.headline}</p>}
+        <main className="mx-auto w-full max-w-2xl px-4 py-8 space-y-8">
+            {/* プロフィール */}
+            <header className="space-y-4">
+                {p.photo_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={p.photo_url}
+                        alt={p.act_name}
+                        className="w-full max-h-80 rounded-xl border object-cover"
+                    />
+                )}
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold">{p.act_name}</h1>
+                    {p.headline && <p className="text-sm text-gray-600">{p.headline}</p>}
+                </div>
+
+                {p.body && (
+                    <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+                        {p.body}
+                    </div>
+                )}
+
+                {p.profile_link_url && (
+                    <a
+                        className="inline-flex items-center text-sm text-blue-700 hover:underline"
+                        href={p.profile_link_url}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        プロフィールリンク &rarr;
+                    </a>
+                )}
             </header>
 
-            <section>
-                <details className="rounded border bg-white p-3">
-                    <summary className="cursor-pointer text-sm font-medium">プロフィール</summary>
-                    <div className="mt-3 space-y-3">
-                        {p.photo_url && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.photo_url} alt="photo" className="w-full rounded border object-cover" />
-                        )}
+            {/* これからのライブ */}
+            <section className="space-y-3">
+                <h2 className="text-base font-bold text-gray-900">これからのライブ</h2>
 
-                        {p.body ? (
-                            <div className="whitespace-pre-wrap text-sm text-gray-700">{p.body}</div>
-                        ) : (
-                            <div className="text-sm text-gray-500">プロフィールはまだありません。</div>
-                        )}
-
-                        {p.profile_link_url && (
-                            <a className="text-sm text-blue-700 hover:underline" href={p.profile_link_url} target="_blank" rel="noreferrer">
-                                リンク
-                            </a>
-                        )}
-                    </div>
-                </details>
-            </section>
-
-            <section className="space-y-2">
-                <h2 className="text-sm font-semibold text-gray-800">ライブ予定</h2>
-                {p.performances.length > 0 && (
-                    <div className="bg-white divide-y">
-                        {p.performances.map((x) => (
-                            <div key={x.performance_id} className="rounded border p-3 gap-3 mt-3 text-sm">
-                                <div className="font-medium">
-                                    {x.event_date}
-                                    <span className="ml-2 font-normal text-gray-700">@ {x.venue_name || "（未設定）"}</span>
-                                </div>
-                                {x.event_title && <div className="text-gray-700 mt-1">{x.event_title}</div>}
-                                <div className="flex justify-between text-gray-500">
-                                    open: {x.open_time || "未定"} / start: {x.start_time || "未定"} / charge: {x.charge || "未定"}
-                                </div>
-                            </div>
+                {futurePerformances.length === 0 ? (
+                    <p className="text-sm text-gray-500">現在予定されているライブはありません。</p>
+                ) : (
+                    <div className="space-y-3">
+                        {futurePerformances.map((x) => (
+                            <PerformanceCard key={x.performance_id} x={x} />
                         ))}
                     </div>
                 )}
             </section>
 
-            <footer className="pt-4 text-center text-[11px] text-gray-400">Powered by Soundwalk</footer>
+            {/* 過去のライブ */}
+            {pastPerformances.length > 0 && (
+                <section className="space-y-3">
+                    <details>
+                        <summary className="cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800">
+                            過去のライブ（{pastPerformances.length}件）
+                        </summary>
+                        <div className="mt-3 space-y-3">
+                            {pastPerformances.map((x) => (
+                                <PerformanceCard key={x.performance_id} x={x} />
+                            ))}
+                        </div>
+                    </details>
+                </section>
+            )}
+
+            <footer className="pt-4 text-center text-[11px] text-gray-400">
+                Powered by Soundwalk
+            </footer>
         </main>
     );
 }
