@@ -32,7 +32,7 @@ export function InlineAddSong({ onAdd }: Props) {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") void submit(); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) void submit(); }}
           placeholder="曲名を追加"
           className="flex-1 rounded border px-3 py-2 text-sm"
         />

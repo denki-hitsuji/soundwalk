@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { InlineAddSong } from "@/components/acts/InlineAddSong";
 
@@ -54,6 +54,19 @@ describe("InlineAddSong", () => {
     await userEvent.type(screen.getByPlaceholderText("曲名を追加"), "Enterで追加{Enter}");
 
     await waitFor(() => expect(onAdd).toHaveBeenCalledWith("Enterで追加"));
+  });
+
+  it("IME変換確定のEnter（isComposing=true）では追加されない", async () => {
+    const onAdd = jest.fn();
+    render(<InlineAddSong onAdd={onAdd} />);
+
+    const input = screen.getByPlaceholderText("曲名を追加");
+    await userEvent.type(input, "にほんご");
+
+    // IME変換中のEnter（isComposing: true）
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+
+    expect(onAdd).not.toHaveBeenCalled();
   });
 
   it("onAdd が失敗するとエラーメッセージが表示される", async () => {

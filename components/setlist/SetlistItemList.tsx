@@ -187,7 +187,7 @@ export function SetlistItemList({ performanceId, setlistId, items }: Props) {
                 placeholder="メモ（キー、クリック、MC等）"
                 autoFocus
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveMemo(item.item_id);
+                  if (e.key === "Enter" && !e.nativeEvent.isComposing) handleSaveMemo(item.item_id);
                   if (e.key === "Escape") handleCancelMemo();
                 }}
               />

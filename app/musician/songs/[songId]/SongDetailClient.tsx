@@ -156,7 +156,7 @@ export default function SongDetailClient({ songId, song, act }: Props) {
                   ref={titleInputRef}
                   onChange={(e) => setTitleDraft(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") void saveTitle();
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing) void saveTitle();
                     if (e.key === "Escape") cancelEditTitle();
                   }}
                   autoFocus
