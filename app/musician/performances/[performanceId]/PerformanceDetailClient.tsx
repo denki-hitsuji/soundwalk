@@ -408,7 +408,16 @@ export default function PerformanceDetailClient(props: {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-semibold">{titleLine}</div>
-            <div className="text-base font-bold">{actLabel}</div>
+            {act ? (
+              <Link
+                href={`/musician/acts/${act.id}`}
+                className="text-base font-bold hover:underline"
+              >
+                {actLabel}
+              </Link>
+            ) : (
+              <div className="text-base font-bold">{actLabel}</div>
+            )}
           </div>
 
           <div className="grid gap-2">
