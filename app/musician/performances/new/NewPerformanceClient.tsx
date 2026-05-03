@@ -89,7 +89,8 @@ export default function NewPerformanceClient({ userId, myActs }: Props) {
       return;
     }
 
-    router.push("/musician/performances");
+    const returnTo = sp.get("returnTo");
+    router.push(returnTo ?? "/musician/performances");
   };
 
   return (

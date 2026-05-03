@@ -13,10 +13,12 @@ import { PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";
 import { notifyActsUpdated } from "@/lib/db/actEvents";
 import { useCurrentAct } from "@/lib/hooks/useCurrentAct";
 import { SongRow } from "@/lib/api/songs";
+import { addSong } from "@/lib/api/songsAction";
 import { User } from "@supabase/auth-js";
 import { ActRow, MemberRow } from "@/lib/utils/acts";
 import { ActMemberRow } from "@/lib/db/acts";
 import { ActMembersList } from "@/components/acts/ActMembersList";
+import { InlineAddSong } from "@/components/acts/InlineAddSong";
 
 const statusBadge: Record<string, { label: string; cls: string }> = {
   offered: { label: "🟡 オファー", cls: "bg-blue-100 text-blue-800" },
@@ -39,9 +41,10 @@ type Props = {
   bandMembers: ActMemberRow[]
 }
 
-export default function ActDetailClient({user, act, performances, nextPerformance, songs, member,bandMembers }: Props) {
+export default function ActDetailClient({user, act, performances, nextPerformance, songs: initialSongs, member,bandMembers }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
+  const [songList, setSongList] = useState<SongRow[]>(initialSongs);
   const { currentAct, setCurrentAct } = useCurrentAct();
   const mode = sp.get("mode");
   const isEdit = mode === "edit";
@@ -134,9 +137,19 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-semibold text-gray-800">次のライブ</h2>
 
-          <Link href={`/musician/performances?actId=${act.id}`} className="text-xs text-blue-600 hover:underline">
-            一覧へ
-          </Link>
+          <div className="flex items-center gap-3">
+            {canEdit && (
+              <Link
+                href={`/musician/performances/new?actId=${act.id}&returnTo=/musician/acts/${act.id}`}
+                className="text-xs text-emerald-700 font-medium hover:underline"
+              >
+                ＋ライブを追加
+              </Link>
+            )}
+            <Link href={`/musician/performances?actId=${act.id}`} className="text-xs text-blue-600 hover:underline">
+              一覧へ
+            </Link>
+          </div>
         </div>
 
         {!nextPerformance ? (
@@ -176,12 +189,12 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
           </Link>
         </div>
 
-        {songs.length === 0 ? (
+        {songList.length === 0 ? (
           <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">曲がまだありません。</div>
         ) : (
           <div className="rounded-lg border bg-white p-2">
             <ul className="divide-y">
-              {songs.map((s) => (
+              {songList.map((s) => (
                 <li key={s.id}>
                   <Link
                     href={`/musician/songs/${s.id}`}
@@ -195,6 +208,15 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
             </ul>
             <div className="px-2 pt-2 text-[11px] text-gray-500">※ 表示は最大20件です</div>
           </div>
+        )}
+
+        {canEdit && (
+          <InlineAddSong
+            onAdd={async (title) => {
+              const data = await addSong(act.id, title);
+              setSongList((prev) => [data, ...prev]);
+            }}
+          />
         )}
       </section>
 
