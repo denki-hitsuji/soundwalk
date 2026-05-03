@@ -191,7 +191,10 @@ export default function SongDetailClient({ songId, song, act }: Props) {
           )}
         </div>
 
-        <Link href="/musician/songs" className="text-xs text-blue-700 underline underline-offset-2">
+        <Link
+          href={act ? `/musician/acts/${act.id}` : "/musician/songs"}
+          className="text-xs text-blue-700 underline underline-offset-2"
+        >
           一覧へ
         </Link>
       </header>
