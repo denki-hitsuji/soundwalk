@@ -11,6 +11,8 @@ import { SetlistSection } from "@/components/setlist/SetlistSection";
 
 import type { PerformanceRow } from "@/lib/utils/performance";
 import type { ActRow, AttachmentRow, DetailsRow, MessageRow } from "@/lib/utils/acts";
+import type { RehearsalRow } from "@/lib/utils/rehearsals";
+import { formatRehearsalTime } from "@/lib/utils/rehearsals";
 import type { SetlistRow, SetlistItemView } from "@/lib/utils/setlist";
 import type { SongRow } from "@/lib/db/songs";
 import type { EventAttachmentRow, FlyerItem } from "@/lib/utils/eventAttachments";
@@ -49,6 +51,7 @@ export default function PerformanceDetailClient(props: {
   actSongs: SongRow[];
   eventAttachments: EventAttachmentRow[];
   eventActNames: string[];
+  rehearsals: RehearsalRow[];
 }) {
   const router = useRouter();
 
@@ -640,6 +643,46 @@ export default function PerformanceDetailClient(props: {
 
   {/* 以降もそのまま */}
 </section>
+
+            {/* リハーサル */}
+            <section className="rounded-xl border bg-white px-4 py-3 shadow-sm space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold">リハーサル</h2>
+                {props.act && (
+                  <Link
+                    href={`/musician/rehearsals?actId=${props.act.id}`}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    リハを追加
+                  </Link>
+                )}
+              </div>
+
+              {props.rehearsals.length === 0 ? (
+                <div className="rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+                  リハーサル未登録
+                </div>
+              ) : (
+                <>
+                  <div className="text-xs text-gray-500">
+                    {props.rehearsals.length}件 / 直近：{props.rehearsals[0].rehearsal_date}
+                  </div>
+                  <div className="space-y-1">
+                    {props.rehearsals.map((r) => (
+                      <div key={r.id} className="flex gap-2 text-xs text-gray-700">
+                        <span className="font-medium">{r.rehearsal_date}</span>
+                        {r.studio_name && <span>{r.studio_name}</span>}
+                        {formatRehearsalTime(r.start_time, r.end_time) && (
+                          <span className="text-gray-500">
+                            {formatRehearsalTime(r.start_time, r.end_time)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
 
             {/* setlist */}
             <SetlistSection

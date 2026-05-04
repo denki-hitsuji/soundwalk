@@ -10,6 +10,7 @@ import { getDetailsForPerformance, getDetailsMapForPerformance, getDetailsMapFor
 import { getSetlistByPerformanceId, getSetlistItems } from "@/lib/api/setlistsAction";
 import { getSongsByActIdsDb } from "@/lib/db/songs";
 import { getEventAttachmentsDb } from "@/lib/db/eventAttachments";
+import { getRehearsalsForPerformance } from "@/lib/api/rehearsals";
 
 export default async function PerformanceDetailPage({ params }: {
   params: { performanceId: string }
@@ -77,6 +78,12 @@ export default async function PerformanceDetailPage({ params }: {
       .filter((n): n is string => !!n);
   }
 
+  // リハーサル（act_idがある場合のみ）
+  const rehearsals =
+    perf.act_id
+      ? await getRehearsalsForPerformance(performanceId, perf.act_id, perf.event_date)
+      : [];
+
   return (
     <PerformanceDetailClient
       performanceId={performanceId}
@@ -95,6 +102,7 @@ export default async function PerformanceDetailPage({ params }: {
       actSongs={actSongs}
       eventAttachments={eventAttachments}
       eventActNames={eventActNames}
+      rehearsals={rehearsals}
     />
   );
 }

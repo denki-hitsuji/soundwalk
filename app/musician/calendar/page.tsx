@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { getPerformancesInRangeDb } from "@/lib/db/performances";
 import { getMyActs } from "@/lib/api/acts";
+import { getRehearsalsInRange } from "@/lib/api/rehearsals";
 import { toYmdLocal } from "@/lib/utils/date";
 import CalendarClient from "./CalendarClient";
 
@@ -24,15 +25,17 @@ export default async function CalendarPage({
   const startDate = toYmdLocal(new Date(baseYear, baseMonth, 1));
   const endDate = toYmdLocal(new Date(baseYear, baseMonth + 1, 0));
 
-  // パフォーマンスデータと出演名義を取得
-  const [performances, myActs] = await Promise.all([
+  // パフォーマンスデータ・リハーサル・出演名義を取得
+  const [performances, rehearsals, myActs] = await Promise.all([
     getPerformancesInRangeDb({ startDate, endDate }),
+    getRehearsalsInRange({ startDate, endDate }),
     getMyActs(),
   ]);
 
   return (
     <CalendarClient
       performances={performances}
+      rehearsals={rehearsals}
       myActs={myActs}
       userId={user.id}
       initialMonth={`${baseYear}-${String(baseMonth + 1).padStart(2, "0")}`}

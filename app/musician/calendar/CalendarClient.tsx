@@ -4,12 +4,14 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { PerformanceWithActs } from "@/lib/db/performances";
 import { ActRow } from "@/lib/utils/acts";
+import { RehearsalRow } from "@/lib/utils/rehearsals";
 import { MonthView } from "@/components/calendar/MonthView";
 import { PerformancePopup } from "@/components/calendar/PerformancePopup";
 import { InlinePerformanceForm } from "@/components/calendar/InlinePerformanceForm";
 
 type CalendarClientProps = {
   performances: PerformanceWithActs[];
+  rehearsals: RehearsalRow[];
   myActs: ActRow[];
   userId: string;
   initialMonth: string; // "YYYY-MM"
@@ -17,6 +19,7 @@ type CalendarClientProps = {
 
 export default function CalendarClient({
   performances,
+  rehearsals,
   myActs,
   userId,
   initialMonth,
@@ -39,6 +42,15 @@ export default function CalendarClient({
     }
     return map;
   }, [performances]);
+
+  // リハーサルを日付でカウント
+  const rehearsalCountByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const r of rehearsals) {
+      map[r.rehearsal_date] = (map[r.rehearsal_date] ?? 0) + 1;
+    }
+    return map;
+  }, [rehearsals]);
 
   // 月切り替え: URLを更新してサーバーから対象月のデータを再取得する
   const changeMonth = (delta: number) => {
@@ -111,6 +123,7 @@ export default function CalendarClient({
         year={year}
         month={month}
         performancesByDate={performancesByDate}
+        rehearsalCountByDate={rehearsalCountByDate}
         selectedDate={selectedDate}
         onDateClick={handleDateClick}
       />

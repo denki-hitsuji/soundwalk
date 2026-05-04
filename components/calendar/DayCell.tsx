@@ -12,6 +12,7 @@ export type CalendarDay = {
 type DayCellProps = {
   day: CalendarDay;
   performances: PerformanceWithActs[];
+  rehearsalCount: number;
   isSelected: boolean;
   onClick: (date: string) => void;
 };
@@ -23,7 +24,7 @@ const statusStyleMap: Record<string, { bg: string; text: string }> = {
   pending_reconfirm: { bg: "bg-yellow-50", text: "text-yellow-800" },
 };
 
-export function DayCell({ day, performances, isSelected, onClick }: DayCellProps) {
+export function DayCell({ day, performances, rehearsalCount, isSelected, onClick }: DayCellProps) {
   const today = toYmdLocal();
   const isToday = day.date === today;
   const isWeekStart = new Date(day.date).getDay() === 0; // Sunday
@@ -68,13 +69,19 @@ export function DayCell({ day, performances, isSelected, onClick }: DayCellProps
         hover:bg-gray-100
       `}
     >
-      {/* 日付番号 */}
-      <div
-        className={`text-sm font-medium mb-1 ${
-          isToday ? "text-blue-600 font-bold" : ""
-        }`}
-      >
-        {day.dayNumber}
+      {/* 日付番号 + マーカー */}
+      <div className="flex items-center gap-0.5 mb-1">
+        <span
+          className={`text-sm font-medium ${isToday ? "text-blue-600 font-bold" : ""}`}
+        >
+          {day.dayNumber}
+        </span>
+        {performances.length > 0 && (
+          <span className="text-[10px] text-red-500" title="ライブあり">★</span>
+        )}
+        {rehearsalCount > 0 && (
+          <span className="text-[10px] text-gray-400" title="リハあり">●</span>
+        )}
       </div>
 
       {/* パフォーマンスチップ */}

@@ -86,6 +86,7 @@ export default function VenueCalendarClient({
         year={year}
         month={month}
         performancesByDate={eventsByDate}
+        rehearsalCountByDate={{}}
         selectedDate={selectedDate}
         onDateClick={handleDateClick}
       />

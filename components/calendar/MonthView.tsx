@@ -9,6 +9,7 @@ type MonthViewProps = {
   year: number;
   month: number; // 0-indexed (0 = January)
   performancesByDate: Record<string, PerformanceWithActs[]>;
+  rehearsalCountByDate: Record<string, number>;
   selectedDate: string | null;
   onDateClick: (date: string) => void;
 };
@@ -60,6 +61,7 @@ export function MonthView({
   year,
   month,
   performancesByDate,
+  rehearsalCountByDate,
   selectedDate,
   onDateClick,
 }: MonthViewProps) {
@@ -93,6 +95,7 @@ export function MonthView({
             key={day.date}
             day={day}
             performances={performancesByDate[day.date] || []}
+            rehearsalCount={rehearsalCountByDate[day.date] ?? 0}
             isSelected={selectedDate === day.date}
             onClick={onDateClick}
           />

@@ -24,6 +24,7 @@ jest.mock("../../components/calendar/InlinePerformanceForm", () => ({
 
 const defaultProps = {
   performances: [],
+  rehearsals: [],
   myActs: [],
   userId: "user-1",
   initialMonth: "2026-05",

@@ -4,6 +4,7 @@ const mockRedirect = jest.fn();
 const mockGetCurrentUser = jest.fn();
 const mockGetPerformancesInRangeDb = jest.fn();
 const mockGetMyActs = jest.fn();
+const mockGetRehearsalsInRange = jest.fn();
 
 jest.mock("next/navigation", () => ({
   redirect: (...args: any[]) => mockRedirect(...args),
@@ -22,6 +23,10 @@ jest.mock("../../lib/api/acts", () => ({
   getMyActs: (...args: any[]) => mockGetMyActs(...args),
 }));
 
+jest.mock("../../lib/api/rehearsals", () => ({
+  getRehearsalsInRange: (...args: any[]) => mockGetRehearsalsInRange(...args),
+}));
+
 jest.mock("../../app/musician/calendar/CalendarClient", () => ({
   __esModule: true,
   default: (props: any) => <div data-testid="calendar-client" data-props={JSON.stringify(props)} />,
@@ -35,6 +40,7 @@ beforeEach(() => {
   mockGetCurrentUser.mockResolvedValue({ id: "user-1" });
   mockGetPerformancesInRangeDb.mockResolvedValue([]);
   mockGetMyActs.mockResolvedValue([]);
+  mockGetRehearsalsInRange.mockResolvedValue([]);
 });
 
 describe("CalendarPage – searchParams によるDB範囲取得", () => {
