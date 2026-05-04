@@ -88,9 +88,6 @@ export const PersonalPerformanceCoreEditor = forwardRef<
           </div>
         )}
 
-        <div className="text-xs text-neutral-600">
-          ※ 会場を候補から選ぶと、会場名はDBの値で確定します（手入力ミス防止）
-        </div>
       </div>
     </section>
   );
