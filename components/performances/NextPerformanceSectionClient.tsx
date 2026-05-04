@@ -49,9 +49,11 @@ export function NextPerformanceSectionClient(props: {
   if (!p) return null;
   const tasks = prepByPerformanceId[p.id] ?? {};
 
+  const isToday = p.event_date === props.todayStr;
+
   return (
     <section className="space-y-2">
-      <div className="text-xs text-gray-500">次回のライブ</div>
+      <div className="text-xs text-gray-500">{isToday ? "当日のライブ" : "次回のライブ"}</div>
       <DashboardPerformanceCard
         p={p}
         flyer={flyer}

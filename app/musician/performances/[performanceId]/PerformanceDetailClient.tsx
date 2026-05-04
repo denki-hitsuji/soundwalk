@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { PerformanceMemoEditor } from "@/components/performances/PerformanceMemoEditor";
 import { CoreInfoEditor } from "@/components/CoreInfoEditor";
-import { PersonalPerformanceCoreEditor } from "@/components/PersonalPerformanceCoreEditor";
+import { PersonalPerformanceCoreEditor, type PersonalPerformanceCoreEditorHandle } from "@/components/PersonalPerformanceCoreEditor";
 import { SetlistSection } from "@/components/setlist/SetlistSection";
 
 import type { PerformanceRow } from "@/lib/utils/performance";
@@ -88,6 +88,8 @@ export default function PerformanceDetailClient(props: {
         }
     );
   });
+
+  const coreEditorRef = useRef<PersonalPerformanceCoreEditorHandle>(null);
 
   const [savingDetails, setSavingDetails] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -190,30 +192,45 @@ export default function PerformanceDetailClient(props: {
 
 
   const saveDetails = async () => {
-    // バリデーション実行
     const errors = validateTimes();
     setValidationErrors(errors);
-    if (errors.length > 0) {
-      return; // エラーがあれば保存しない
-    }
+    if (errors.length > 0) return;
 
     setSavingDetails(true);
     try {
+      let coreResult: { eventDate: string; venueId: string | null; venueName: string | null } | undefined;
+      if (!performance.event_id && coreEditorRef.current) {
+        coreResult = await coreEditorRef.current.save();
+      }
+
       await savePerformanceDetailsFullAction({
-          performanceId,
-          load_in_time: details.load_in_time,
-          set_start_time: details.set_start_time,
-          set_end_time: details.set_end_time,
-          set_minutes: details.set_minutes,
-          customer_charge_yen: details.customer_charge_yen,
-          one_drink_required: details.one_drink_required,
-          notes: details.notes,
-          open_time: performance.open_time,
-          start_time: performance.start_time
+        performanceId,
+        load_in_time: details.load_in_time,
+        set_start_time: details.set_start_time,
+        set_end_time: details.set_end_time,
+        set_minutes: details.set_minutes,
+        customer_charge_yen: details.customer_charge_yen,
+        one_drink_required: details.one_drink_required,
+        notes: details.notes,
+        open_time: performance.open_time,
+        start_time: performance.start_time,
       });
+
+      if (coreResult) {
+        const newVenueName = coreResult.venueId
+          ? venues.find((v) => v.id === coreResult!.venueId)?.name ?? coreResult.venueName
+          : coreResult.venueName;
+        setPerformance((p) => ({
+          ...p,
+          event_date: coreResult!.eventDate,
+          venue_id: coreResult!.venueId,
+          venue_name: newVenueName,
+        }));
+      }
+
       router.refresh();
     } catch (e: any) {
-      alert(e?.message ?? "保存に失敗しました（details）。");
+      alert(e?.message ?? "保存に失敗しました。");
     } finally {
       setSavingDetails(false);
     }
@@ -476,12 +493,12 @@ export default function PerformanceDetailClient(props: {
             )
           ) : (
             <PersonalPerformanceCoreEditor
+              ref={coreEditorRef}
               performanceId={performance.id}
               eventDate={performance.event_date}
               venueId={performance.venue_id}
               venueName={performance.venue_name}
               venues={venues}
-              onSaved={() => router.refresh()}
             />
           )}
         </div>
