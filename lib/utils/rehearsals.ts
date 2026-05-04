@@ -11,12 +11,18 @@ export type RehearsalRow = {
   created_at: string;
 };
 
+function trimSeconds(t: string): string {
+  return t.slice(0, 5);
+}
+
 export function formatRehearsalTime(
   start_time: string | null,
   end_time: string | null
 ): string {
-  if (!start_time && !end_time) return "";
-  if (start_time && end_time) return `${start_time}〜${end_time}`;
-  if (start_time) return `${start_time}〜`;
-  return `〜${end_time}`;
+  const s = start_time ? trimSeconds(start_time) : null;
+  const e = end_time ? trimSeconds(end_time) : null;
+  if (!s && !e) return "";
+  if (s && e) return `${s}〜${e}`;
+  if (s) return `${s}〜`;
+  return `〜${e}`;
 }
