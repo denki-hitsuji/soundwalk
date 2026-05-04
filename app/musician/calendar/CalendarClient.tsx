@@ -12,15 +12,19 @@ type CalendarClientProps = {
   performances: PerformanceWithActs[];
   myActs: ActRow[];
   userId: string;
+  initialMonth: string; // "YYYY-MM"
 };
 
 export default function CalendarClient({
   performances,
   myActs,
   userId,
+  initialMonth,
 }: CalendarClientProps) {
   const router = useRouter();
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(
+    () => new Date(`${initialMonth}-01`)
+  );
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
@@ -36,14 +40,18 @@ export default function CalendarClient({
     return map;
   }, [performances]);
 
-  // 月切り替え
+  // 月切り替え: URLを更新してサーバーから対象月のデータを再取得する
   const changeMonth = (delta: number) => {
-    setCurrentMonth((prev) => {
-      const newDate = new Date(prev.getFullYear(), prev.getMonth() + delta, 1);
-      return newDate;
-    });
+    const newDate = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() + delta,
+      1
+    );
+    setCurrentMonth(newDate);
     setSelectedDate(null);
     setShowAddForm(false);
+    const monthParam = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, "0")}`;
+    router.push(`?month=${monthParam}`);
   };
 
   // 日付クリック時の処理

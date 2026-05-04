@@ -5,18 +5,24 @@ import { getMyActs } from "@/lib/api/acts";
 import { toYmdLocal } from "@/lib/utils/date";
 import CalendarClient from "./CalendarClient";
 
-export default async function CalendarPage() {
+type SearchParams = Promise<{ month?: string }>;
+
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // 現在月±2ヶ月の範囲を計算（計5ヶ月分）
-  const today = new Date();
-  const startDate = toYmdLocal(
-    new Date(today.getFullYear(), today.getMonth() - 2, 1)
-  );
-  const endDate = toYmdLocal(
-    new Date(today.getFullYear(), today.getMonth() + 3, 0)
-  );
+  // ?month=YYYY-MM があればその月、なければ今月を基準にする
+  const { month } = await searchParams;
+  const base = month ? new Date(`${month}-01`) : new Date();
+  const baseYear = base.getFullYear();
+  const baseMonth = base.getMonth();
+
+  const startDate = toYmdLocal(new Date(baseYear, baseMonth, 1));
+  const endDate = toYmdLocal(new Date(baseYear, baseMonth + 1, 0));
 
   // パフォーマンスデータと出演名義を取得
   const [performances, myActs] = await Promise.all([
@@ -29,6 +35,7 @@ export default async function CalendarPage() {
       performances={performances}
       myActs={myActs}
       userId={user.id}
+      initialMonth={`${baseYear}-${String(baseMonth + 1).padStart(2, "0")}`}
     />
   );
 }
