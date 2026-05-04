@@ -17,13 +17,19 @@ type Prop = {
     profileName: string;
 };
 
-export function PerformancesClient({ userId, performances, flyerByPerformanceId, detailsByPerformanceId, prep, profileName}: Prop) {
-    // const [prepByPerformanceId, setPrepByPerformanceId ] = useState<PrepMap>({});
+const ACTION_STATUSES = new Set(["offered", "pending_reconfirm"]);
 
+export function PerformancesClient({ userId, performances, flyerByPerformanceId, detailsByPerformanceId, prep, profileName}: Prop) {
     const prepByPerformanceId = prep;
-    const rank = (s: string | null) => (s === "offered" ? 0 : s === "pending_reconfirm" ? 1 : 2);
     const todayStr = useMemo(() => toYmdLocal(), []);
     const todayDate = useMemo(() => parseYmdLocal(todayStr), [todayStr]);
+
+    // 翌月末日のYMD文字列（初期表示の境界）
+    const cutoffStr = useMemo(() => {
+        const d = new Date(todayDate.getFullYear(), todayDate.getMonth() + 2, 0);
+        return toYmdLocal(d);
+    }, [todayDate]);
+
     const futurePerformances = useMemo(
         () => performances.filter((p) => p.event_date >= todayStr),
         [performances, todayStr],
@@ -33,9 +39,34 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
         [performances, todayStr],
     );
 
+    // 要対応（offered / pending_reconfirm）: 日付昇順、件数に関わらず全件表示
+    const actionRequired = useMemo(
+        () => [...futurePerformances]
+            .filter((p) => ACTION_STATUSES.has(p.status ?? ""))
+            .sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? "")),
+        [futurePerformances],
+    );
+
+    // 確定済み（その他）: 日付昇順、翌月末以降は折りたたむ
+    const confirmedAll = useMemo(
+        () => [...futurePerformances]
+            .filter((p) => !ACTION_STATUSES.has(p.status ?? ""))
+            .sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? "")),
+        [futurePerformances],
+    );
+    const confirmedVisible = useMemo(
+        () => confirmedAll.filter((p) => (p.event_date ?? "") <= cutoffStr),
+        [confirmedAll, cutoffStr],
+    );
+    const confirmedHidden = useMemo(
+        () => confirmedAll.filter((p) => (p.event_date ?? "") > cutoffStr),
+        [confirmedAll, cutoffStr],
+    );
+
+    const [showMoreConfirmed, setShowMoreConfirmed] = useState(false);
     const [showSchedulePost, setShowSchedulePost] = useState(false);
 
-    // まとめ告知文（日付昇順）
+    // まとめ告知文（日付昇順・全件）
     const schedulePostText = useMemo(() => {
         if (futurePerformances.length === 0) return "";
         const sorted = [...futurePerformances]
@@ -59,23 +90,34 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
         if (!row) return;
 
         try {
-            const updated = await updatePrepTaskDone({
+            await updatePrepTaskDone({
                 taskId: row.id,
                 nextDone: !row.is_done,
                 userId,
             });
-
-            // setPrepByPerformanceId((prev) => ({
-            //     ...prev,
-            //     [updated.performance_id]: {
-            //         ...(prev[updated.performance_id] ?? {}),
-            //         [updated.task_key]: updated,
-            //     },
-            // }));
         } catch (e) {
             console.error("prep update error", e);
         }
     };
+
+    const renderCard = (p: PerformanceWithActs) => (
+        <PerformanceCard
+            key={p.id}
+            p={p}
+            flyer={flyerByPerformanceId[p.id]}
+            details={detailsByPerformanceId[p.id]}
+            tasks={prepByPerformanceId[p.id] ?? {}}
+            prepDefs={PREP_DEFS}
+            todayDate={todayDate}
+            normalizeAct={normalizeAct}
+            detailsSummary={detailsSummary}
+            parseYmdLocal={parseYmdLocal}
+            addDays={addDays}
+            fmtMMdd={fmtMMdd}
+            statusText={statusText}
+            onToggleDone={toggleDone}
+        />
+    );
 
     return (
         <div>
@@ -101,35 +143,38 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
                 {futurePerformances.length === 0 ? (
                     <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">未来のライブはまだありません。</div>
                 ) : (
-                    <div className="space-y-3">
-                        {[...futurePerformances].sort((a, b) => {
-                            const r = rank(a.status) - rank(b.status);
-                            if (r !== 0) return r;
-                            return (b.event_date ?? "").localeCompare(a.event_date ?? "");
-                        }).map((p) => {
-                            const flyer = flyerByPerformanceId[p.id];
-                            const d = detailsByPerformanceId[p.id];
-                            const tasks = prepByPerformanceId[p.id] ?? {};
+                    <div className="space-y-4">
+                        {/* 要対応セクション */}
+                        {actionRequired.length > 0 && (
+                            <div className="space-y-3">
+                                <p className="text-xs font-medium text-gray-500">要対応</p>
+                                {actionRequired.map(renderCard)}
+                            </div>
+                        )}
 
-                            return (
-                                <PerformanceCard
-                                    key={p.id}
-                                    p={p}
-                                    flyer={flyer}
-                                    details={d}
-                                    tasks={tasks}
-                                    prepDefs={PREP_DEFS}
-                                    todayDate={todayDate}
-                                    normalizeAct={normalizeAct}
-                                    detailsSummary={detailsSummary}
-                                    parseYmdLocal={parseYmdLocal}
-                                    addDays={addDays}
-                                    fmtMMdd={fmtMMdd}
-                                    statusText={statusText}
-                                    onToggleDone={toggleDone}
-                                />
-                            );
-                        })}
+                        {/* 確定済みセクション */}
+                        {confirmedAll.length > 0 && (
+                            <div className="space-y-3">
+                                {actionRequired.length > 0 && (
+                                    <p className="text-xs font-medium text-gray-500">確定済み</p>
+                                )}
+                                {confirmedVisible.map(renderCard)}
+                                {confirmedHidden.length > 0 && (
+                                    <>
+                                        {showMoreConfirmed && confirmedHidden.map(renderCard)}
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowMoreConfirmed((v) => !v)}
+                                            className="w-full rounded-lg border border-dashed border-gray-300 bg-white py-2 text-xs text-gray-500 hover:bg-gray-50"
+                                        >
+                                            {showMoreConfirmed
+                                                ? "▲ 折りたたむ"
+                                                : `▼ 先の予定をさらに ${confirmedHidden.length} 件表示`}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </section>
