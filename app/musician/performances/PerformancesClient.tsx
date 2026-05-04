@@ -35,7 +35,9 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
         [performances, todayStr],
     );
     const pastPerformances = useMemo(
-        () => performances.filter((p) => p.event_date < todayStr),
+        () => [...performances]
+            .filter((p) => p.event_date < todayStr)
+            .sort((a, b) => (b.event_date ?? "").localeCompare(a.event_date ?? "")),
         [performances, todayStr],
     );
 
