@@ -155,7 +155,10 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
         {!nextPerformance ? (
           <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">予定はまだありません。</div>
         ) : (
-          <div className="rounded-lg border bg-white p-4 space-y-2">
+          <Link
+            href={`/musician/performances/${nextPerformance.id}`}
+            className="block rounded-lg border bg-white p-4 space-y-2 hover:bg-gray-50 transition-colors"
+          >
             <div className="flex items-center justify-between gap-2">
               <div className="text-sm font-semibold">
                 {ymdToText(nextPerformance.event_date)}
@@ -176,7 +179,7 @@ export default function ActDetailClient({user, act, performances, nextPerformanc
             <div className="text-xs text-gray-500">
               ※ 未決定イベントも表示します
             </div>
-          </div>
+          </Link>
         )}
       </section>
 
