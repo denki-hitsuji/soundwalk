@@ -45,11 +45,11 @@ export const PersonalPerformanceCoreEditor = forwardRef<
       <h3 className="font-semibold">日付・会場（個人登録）</h3>
 
       <div className="space-y-3">
-        <div className="grid grid-cols-[120px_1fr] items-center gap-3">
+        <div className="grid grid-cols-[120px_1fr] items-center gap-3 min-w-0">
           <div className="text-sm text-neutral-600">日付</div>
           <input
             type="date"
-            className="w-full rounded-md border px-3 py-2"
+            className="w-full min-w-0 rounded-md border px-3 py-2"
             value={draftDate}
             onChange={(e) => setDraftDate(e.target.value)}
           />
