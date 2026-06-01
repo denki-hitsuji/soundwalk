@@ -1,6 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache";
-import { acceptOfferDb, deletePerformanceAttachmentDb, deletePerformanceMemoDb, deletePersonalPerformanceDb, ensureAndFetchPrepMapDb, postPerformanceMessageDb, savePerformanceDetailsFullDb, updatePerformanceMemoDb, updatePrepTaskDoneDb, uploadPerformanceFlyerDb, upsertPerformanceDb, upsertPerformanceDetailsDb, withdrawFromEventDb } from "../db/performances";
+import { acceptOfferDb, deletePerformanceAttachmentDb, deletePerformanceMemoDb, deletePerformanceMessageDb, deletePersonalPerformanceDb, ensureAndFetchPrepMapDb, postPerformanceMessageDb, savePerformanceDetailsFullDb, updatePerformanceMemoDb, updatePerformanceMessageDb, updatePrepTaskDoneDb, uploadPerformanceFlyerDb, upsertPerformanceDb, upsertPerformanceDetailsDb, withdrawFromEventDb } from "../db/performances";
 import { redirect } from "next/navigation";
 
 export async function updatePrepTaskDone(params: { taskId: string; nextDone: boolean; userId: string | null; }) {
@@ -65,6 +65,20 @@ export async function postPerformanceMessageAction(params: {
   source: string | null;
 }) {
     return await postPerformanceMessageDb(params);
+}
+
+export async function deletePerformanceMessageAction(params: {
+  messageId: string;
+}) {
+    return await deletePerformanceMessageDb(params);
+}
+
+export async function updatePerformanceMessageAction(params: {
+  messageId: string;
+  body: string;
+  source: string | null;
+}) {
+    return await updatePerformanceMessageDb(params);
 }
 
 export async function uploadPerformanceFlyerAction(formData: FormData) {

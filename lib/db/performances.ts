@@ -445,6 +445,30 @@ export async function postPerformanceMessageDb(params: {
   if (error) throw new Error(error.message);
 }
 
+export async function deletePerformanceMessageDb(params: {
+  messageId: string;
+}) {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("performance_messages")
+    .delete()
+    .eq("id", params.messageId);
+  if (error) throw new Error(error.message);
+}
+
+export async function updatePerformanceMessageDb(params: {
+  messageId: string;
+  body: string;
+  source: string | null;
+}) {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("performance_messages")
+    .update({ body: params.body, source: params.source })
+    .eq("id", params.messageId);
+  if (error) throw new Error(error.message);
+}
+
 export async function uploadPerformanceFlyerDb(formData: FormData) {
   const supabase = await createSupabaseServerClient();
 

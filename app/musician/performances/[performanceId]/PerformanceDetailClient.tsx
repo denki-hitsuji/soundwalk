@@ -22,6 +22,8 @@ import { FlyerSection } from "@/components/flyers/FlyerSection";
 import {
   savePerformanceDetailsFullAction,
   postPerformanceMessageAction,
+  deletePerformanceMessageAction,
+  updatePerformanceMessageAction,
   uploadPerformanceFlyerAction,
   deletePerformanceAttachmentAction,
   acceptOfferAction,
@@ -101,6 +103,11 @@ export default function PerformanceDetailClient(props: {
   const [newMessage, setNewMessage] = useState("");
   const [newMessageSource, setNewMessageSource] = useState("LINE");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingBody, setEditingBody] = useState("");
+  const [editingSource, setEditingSource] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
 
   const titleLine = useMemo(() => {
     const venue = performance.venue_name ? ` @ ${performance.venue_name}` : "";
@@ -332,6 +339,44 @@ export default function PerformanceDetailClient(props: {
       alert(e?.message ?? "保存に失敗しました（message）。");
     } finally {
       setPosting(false);
+    }
+  };
+
+  const startEditMessage = (m: { id: string; body: string; source: string | null }) => {
+    setEditingMessageId(m.id);
+    setEditingBody(m.body);
+    setEditingSource(m.source ?? "");
+  };
+
+  const saveEditMessage = async () => {
+    if (!editingMessageId) return;
+    setSavingEdit(true);
+    try {
+      await updatePerformanceMessageAction({
+        messageId: editingMessageId,
+        body: editingBody.trim(),
+        source: editingSource.trim() || null,
+      });
+      setEditingMessageId(null);
+      router.refresh();
+    } catch (e: any) {
+      alert(e?.message ?? "編集に失敗しました。");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    const ok = window.confirm("このメッセージを削除しますか？");
+    if (!ok) return;
+    setDeletingMessageId(messageId);
+    try {
+      await deletePerformanceMessageAction({ messageId });
+      router.refresh();
+    } catch (e: any) {
+      alert(e?.message ?? "削除に失敗しました。");
+    } finally {
+      setDeletingMessageId(null);
     }
   };
 
@@ -793,11 +838,66 @@ export default function PerformanceDetailClient(props: {
                     <div className="space-y-2">
                         {props.messages.map((m) => (
                             <div key={m.id} className="rounded border bg-white px-3 py-2">
-                                <div className="text-[11px] text-gray-500 mb-1">
-                                    {m.source ? `${m.source} / ` : ""}
-                                    {new Date(m.created_at).toLocaleString()}
-                                </div>
-                                <div className="text-xs text-gray-800 whitespace-pre-wrap">{m.body}</div>
+                                {editingMessageId === m.id ? (
+                                    <div className="grid gap-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                className="w-28 rounded border px-2 py-1 text-sm"
+                                                value={editingSource}
+                                                onChange={(e) => setEditingSource(e.target.value)}
+                                                placeholder="LINE"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => void saveEditMessage()}
+                                                disabled={savingEdit || !editingBody.trim()}
+                                                className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
+                                            >
+                                                {savingEdit ? "保存中…" : "保存"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditingMessageId(null)}
+                                                className="rounded border border-gray-300 px-3 py-1 text-xs text-gray-600"
+                                            >
+                                                キャンセル
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            className="w-full rounded border px-2 py-1 text-sm h-28"
+                                            value={editingBody}
+                                            onChange={(e) => setEditingBody(e.target.value)}
+                                        />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <div className="text-[11px] text-gray-500">
+                                                {m.source ? `${m.source} / ` : ""}
+                                                {new Date(m.created_at).toLocaleString()}
+                                            </div>
+                                            <div className="flex gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startEditMessage(m)}
+                                                    className="rounded px-2 py-0.5 text-[11px] text-blue-600 border border-blue-200 hover:bg-blue-50"
+                                                >
+                                                    編集
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => void deleteMessage(m.id)}
+                                                    disabled={deletingMessageId === m.id}
+                                                    className="rounded px-2 py-0.5 text-[11px] text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-50"
+                                                >
+                                                    {deletingMessageId === m.id ? "削除中…" : "削除"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-gray-800 whitespace-pre-wrap">{m.body}</div>
+                                    </>
+                                )}
                             </div>
                         ))}
                     </div>
