@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCurrentUser } from "@/lib/auth/session.client";
+import { getCurrentUserClient } from "@/lib/auth/session.client";
 
 export default function PublicHomePage() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export default function PublicHomePage() {
 
   useEffect(() => {
     const run = async () => {
-      const user = await useCurrentUser();
+      const { user } = await getCurrentUserClient();
       if (user) {
         router.replace("/musician"); // ログイン済はダッシュボードへ
         return;
@@ -33,18 +33,12 @@ export default function PublicHomePage() {
           フライヤー・入り時間・段取りチェックを、タイムラインで一括管理。
         </p>
 
-        <div className="mt-4 flex gap-2">
-          <Link
-            href="/signup"
-            className="flex-1 rounded bg-gray-900 px-3 py-2 text-center text-sm font-medium text-white hover:bg-gray-800"
-          >
-            サインアップ
-          </Link>
+        <div className="mt-4">
           <Link
             href="/login"
-            className="flex-1 rounded border px-3 py-2 text-center text-sm font-medium text-gray-900 hover:bg-gray-50"
+            className="block w-full rounded bg-gray-900 px-3 py-2 text-center text-sm font-medium text-white hover:bg-gray-800"
           >
-            ログイン
+            Googleではじめる
           </Link>
         </div>
 

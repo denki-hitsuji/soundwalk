@@ -8,14 +8,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           soundwalk
         </Link>
         <nav className="flex items-center gap-3 text-sm">
-          <Link href="/login" className="text-gray-600 hover:text-gray-900">
-            ログイン
-          </Link>
           <Link
-            href="/signup"
+            href="/login"
             className="rounded bg-gray-900 px-3 py-1.5 text-white hover:bg-gray-800"
           >
-            サインアップ
+            Googleではじめる
           </Link>
         </nav>
       </header>

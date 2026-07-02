@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { signInWithGoogle } from "@/lib/auth/oauth.client";
 
 type InvitePublic = {
   act_id: string;
@@ -218,20 +219,13 @@ export default function InviteClient({ token }: { token: string }) {
             <p className="text-sm text-gray-600">
               参加するにはログインが必要です（ログイン後、この招待に戻って続けられます）。
             </p>
-            <div className="flex gap-2">
-              <Link
-                href={`/login?next=${encodeURIComponent(nextPath)}`}
-                className="flex-1 rounded bg-gray-900 px-3 py-2 text-center text-sm font-medium text-white hover:bg-gray-800"
-              >
-                ログインして参加
-              </Link>
-              <Link
-                href={`/signup?next=${encodeURIComponent(nextPath)}`}
-                className="flex-1 rounded border px-3 py-2 text-center text-sm font-medium hover:bg-gray-50"
-              >
-                新しく登録して参加
-              </Link>
-            </div>
+            <button
+              type="button"
+              onClick={() => void signInWithGoogle(nextPath)}
+              className="w-full rounded bg-gray-900 px-3 py-2 text-center text-sm font-medium text-white hover:bg-gray-800"
+            >
+              Googleでログインして参加
+            </button>
           </div>
         ) : (
           <button
