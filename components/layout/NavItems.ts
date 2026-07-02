@@ -11,6 +11,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "ライブ", href: "/musician/performances", requiresAuth: true },
   { label: "リハーサル", href: "/musician/rehearsals", requiresAuth: true },
   { label: "カレンダー", href: "/musician/calendar", requiresAuth: true },
+  { label: "足跡", href: "/musician/history", requiresAuth: true },
   { label: "出演名義（アクト）", href: "/musician/acts", requiresAuth: true },
   { label: "企画管理", href: "/organizer", requiresAuth: true },
   { label: "会場管理", href: "/venue", requiresAuth: true },
