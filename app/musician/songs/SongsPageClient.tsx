@@ -4,18 +4,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
-import { ActRow } from "@/lib/utils/acts";
+import { ActRow, typeLabel } from "@/lib/utils/acts";
 import { getSongsByActIds, SongRow } from "@/lib/api/songs";
 import { addSong } from "@/lib/api/songsAction";
-
-function typeLabel(t: string | null) {
-  if (!t) return "種別未設定";
-  if (t === "solo") return "ソロ";
-  if (t === "band") return "バンド";
-  if (t === "duo") return "デュオ";
-  if (t === "unit") return "ユニット";
-  return t;
-}
 
 type Props = {
   userId: string | null;

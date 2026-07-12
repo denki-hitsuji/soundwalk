@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMyActs, getMyMemberActs } from "@/lib/api/acts";
+import { typeLabel } from "@/lib/utils/acts";
 import type { SongRow } from "@/lib/db/songs";
 
 // Client bits（別ファイル想定）
@@ -19,14 +20,6 @@ type MemberRow = {
   is_admin: boolean;
   status: string | null;
 };
-
-function typeLabel(actType: string | null) {
-  if (!actType) return "種別未設定";
-  if (actType === "solo") return "ソロ";
-  if (actType === "band") return "バンド";
-  if (actType === "duo") return "デュオ";
-  return actType;
-}
 
 async function getSongsByActIds(actIds: string[]): Promise<SongRow[]> {
   if (actIds.length === 0) return [];

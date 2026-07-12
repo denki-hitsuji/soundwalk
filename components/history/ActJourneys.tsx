@@ -1,15 +1,7 @@
 "use client";
 
 import type { ActJourney } from "@/lib/utils/history";
-
-function typeLabel(t: string | null) {
-  if (!t) return "種別未設定";
-  if (t === "solo") return "ソロ";
-  if (t === "band") return "バンド";
-  if (t === "duo") return "デュオ";
-  if (t === "unit") return "ユニット";
-  return t;
-}
+import { typeLabel } from "@/lib/utils/acts";
 
 function fmtYearMonth(ymd: string) {
   const [y, m] = ymd.split("-");

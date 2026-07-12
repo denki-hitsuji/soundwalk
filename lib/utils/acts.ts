@@ -15,6 +15,15 @@ export type ActRow = {
   profile_link_url: string | null;
 };
 
+export function typeLabel(t: string | null): string {
+  if (!t) return "種別未設定";
+  if (t === "solo") return "ソロ";
+  if (t === "band") return "バンド";
+  if (t === "duo") return "デュオ";
+  if (t === "unit") return "ユニット";
+  return t;
+}
+
 export type DetailsRow = {
   performance_id: string;
   load_in_time: string | null;
