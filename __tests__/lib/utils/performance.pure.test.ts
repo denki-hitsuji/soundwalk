@@ -45,6 +45,7 @@ describe("performance pure utilities", () => {
       set_minutes: 30,
       customer_charge_yen: 2000,
       one_drink_required: true,
+      notes: null,
     };
 
     expect(detailsSummary(details, performance)).toBe(

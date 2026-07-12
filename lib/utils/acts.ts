@@ -24,16 +24,7 @@ export function typeLabel(t: string | null): string {
   return t;
 }
 
-export type DetailsRow = {
-  performance_id: string;
-  load_in_time: string | null;
-  set_start_time: string | null;
-  set_end_time: string | null;
-  set_minutes: number | null;
-  customer_charge_yen: number | null;
-  one_drink_required: boolean | null;
-  notes: string | null;
-};
+export type { DetailsRow } from "./performance";
 
 export type AttachmentRow = {
   id: string;

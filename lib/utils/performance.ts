@@ -161,6 +161,7 @@ export type DetailsRow = {
   set_minutes: number | null;
   customer_charge_yen: number | null;
   one_drink_required: boolean | null;
+  notes: string | null;
 };
 export type DetailsMap = Record<string, DetailsRow>;
 
@@ -293,7 +294,8 @@ export async function getPerformances(): Promise<{ data: PerformanceWithActs[]; 
   if (error) throw error;
   const normalizedData = data.map((p) => {
     // Normalize details: take the first element if it's an array, or null if missing
-    const details = Array.isArray(p.details) ? (p.details[0] ?? null) : (p.details ?? null);
+    const rawDetails = Array.isArray(p.details) ? (p.details[0] ?? null) : (p.details ?? null);
+    const details = rawDetails == null ? null : { ...rawDetails, notes: (rawDetails as any).notes ?? null };
 
    const toActRow = (a: any): ActRow => ({
   id: a.id,
