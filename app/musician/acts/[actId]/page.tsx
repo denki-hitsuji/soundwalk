@@ -1,5 +1,4 @@
 // app/musician/acts/[actId]/page.tsx
-"use server"
 import { getActById, getActMembers, getMyMemberActs  } from "@/lib/api/acts";
 import ActDetailClient from "./ActDetailClient";
 import { getMyUpcomingPerformances, PerformanceRow, PerformanceWithActs } from "@/lib/api/performances";

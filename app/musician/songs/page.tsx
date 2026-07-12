@@ -1,5 +1,4 @@
 // app/musician/songs/page.tsx
-"use server"
 import { getCurrentUser } from "@/lib/auth/session.server";
 import SongsPageClient from "./SongsPageClient";
 import { getMyActs, getMyMemberActs } from "@/lib/api/acts";

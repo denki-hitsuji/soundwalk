@@ -1,5 +1,4 @@
 // app/musician/acts/new/page.tsx
-"use server"
 import { getCurrentUser } from "@/lib/auth/session.server";
 import ActNewClient from "./ActNewClient";
 

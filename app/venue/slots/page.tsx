@@ -1,5 +1,4 @@
 // app/venue/slots/page.tsx
-"use server"
 import { EventActRow, EventRow, EventWithAct, EventWithCount } from "@/lib/utils/events";
 import { getEventActs, getMyEvents } from "@/lib/api/events";
 import Link from "next/link";

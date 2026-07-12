@@ -1,4 +1,3 @@
-"use server"
 import { NextPerformanceSectionServer } from "@/components/performances/NextPerformanceSection.server";
 import { SongSummaryCard } from "@/components/songs/SongSummaryCard";
 import { getCurrentUser } from "@/lib/auth/session.server";

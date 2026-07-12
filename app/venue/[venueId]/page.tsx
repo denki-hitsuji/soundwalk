@@ -1,5 +1,4 @@
 // app/venue/[venueId]/page.tsx
-"use server";
 import { getVenueEventsWithAcceptedCount } from "@/lib/api/venues";
 
 export default async function VenuePage({ params }: { params: Promise<{ venueId: string }> }) {

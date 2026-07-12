@@ -1,5 +1,3 @@
-"use server";
-
 import OrganizedEventsListClient from "@/components/organizer/OrganizedEventsListClient";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { redirect } from "next/navigation";
