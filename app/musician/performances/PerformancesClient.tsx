@@ -5,6 +5,7 @@ import { updatePrepTaskDone } from "@/lib/api/performancesAction";
 import { addDays, fmtMMdd, parseYmdLocal, toYmdLocal } from "@/lib/utils/date";
 import { DetailsMap, detailsSummary, FlyerMap, normalizeAct, PerformanceWithActs, PREP_DEFS, PrepMap, statusText } from "@/lib/utils/performance";
 import { buildSchedulePost } from "@/lib/utils/buildSchedulePost";
+import { isCanceledStatus } from "@/lib/utils/history";
 import { SharePostPreview } from "@/components/share/SharePostPreview";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -72,7 +73,7 @@ export function PerformancesClient({ userId, performances, flyerByPerformanceId,
     const schedulePostText = useMemo(() => {
         if (futurePerformances.length === 0) return "";
         const sorted = [...futurePerformances]
-            .filter((p) => p.status !== "canceled")
+            .filter((p) => !isCanceledStatus(p.status))
             .sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? ""));
         return buildSchedulePost({
             performances: sorted.map((p) => ({

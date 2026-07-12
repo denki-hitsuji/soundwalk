@@ -14,6 +14,7 @@ import { getFutureFlyers } from "@/lib/utils/performance";
 import { ensureAndFetchPrepMapDb, getDetailsMapForPerformancesDb } from "@/lib/db/performances";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { getProfileByUserId } from "@/lib/db/profiles";
+import { isCanceledStatus } from "@/lib/utils/history";
 import { redirect } from "next/navigation";
 import { PerformancesClient } from "./PerformancesClient";
 
@@ -70,7 +71,7 @@ const activePerformances = performances.filter(
   (p) =>
     p.event_date >= todayStr &&
     p.act_id &&
-    p.status !== "cancelled"
+    !isCanceledStatus(p.status)
 );
 prepByPerformanceId = {};
 if (activePerformances.length > 0) {
