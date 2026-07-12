@@ -11,11 +11,11 @@ import type {
   FlyerRow,
   PerformanceRow,
 } from "@/lib/utils/performance";
-import { getPerformances, PREP_DEFS, toPerformanceWithActsArrayPlain, toPerformanceWithActsPlain } from "@/lib/utils/performance";
+import { PREP_DEFS, toPerformanceWithActsArrayPlain, toPerformanceWithActsPlain } from "@/lib/utils/performance";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
 import { getMyActs } from "@/lib/api/acts";
 import { ActRow } from "@/lib/utils/acts"
-import { toStringOrNull, toBoolean, toString, toPlainError } from "../utils/convert";
+import { toStringOrNull, toBoolean, toString } from "../utils/convert";
 export type {
   PerformanceRow,
   PerformanceWithActs,
@@ -240,16 +240,6 @@ export async function upsertPerformanceDb(params: {
   return perfId ?? "";
 }
 
-export async function getPerformancesForDashboardDb(userId: string) {
-  const supabase = await createSupabaseServerClient();
-
-  const { data } = await supabase
-    .from("v_dashboard_performances")
-    .select("*");
-
-  return data;
-}
-
 export async function updatePerformanceMemoDb(params: {
   performanceId: string;
   newMemo: string | null;
@@ -319,52 +309,6 @@ export async function upsertPerformanceDetailsDb(params: {
   if (error) throw error;
 }
 
-
-export async function getMyActsServerDb() {
-  const supabase = await createSupabaseServerClient();
-  const { data: auth, error: authErr } = await supabase.auth.getUser();
-  if (authErr) throw new Error(`auth.getUser failed: ${toPlainError(authErr).message}`);
-  const userId = auth.user?.id;
-  if (!userId) return { userId: null , actIds: [] as string[] };
-
-  const { data, error } = await supabase.from("v_my_acts").select("id");
-  if (error) throw new Error(`v_my_acts select failed: ${toPlainError(error).message}`);
-
-  return { userId, actIds: (data ?? []).map((r: any) => String(r.id)) };
-}
-
-export async function getNextPerformanceServerDb(todayStr?: string) {
-  const t = todayStr ?? toYmdLocal();
-  const { actIds } = await getMyActsServerDb();
-  if (actIds.length === 0) return null;
-
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("musician_performances")
-    .select(
-      `
-      id,
-      event_date,
-      venue_name,
-      memo,
-      act_id,
-      status,
-      status_reason,
-      status_changed_at,
-      acts:acts ( id, name, act_type )
-    `
-    )
-    .in("act_id", actIds)
-    .gte("event_date", t)
-    .neq("status", "canceled")
-    .order("event_date", { ascending: true })
-    .limit(1);
-
-  if (error) throw new Error(`musician_performances select failed: ${toPlainError(error).message}`);
-
-  // supabaseの返すdataは基本 plain object なのでOK。Date化しないのが大事。
-  return (data?.[0] ?? null) as PerformanceWithActs | null;
-}
 
 const BUCKET = "performance-attachments";
 
