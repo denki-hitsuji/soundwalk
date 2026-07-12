@@ -4,7 +4,6 @@ import { EventPerformancesPanel } from "@/components/venue/EventPerformancesPane
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { getEventById } from "@/lib/api/events";
 import { getVenueById } from "@/lib/api/venues";
-import { getPerformances } from "@/lib/utils/performance";
 
 export default async function VenueEventPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;

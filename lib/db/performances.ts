@@ -30,7 +30,6 @@ export type {
 
 
 export async function getMyUpcomingPerformancesDb(todayStr?: string) {
-  console.log("getMyUpcomingPerformances start");
   const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();
   const myActs = await getMyActsDb().then((acts) => acts.map((a) => a.id));
@@ -54,7 +53,6 @@ export async function getMyUpcomingPerformancesDb(todayStr?: string) {
     .neq("status", "canceled")
     .order("event_date", { ascending: true })
 
-  // console.log(`data : ${data}`);
   if (error) throw error;
   return toPerformanceWithActsArrayPlain(data);
 }

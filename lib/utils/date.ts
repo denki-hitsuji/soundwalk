@@ -1,4 +1,4 @@
-// lib/dateUtils.ts
+// lib/utils/date.ts
 export function toYmdLocal(d: Date = new Date()): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -40,4 +40,3 @@ export function fmtMMdd(d: Date) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${m}/${day}`;
 }
-

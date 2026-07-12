@@ -148,7 +148,6 @@ export async function updateEventDb(eventId: string, input: {
   charge: Number | null;
   conditions: string | null,
 }): Promise<void> {
-  console.log("🔥 updateEventDb called", eventId, input);
   const supabase = await createSupabaseServerClient();
   // const user = await getCurrentUser();
 
@@ -171,7 +170,6 @@ export async function updateEventDb(eventId: string, input: {
   if (error) {
     throw error;
   }
-  console.log("🔥 updateEventDb end");
 }
 
 // ★ イベント削除
@@ -464,4 +462,4 @@ export async function getVenueEventsInRangeDb(
     venue_name: e.venues?.name ?? null,
     acceptedCount: countMap.get(e.id) ?? 0,
   }));
-} 
+}

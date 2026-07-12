@@ -20,7 +20,6 @@ export async function upsertPerformance(params: {
     memo: string | null;
     act_id: string | null;
 }): Promise<string> { 
-  console.log(`upsert start`);
     return await upsertPerformanceDb(params);
 }
 

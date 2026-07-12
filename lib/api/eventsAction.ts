@@ -28,7 +28,6 @@ export async function updateEvent(eventId: string, input: {
   charge: Number | null;
   conditions: string | null,
 }): Promise<void> {
-  console.log("🔥 updateEvent called", eventId, input);
   return await updateEventDb(eventId, input);
 }
 

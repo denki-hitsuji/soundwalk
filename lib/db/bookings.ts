@@ -123,6 +123,5 @@ export async function createOfferAndInboxPerformanceDb(params: { eventId: string
           p_act_id: actId,
         });
 
-        console.log("offer rpc result", { data, error });
         if (error) throw error;
 }
