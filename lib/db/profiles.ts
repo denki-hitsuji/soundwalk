@@ -18,25 +18,6 @@ export async function getProfileByUserId(userId: string) {
   return data as ProfileRow;
 }
 
-export async function updatePerformanceMemo(params: {
-  performanceId: string;
-  newMemo: string | null;
-}): Promise<void> {
-  const supabase = await createSupabaseServerClient();
-  const { performanceId, newMemo } = params;
-
-  const patch = {
-    memo: newMemo?.trim() ? newMemo.trim() : null,
-  };
-
-  const { error } = await supabase
-    .from("musician_performances")
-    .update(patch)
-    .eq("id", performanceId);
-
-  if (error) throw error;
-} 
-
 export async function upsertProfile(profile: {
   id: string;
   display_name: string;
