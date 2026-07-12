@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  PREP_DEFS,
   type PerformanceWithActs,
   type FlyerMap,
   type DetailsRow,
@@ -10,7 +9,7 @@ import {
   getPerformances,
 } from "@/lib/utils/performance";
 
-import { toYmdLocal, parseYmdLocal, addDays } from "@/lib/utils/date";
+import { toYmdLocal, parseYmdLocal } from "@/lib/utils/date";
 import { getFutureFlyers } from "@/lib/utils/performance";
 import { ensureAndFetchPrepMapDb, getDetailsMapForPerformancesDb } from "@/lib/db/performances";
 import { getCurrentUser } from "@/lib/auth/session.server";
@@ -37,9 +36,9 @@ export default async function PerformancesPage() {
     if (r !== 0) return r;
     return (b.event_date ?? "").localeCompare(a.event_date ?? "");
   });
-  var flyerByPerformanceId: FlyerMap = {};
-  var detailsByPerformanceId: DetailsMap = {};
-  var prepByPerformanceId: PrepMap = {};
+  let flyerByPerformanceId: FlyerMap = {};
+  let detailsByPerformanceId: DetailsMap = {};
+  let prepByPerformanceId: PrepMap = {};
 
   const futureIds = performances.filter((p) => p.event_date >= todayStr).map((p) => p.id);
 
@@ -67,23 +66,6 @@ export default async function PerformancesPage() {
     detailsByPerformanceId = dmap;
   }
 
-  // 4) 段取りタスク：未来分を upsert（方式B）
-  //    まず desired rows を作る → upsert → select して state に入れる
-  const desired = performances
-    .filter((p) => p.event_date >= todayStr && p.act_id && p.status !== "cancelled")
-    .flatMap((p) => {
-      const eventDate = parseYmdLocal(p.event_date);
-      return PREP_DEFS.map((def) => {
-        const due = addDays(eventDate, def.offsetDays);
-        const dueStr = due.toISOString().slice(0, 10);
-        return {
-          performance_id: p.id,
-          task_key: def.key,
-          act_id: p.act_id, // performance.act_id が入ってれば共有が自然に揃う
-          due_date: dueStr,
-        };
-      });
-    });
 const activePerformances = performances.filter(
   (p) =>
     p.event_date >= todayStr &&
