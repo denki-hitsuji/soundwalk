@@ -13,7 +13,7 @@ import type {
 } from "@/lib/utils/performance";
 import { PREP_DEFS, toPerformanceWithActsArrayPlain, toPerformanceWithActsPlain } from "@/lib/utils/performance";
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
-import { getMyActs } from "@/lib/api/acts";
+import { getMyActsDb } from "@/lib/db/acts";
 import { ActRow } from "@/lib/utils/acts"
 import { toStringOrNull, toBoolean, toString, toPlainError } from "../utils/convert";
 export type {
@@ -33,7 +33,7 @@ export async function getMyUpcomingPerformancesDb(todayStr?: string) {
   console.log("getMyUpcomingPerformances start");
   const supabase = await createSupabaseServerClient();
   const t = todayStr ?? toYmdLocal();
-  const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
+  const myActs = await getMyActsDb().then((acts) => acts.map((a) => a.id));
   const { data, error } = await supabase
     .from("musician_performances")
     .select(
@@ -64,7 +64,7 @@ export async function getPerformancesInRangeDb(params: {
   endDate: string;    // YYYY-MM-DD
 }) {
   const supabase = await createSupabaseServerClient();
-  const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
+  const myActs = await getMyActsDb().then((acts) => acts.map((a) => a.id));
 
   if (myActs.length === 0) return [];
 
