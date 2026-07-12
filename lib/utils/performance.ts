@@ -339,11 +339,12 @@ if (Array.isArray(p.acts)) {
 }
 
 export async function getFutureFlyers(flyerIds: string[]): Promise<{ data: FlyerRow[]; error: any }> {
+  if (flyerIds.length === 0) return { data: [] as FlyerRow[], error: null };
   const supabase = await createSupabaseServerClient();
-  const todayStr = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
     .from("performance_attachments")
     .select("performance_id, file_url, created_at")
+    .in("performance_id", flyerIds)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return { data: data as FlyerRow[], error };
