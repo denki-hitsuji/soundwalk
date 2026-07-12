@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 export default async function MusicianDashboardPage() {
   const user = await getCurrentUser();
-  if (!user) redirect("login");
+  if (!user) redirect("/login");
   return (
     <main className="w-full mx-auto">
       <NextPerformanceSectionServer />
