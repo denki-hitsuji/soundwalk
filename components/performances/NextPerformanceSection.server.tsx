@@ -2,15 +2,14 @@
 import { toYmdLocal } from "@/lib/utils/date";
 
 import { NextPerformanceSectionClient } from "./NextPerformanceSectionClient";
-import { ensureAndFetchPrepMapDb, getFlyerMapForPerformancesDb } from "@/lib/db/performances";
-import { getMyActsServer, getNextPerformanceServer } from "@/lib/utils/performance";
+import { ensureAndFetchPrepMapDb, getFlyerMapForPerformancesDb, getMyActsServerDb, getNextPerformanceServerDb } from "@/lib/db/performances";
 import { getDetailsForPerformance } from "@/lib/api/performances";
 
 export async function NextPerformanceSectionServer() {
   const todayStr = toYmdLocal();
 
-  const { userId } = await getMyActsServer();
-  const next = await getNextPerformanceServer(todayStr);
+  const { userId } = await getMyActsServerDb();
+  const next = await getNextPerformanceServerDb(todayStr);
 
   if (!next) {
     // 表示しない方針ならnullでOK

@@ -15,7 +15,7 @@ import { PREP_DEFS, toPerformanceWithActsArrayPlain, toPerformanceWithActsPlain 
 import { toYmdLocal, parseYmdLocal, addDaysLocal, diffDaysLocal, addDays } from "@/lib/utils/date";
 import { getMyActs } from "@/lib/api/acts";
 import { ActRow } from "@/lib/utils/acts"
-import { toStringOrNull, toBoolean, toString } from "../utils/convert";
+import { toStringOrNull, toBoolean, toString, toPlainError } from "../utils/convert";
 export type {
   PerformanceRow,
   PerformanceWithActs,
@@ -646,4 +646,106 @@ export async function getDetailsForPerformanceDb(params: { performanceId: string
 
   if (error) throw new Error(error.message);
   return data;
+}
+
+export async function getMyPerformancesDb(): Promise<{ data: PerformanceWithActs[]; error: any }> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("v_my_performances")
+    .select(`
+      id, event_date, venue_name, memo, act_id, status, status_reason,
+      status_changed_at, created_at, profile_id, event_id, venue_id,
+      booking_id, offer_id, open_time, start_time,
+      details:performance_details (
+        performance_id, load_in_time, set_start_time, set_end_time,
+        set_minutes, customer_charge_yen, one_drink_required
+      ),
+      attachments:performance_attachments (performance_id, file_url, created_at),
+      acts:acts (
+        id, name, act_type, owner_profile_id, is_temporary, description,
+        icon_url, photo_url, profile_link_url
+      ),
+      events:events (title)
+    `)
+    .not("acts", "is", null)
+    .neq("status", "canceled")
+    .order("event_date", { ascending: false });
+
+  if (error) throw error;
+
+  const normalizedData = data.map((p) => {
+    const rawDetails = Array.isArray(p.details) ? (p.details[0] ?? null) : (p.details ?? null);
+    const details = rawDetails == null ? null : { ...rawDetails, notes: (rawDetails as any).notes ?? null };
+    const toActRow = (a: any): ActRow => ({
+      id: a.id,
+      name: a.name,
+      act_type: a.act_type,
+      owner_profile_id: a.owner_profile_id ?? null,
+      is_temporary: a.is_temporary ?? null,
+      description: a.description ?? null,
+      icon_url: a.icon_url ?? null,
+      photo_url: a.photo_url ?? null,
+      profile_link_url: a.profile_link_url ?? null,
+    });
+
+    let acts: ActRow | ActRow[] | null = null;
+    if (Array.isArray(p.acts)) acts = p.acts.map(toActRow);
+    else if (p.acts) acts = toActRow(p.acts);
+
+    const event_title = (p as any).events?.title ?? null;
+    const act_name = Array.isArray(acts) ? (acts[0]?.name ?? null) : (acts?.name ?? null);
+    const flyer_url = Array.isArray((p as any).attachments)
+      ? ((p as any).attachments[0]?.file_url ?? null)
+      : ((p as any).attachments?.file_url ?? null);
+
+    return { ...p, details, acts, event_title, act_name, flyer_url };
+  });
+
+  return { data: normalizedData, error };
+}
+
+export async function getFutureFlyersDb(flyerIds: string[]): Promise<{ data: FlyerRow[]; error: any }> {
+  if (flyerIds.length === 0) return { data: [] as FlyerRow[], error: null };
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("performance_attachments")
+    .select("performance_id, file_url, created_at")
+    .in("performance_id", flyerIds)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return { data: data as FlyerRow[], error };
+}
+
+export async function getMyActsServerDb() {
+  const supabase = await createSupabaseServerClient();
+  const { data: auth, error: authErr } = await supabase.auth.getUser();
+  if (authErr) throw new Error(`auth.getUser failed: ${toPlainError(authErr).message}`);
+  const userId = auth.user?.id;
+  if (!userId) return { userId: null, actIds: [] as string[] };
+
+  const { data, error } = await supabase.from("v_my_acts").select("id");
+  if (error) throw new Error(`v_my_acts select failed: ${toPlainError(error).message}`);
+  return { userId, actIds: (data ?? []).map((r: any) => String(r.id)) };
+}
+
+export async function getNextPerformanceServerDb(todayStr?: string) {
+  const t = todayStr ?? toYmdLocal();
+  const { actIds } = await getMyActsServerDb();
+  if (actIds.length === 0) return null;
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("musician_performances")
+    .select(`
+      id, event_date, venue_name, memo, act_id, status, status_reason,
+      status_changed_at, acts:acts ( id, name, act_type )
+    `)
+    .in("act_id", actIds)
+    .gte("event_date", t)
+    .neq("status", "canceled")
+    .order("event_date", { ascending: true })
+    .limit(1);
+
+  if (error) throw new Error(`musician_performances select failed: ${toPlainError(error).message}`);
+  return (data?.[0] ?? null) as PerformanceWithActs | null;
 }

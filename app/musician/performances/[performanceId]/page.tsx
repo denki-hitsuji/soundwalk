@@ -2,7 +2,7 @@
 import { getCurrentUser } from "@/lib/auth/session.server";
 import PerformanceDetailClient from "./PerformanceDetailClient";
 import { getMyOwnerVenues } from "@/lib/api/venues";
-import { getPerformances } from "@/lib/utils/performance";
+import { getMyPerformancesDb } from "@/lib/db/performances";
 import { EventRow } from "@/lib/utils/events";
 import { getEventActs, getEventById } from "@/lib/api/events";
 import { getActById, getAllActs } from "@/lib/api/acts";
@@ -28,7 +28,7 @@ export default async function PerformanceDetailPage({ params }: {
 
   // performance
   // console.log(performanceId); 
-  const perfs = await getPerformances();
+  const perfs = await getMyPerformancesDb();
   // console.log(JSON.stringify(perfs));
   const perf = perfs.data.find(p => p.id === performanceId );
   // console.log(JSON.stringify(perf));

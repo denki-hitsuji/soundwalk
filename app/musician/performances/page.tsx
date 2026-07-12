@@ -6,12 +6,10 @@ import {
   type DetailsMap,
   type PrepTaskRow,
   type PrepMap,
-  getPerformances,
 } from "@/lib/utils/performance";
 
 import { toYmdLocal, parseYmdLocal } from "@/lib/utils/date";
-import { getFutureFlyers } from "@/lib/utils/performance";
-import { ensureAndFetchPrepMapDb, getDetailsMapForPerformancesDb } from "@/lib/db/performances";
+import { ensureAndFetchPrepMapDb, getDetailsMapForPerformancesDb, getFutureFlyersDb, getMyPerformancesDb } from "@/lib/db/performances";
 import { getCurrentUser } from "@/lib/auth/session.server";
 import { getProfileByUserId } from "@/lib/db/profiles";
 import { isCanceledStatus } from "@/lib/utils/history";
@@ -29,7 +27,7 @@ export default async function PerformancesPage() {
   const todayDate = parseYmdLocal(todayStr);
 
   // 1) ライブ一覧（acts も一緒）
-  const { data, error } = await getPerformances();
+  const { data, error } = await getMyPerformancesDb();
   const performances = (data ?? []) as unknown as PerformanceWithActs[];
 
   performances.sort((a, b) => {
@@ -44,7 +42,7 @@ export default async function PerformancesPage() {
   const futureIds = performances.filter((p) => p.event_date >= todayStr).map((p) => p.id);
 
   // 2) 未来分の代表フライヤー（最新1枚）
-  const { data: atts, error: attErr } = await getFutureFlyers(futureIds);
+  const { data: atts, error: attErr } = await getFutureFlyersDb(futureIds);
 
   if (attErr) {
     console.error("load future flyers error", attErr);
