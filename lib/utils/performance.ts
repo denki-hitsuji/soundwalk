@@ -1,5 +1,5 @@
 // lib/performanceUtils.ts
-import { ActRow } from "@/lib/utils/acts"
+import { ActRow, normalizeAct as normalizeActRow } from "@/lib/utils/acts"
 import { diffDays, toYmdLocal } from "@/lib/utils/date";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { toString, toBoolean, toStringOrNull, toPlainError } from "./convert";
@@ -230,9 +230,7 @@ export const PREP_DEFS = [
 export type PrepDef = (typeof PREP_DEFS)[number];
 
 export function normalizeAct(p: PerformanceWithActs): ActRow | null {
-  const a = p.acts;
-  if (!a) return null;
-  return Array.isArray(a) ? a[0] ?? null : a;
+  return normalizeActRow(p.acts);
 }
 
 export async function getPerformances(): Promise<{ data: PerformanceWithActs[]; error: any }> {
