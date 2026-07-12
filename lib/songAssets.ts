@@ -38,7 +38,7 @@ export type SongAssetRow = {
 
 const BUCKET = "song-assets";
 
-// 方針：10MB、動画NG、whitelist、音声はmp3のみ
+// 方針：10MB、動画NG、whitelist、音声はmp3推奨（m4aも可）
 export const SONG_ASSET_MAX_BYTES = 10 * 1024 * 1024;
 
 export const ALLOWED_MIME_TYPES = new Set<string>([
@@ -55,17 +55,15 @@ export function validateSongAssetFile(file: File): string | null {
   if (!file) return "ファイルが選択されていません。";
   if (file.size > SONG_ASSET_MAX_BYTES) return "ファイルサイズが10MBを超えています。";
 
-  // MIMEタイプを正規化してからチェック（m4aファイル対応）
   const mimeType = normalizeMimeType(file);
   if (!ALLOWED_MIME_TYPES.has(mimeType)) {
     return `許可されていないファイル形式です: ${file.type || "unknown"}`;
   }
-  // 動画をMIMEで弾けないケースにも備える（拡張子でも軽くガード）
+
   const lower = file.name.toLowerCase();
   if (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".m4v") || lower.endsWith(".avi")) {
     return "動画ファイルはアップロードできません。";
   }
-  // m4aは許可（警告はUI側で表示）
   return null;
 }
 
@@ -112,11 +110,6 @@ export async function uploadSongAsset(params: {
   const objectPath = `songs/${actSongId}/${assetId}_${safeName}`;
   const mimeType = normalizeMimeType(file);
 
-  // デバッグ: MIMEタイプを確認
-  console.log("Original MIME type:", file.type);
-  console.log("Normalized MIME type:", mimeType);
-  console.log("File name:", file.name);
-
   // MIMEタイプが変更された場合は新しいFileオブジェクトを作成
   const uploadFile = file.type !== mimeType
     ? new File([file], file.name, {
@@ -124,8 +117,6 @@ export async function uploadSongAsset(params: {
         lastModified: file.lastModified,
       })
     : file;
-
-  console.log("Upload file MIME type:", uploadFile.type);
 
   // 2) Storage upload
   const { error: upErr } = await supabase.storage
