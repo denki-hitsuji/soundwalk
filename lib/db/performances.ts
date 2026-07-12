@@ -1,6 +1,8 @@
 "use server"
 import "server-only";
+import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/session.server";
 import type {
   PerformanceWithActs,
   FlyerMap,
@@ -516,8 +518,8 @@ export async function withdrawFromEventDb(params: {
   const supabase = await createSupabaseServerClient();
 
   // 認証必須（自分のperformanceだけ更新する安全柵）
-  const { data: auth } = await supabase.auth.getUser();
-  const uid = auth.user?.id;
+  const user = await getCurrentUser();
+  const uid = user?.id;
   if (!uid) throw new Error("Not authenticated");
 
   const { error } = await supabase
@@ -539,8 +541,8 @@ export async function withdrawFromEventDb(params: {
 export async function deletePersonalPerformanceDb(params: { performanceId: string }) {
   const supabase = await createSupabaseServerClient();
 
-  const { data: auth } = await supabase.auth.getUser();
-  const uid = auth.user?.id;
+  const user = await getCurrentUser();
+  const uid = user?.id;
   if (!uid) throw new Error("Not authenticated");
 
   // performance を読んで event_id が無いことを確認（安全）
@@ -632,8 +634,8 @@ export async function getDetailsForPerformanceDb(params: { performanceId: string
   const { performanceId } = params;
   const supabase = await createSupabaseServerClient();
     // 認証必須（自分のperformanceだけ更新する安全柵）
-  const { data: auth } = await supabase.auth.getUser();
-  const uid = auth.user?.id;
+  const user = await getCurrentUser();
+  const uid = user?.id;
   if (!uid) throw new Error("Not authenticated");
 
   const { data, error } = await supabase
@@ -714,22 +716,21 @@ export async function getFutureFlyersDb(flyerIds: string[]): Promise<{ data: Fly
   return { data: data as FlyerRow[], error };
 }
 
-export async function getMyActsServerDb() {
+export const getMyActsServerDb = cache(async () => {
   const supabase = await createSupabaseServerClient();
-  const { data: auth, error: authErr } = await supabase.auth.getUser();
-  if (authErr) throw new Error(`auth.getUser failed: ${toPlainError(authErr).message}`);
-  const userId = auth.user?.id;
+  const user = await getCurrentUser();
+  const userId = user?.id;
   if (!userId) return { userId: null, actIds: [] as string[] };
 
   const { data, error } = await supabase.from("v_my_acts").select("id");
   if (error) throw new Error(`v_my_acts select failed: ${toPlainError(error).message}`);
   return { userId, actIds: (data ?? []).map((r: any) => String(r.id)) };
-}
+});
 
-export async function getNextPerformanceServerDb(todayStr?: string) {
+export async function getNextPerformanceServerDb(todayStr?: string, actIds?: string[]) {
   const t = todayStr ?? toYmdLocal();
-  const { actIds } = await getMyActsServerDb();
-  if (actIds.length === 0) return null;
+  const resolvedActIds = actIds ?? (await getMyActsServerDb()).actIds;
+  if (resolvedActIds.length === 0) return null;
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -738,7 +739,7 @@ export async function getNextPerformanceServerDb(todayStr?: string) {
       id, event_date, venue_name, memo, act_id, status, status_reason,
       status_changed_at, acts:acts ( id, name, act_type )
     `)
-    .in("act_id", actIds)
+    .in("act_id", resolvedActIds)
     .gte("event_date", t)
     .neq("status", "canceled")
     .order("event_date", { ascending: true })

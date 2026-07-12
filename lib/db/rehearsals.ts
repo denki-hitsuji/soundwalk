@@ -1,6 +1,7 @@
 "use server";
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/session.server";
 import { RehearsalRow } from "@/lib/utils/rehearsals";
 
 export async function getRehearsalsForActDb(actId: string): Promise<RehearsalRow[]> {
@@ -82,9 +83,7 @@ export async function addRehearsalDb(params: {
   performance_id?: string | null;
 }): Promise<void> {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) throw new Error("ログインが必要です");
 
@@ -104,9 +103,7 @@ export async function addRehearsalDb(params: {
 
 export async function deleteRehearsalDb(rehearsalId: string): Promise<void> {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) throw new Error("ログインが必要です");
 

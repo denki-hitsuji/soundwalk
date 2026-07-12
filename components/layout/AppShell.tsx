@@ -1,16 +1,10 @@
 // AppShell.tsx（Server Component）
-"use server";
 import { redirect } from "next/navigation";
 import { AppShellClient } from "./AppShellClient";
-import { createSupabaseServerClient } from "@/lib/supabase/server"; // ←あなたの実装に合わせてパス調整
+import { getCurrentUser } from "@/lib/auth/session.server";
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
-  const supabase = await createSupabaseServerClient();
-
-  // Supabase SSR の作法に合わせて取得（例：auth.getUser）
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const initialUserId = user?.id ?? null;

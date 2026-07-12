@@ -15,15 +15,3 @@ export async function getSongsByActIds(actIds: string[]) {
 export async function getSongById(songId: string) {
     return await getSongByIdDb(songId);
 }
-
-// export async function getSignedUrl(objectPath: string, expiresInSec: number) {
-//     return await getSignedUrlDb(objectPath, expiresInSec);
-// }
-
-// export async function deleteSongAsset(asset: SongAssetRow) {
-//     return await deleteSongAssetDb(asset)
-// }
-
-// export async function listSongAssets(songId: string) {
-//   return await listSongAssetsDb(songId);
-// }

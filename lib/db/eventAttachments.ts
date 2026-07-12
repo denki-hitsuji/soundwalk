@@ -1,6 +1,7 @@
 // lib/db/eventAttachments.ts
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/session.server";
 import { EventAttachmentRow } from "@/lib/utils/eventAttachments";
 
 const BUCKET = "event-attachments";
@@ -32,8 +33,8 @@ export async function uploadEventFlyerDb(formData: FormData) {
   const supabase = await createSupabaseServerClient();
 
   // 認証チェック
-  const { data: auth } = await supabase.auth.getUser();
-  const userId = auth.user?.id;
+  const user = await getCurrentUser();
+  const userId = user?.id;
   if (!userId) throw new Error("ログインが必要です");
 
   const eventId = String(formData.get("eventId") ?? "");
@@ -94,8 +95,8 @@ export async function deleteEventAttachmentDb(params: {
   const supabase = await createSupabaseServerClient();
 
   // 認証チェック
-  const { data: auth } = await supabase.auth.getUser();
-  const userId = auth.user?.id;
+  const user = await getCurrentUser();
+  const userId = user?.id;
   if (!userId) throw new Error("ログインが必要です");
 
   // 企画者チェック

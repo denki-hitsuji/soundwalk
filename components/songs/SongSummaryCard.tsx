@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ACTS_UPDATED_EVENT } from "@/lib/db/actEvents";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/session.server";
 import { getMyActs, getMyMemberActs } from "@/lib/api/acts";
 import { typeLabel } from "@/lib/utils/acts";
 import type { SongRow } from "@/lib/db/songs";
@@ -92,12 +93,8 @@ function ActSongsCard({
 }
 
 export async function SongSummaryCard() {
-  const supabase = await createSupabaseServerClient();
-
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError) throw userError;
-
-  const userId = userData?.user?.id ?? null;
+  const user = await getCurrentUser();
+  const userId = user?.id ?? null;
 
   if (!userId) {
     return (

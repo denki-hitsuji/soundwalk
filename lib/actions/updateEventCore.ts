@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/session.server";
 
 export async function updateEventCore(input: {
   eventId: string;
@@ -9,12 +10,8 @@ export async function updateEventCore(input: {
 }) {
   const supabase = await createSupabaseServerClient();
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) throw new Error("Not authenticated");
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not authenticated");
 
   const { error } = await supabase.rpc("update_event_core", {
     p_event_id: input.eventId,

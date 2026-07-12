@@ -1,8 +1,9 @@
 // lib/auth/session.server.ts
-"use server";
+import "server-only";
+import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -12,4 +13,4 @@ export async function getCurrentUser() {
 
   if (error) return null;
   return user;
-}
+});

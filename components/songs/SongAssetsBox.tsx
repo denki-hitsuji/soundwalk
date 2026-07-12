@@ -2,14 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  listSongAssets,
-  uploadSongAsset,
-  deleteSongAsset,
-  getSignedUrl,
+  listSongAssetsAction,
+  uploadSongAssetAction,
+  deleteSongAssetAction,
+  getSignedUrlAction,
+} from "@/lib/api/songAssets";
+import {
   validateSongAssetFile,
   type SongAssetRow,
   SONG_ASSET_MAX_BYTES,
-} from "@/lib/songAssets";
+} from "@/lib/utils/songAssets";
 
 function fmtBytes(n: number) {
   if (n < 1024) return `${n}B`;
@@ -57,14 +59,14 @@ const kindLabel: Record<string,string> = {
     setLoading(true);
     setErr(null);
     try {
-      const list = await listSongAssets(actSongId);
+      const list = await listSongAssetsAction(actSongId);
       setAssets(list);
 
       // 直近分だけ署名URL作る（多すぎるとAPI叩きすぎるので必要なら後で最適化）
       const next: Record<string, string> = {};
       for (const a of list) {
         try {
-          next[a.id] = await getSignedUrl(a.object_path, 60 * 10);
+          next[a.id] = await getSignedUrlAction(a.object_path, 60 * 10);
         } catch {
           // 署名作成に失敗しても一覧自体は見せる
         }
@@ -108,13 +110,13 @@ const kindLabel: Record<string,string> = {
     setUploading(true);
     setErr(null);
     try {
-      const inserted = await uploadSongAsset({ actSongId, file, assetKind: kind });
+      const inserted = await uploadSongAssetAction({ actSongId, file, assetKind: kind });
       setFile(null);
 
       // 追加分だけ先に差し込む
       setAssets((prev) => [inserted, ...prev]);
       try {
-        const url = await getSignedUrl(inserted.object_path, 60 * 10);
+        const url = await getSignedUrlAction(inserted.object_path, 60 * 10);
         setSignedMap((prev) => ({ ...prev, [inserted.id]: url }));
       } catch {}
     } catch (e: any) {
@@ -130,7 +132,7 @@ const kindLabel: Record<string,string> = {
 
     setErr(null);
     try {
-      await deleteSongAsset(a);
+      await deleteSongAssetAction(a);
       setAssets((prev) => prev.filter((x) => x.id !== a.id));
       setSignedMap((prev) => {
         const n = { ...prev };

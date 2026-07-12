@@ -8,8 +8,8 @@ import { getDetailsForPerformance } from "@/lib/api/performances";
 export async function NextPerformanceSectionServer() {
   const todayStr = toYmdLocal();
 
-  const { userId } = await getMyActsServerDb();
-  const next = await getNextPerformanceServerDb(todayStr);
+  const { userId, actIds } = await getMyActsServerDb();
+  const next = await getNextPerformanceServerDb(todayStr, actIds);
 
   if (!next) {
     // 表示しない方針ならnullでOK

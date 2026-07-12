@@ -1,16 +1,17 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/session.server";
 
 export async function acceptBookingAndCreatePerformance(bookingId: string) {
   const supabase = await createSupabaseServerClient();
 
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) throw new Error("Not authenticated");
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not authenticated");
 
   const { data, error } = await supabase.rpc("accept_booking_and_create_performance", {
     p_booking_id: bookingId,
-    p_actor_user_id: auth.user.id,
+    p_actor_user_id: user.id,
   });
 
   if (error) throw new Error(error.message);
@@ -22,12 +23,12 @@ export async function acceptBookingAndCreatePerformance(bookingId: string) {
 export async function acceptOfferAndCreatePerformance(offerId: string) {
   const supabase = await createSupabaseServerClient();
 
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) throw new Error("Not authenticated");
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not authenticated");
 
   const { data, error } = await supabase.rpc("accept_offer_and_create_performance", {
     p_offer_id: offerId,
-    p_actor_user_id: auth.user.id,
+    p_actor_user_id: user.id,
   });
 
   if (error) throw new Error(error.message);
