@@ -1,5 +1,5 @@
 "use server"
-import { getMyActsDb, getMyOwnerActsDb, getMyMemberActsDb, getNextPerformanceDb, getActByIdDb, getActsByIdsDb, getAllActsDb, insertActDb, getActMembersDb } from "../db/acts";
+import { getMyActsDb, getMyOwnerActsDb, getMyMemberActsDb, getActByIdDb, getActsByIdsDb, getAllActsDb, insertActDb, getActMembersDb } from "../db/acts";
 import { ActRow } from "../utils/acts";
 
 export async function getMyActs(): Promise<ActRow[]> {
@@ -11,10 +11,6 @@ export async function getMyOwnerActs(): Promise<ActRow[]> {
 export async function getMyMemberActs(): Promise<ActRow[]> {
   return await getMyMemberActsDb();
 }
-export async function getNextPerformance() {
-  return await getNextPerformanceDb();
-}
-
 export async function getActById(actId: string): Promise<ActRow | null> {
   return await getActByIdDb(actId);
 }

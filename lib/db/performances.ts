@@ -97,36 +97,6 @@ export async function getPerformancesInRangeDb(params: {
   return toPerformanceWithActsArrayPlain(data);
 }
 
-export async function getNextPerformanceDb(todayStr?: string) {
-  const supabase = await createSupabaseServerClient();
-  const t = todayStr ?? toYmdLocal();
-  const myActs = await getMyActs().then((acts) => acts.map((a) => a.id));
-  // console.log(`my acts: ${myActs}`);
-  const { data, error } = await supabase
-    .from("musician_performances")
-    .select(
-      `
-      id,
-      event_date,
-      venue_name,
-      memo,
-      act_id,
-      status,
-      status_reason,
-      status_changed_at,
-      acts:acts ( id, name, act_type )
-    `
-    )
-    .in("act_id", myActs)
-    .gte("event_date", t)
-    .neq("status", "canceled")   
-    .order("event_date", { ascending: true })
-    .limit(1);
-
-  if (error) throw error;
-  return toPerformanceWithActsPlain(data);
-}
-
 export async function getFlyerMapForPerformancesDb(performanceIds: string[]) {
   const supabase = await createSupabaseServerClient();
   if (performanceIds.length === 0) return {} as FlyerMap;

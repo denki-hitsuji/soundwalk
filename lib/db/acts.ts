@@ -50,33 +50,6 @@ export async function getMyMemberActsDb(): Promise<ActRow[]> {
   return (data ?? []) as ActRow[];
 }
 
-export async function getNextPerformanceDb() {
-  const today = toYmdLocal();
-  const supabase = await createSupabaseServerClient();
-
-  const { data, error } = await supabase
-    .from("v_my_performances")
-    .select(`
-      id,
-      event_date,
-      venue_name,
-      memo,
-      flyer_url,
-      acts (
-        id,
-        name,
-        act_type
-      )
-    `)
-    .gte("event_date", today)
-    .order("event_date", { ascending: true })
-    .limit(1);
-
-  if (error) throw error;
-
-  // 0 or 1 件
-  return data?.[0] ?? null;
-}
   // “できる範囲で” storage から消す（photo_url しか無いので推測）
   const tryRemoveFromStorageByUrl = async (url: string) => {
   const supabase = await createSupabaseServerClient();
