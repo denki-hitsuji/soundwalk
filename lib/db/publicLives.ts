@@ -32,14 +32,12 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 /**
- * slug に紐づく公開アクトの今後のライブ情報を返す。
+ * slug に紐づく公開アクトのライブ情報（過去・今後の両方）を返す。
  * - is_public でないアクト、キャンセル済み公演、未確定（matched でない）企画は除外する。
  * - 対象アクトが存在しない/非公開の場合は null を返す（404判定は呼び出し側で行う）。
+ * - 今後/過去の絞り込みは行わない（呼び出し側で date を見て振り分ける）。
  */
-export async function getPublicActLivesDb(
-  slug: string,
-  todayStr: string
-): Promise<PublicActLives | null> {
+export async function getPublicActLivesDb(slug: string): Promise<PublicActLives | null> {
   const supabase = createSupabaseServiceClient();
 
   const { data: page, error: pageError } = await supabase
@@ -64,7 +62,6 @@ export async function getPublicActLivesDb(
     )
     .eq("act_id", act.id)
     .neq("status", "canceled")
-    .gte("event_date", todayStr)
     .order("event_date", { ascending: true });
 
   if (perfError) throw new Error(perfError.message);

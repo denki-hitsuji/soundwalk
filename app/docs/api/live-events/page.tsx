@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "ライブ情報 公開API仕様 | Soundwalk",
   description:
-    "Soundwalkに登録されたアクト（バンド）の今後のライブ情報を取得する公開APIのリファレンスです。",
+    "Soundwalkに登録されたアクト（バンド）の過去・今後のライブ情報を取得する公開APIのリファレンスです。",
 };
 
 const RESPONSE_EXAMPLE = `{
@@ -15,6 +15,14 @@ const RESPONSE_EXAMPLE = `{
     "profile_link_url": "https://x.com/theholidays"
   },
   "events": [
+    {
+      "title": "過去のワンマン",
+      "date": "2026-01-15",
+      "open_time": "18:00",
+      "start_time": "18:30",
+      "venue": "水戸△△",
+      "charge": 2000
+    },
     {
       "title": "○○ LIVE",
       "date": "2026-09-12",
@@ -85,7 +93,7 @@ export default function LiveEventsApiDocsPage() {
         </p>
         <h1 className="text-2xl font-bold text-gray-900">ライブ情報 公開API</h1>
         <p className="text-sm text-gray-600">
-          Soundwalkに登録されたアクト（バンド）ごとの、今後のライブ情報をJSONで取得できます。認証は不要です。
+          Soundwalkに登録されたアクト（バンド）ごとの、過去・今後すべてのライブ情報をJSONで取得できます。認証は不要です。
         </p>
       </header>
 
@@ -93,7 +101,9 @@ export default function LiveEventsApiDocsPage() {
         <ul className="list-disc space-y-1 pl-5">
           <li>認証: 不要（公開API）</li>
           <li>形式: JSON</li>
-          <li>取得できるのは「今後（当日以降）」のライブのみで、過去のライブは含まれません</li>
+          <li>
+            <strong>過去・今後を問わずすべてのライブ</strong>を日付昇順で返します。「今後のライブ一覧」「過去のアーカイブ」を分けて表示したい場合は、取得後に各イベントの <code className="rounded bg-gray-100 px-1 py-0.5 font-mono">date</code> を今日の日付と比較して振り分けてください（本APIへのリクエストは1回で済みます）。
+          </li>
           <li>キャンセル済み・開催未確定のライブは含まれません</li>
         </ul>
       </Section>

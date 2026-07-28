@@ -2,12 +2,11 @@
 import { NextResponse } from "next/server";
 import { getPublicActLivesDb } from "@/lib/db/publicLives";
 import { checkRateLimit } from "@/lib/utils/rateLimit";
-import { toYmdLocal } from "@/lib/utils/date";
 
 const RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 
 export async function getPublicActLives(slug: string) {
-  return getPublicActLivesDb(slug, toYmdLocal());
+  return getPublicActLivesDb(slug);
 }
 
 function clientIp(request: Request): string {

@@ -30,7 +30,7 @@ describe("getPublicActLivesDb", () => {
       makeQuery(["select", "eq", "eq", "maybeSingle"], { data: null, error: null })
     );
 
-    await expect(getPublicActLivesDb("unknown-slug", "2026-07-28")).resolves.toBeNull();
+    await expect(getPublicActLivesDb("unknown-slug")).resolves.toBeNull();
 
     expect(mockFrom).toHaveBeenCalledTimes(1);
     expect(mockFrom).toHaveBeenCalledWith("act_public_pages");
@@ -40,7 +40,7 @@ describe("getPublicActLivesDb", () => {
     const pageQuery = makeQuery(["select", "eq", "eq", "maybeSingle"], { data: null, error: null });
     mockFrom.mockReturnValueOnce(pageQuery);
 
-    await getPublicActLivesDb("the-holidays", "2026-07-28");
+    await getPublicActLivesDb("the-holidays");
 
     expect(pageQuery.eq).toHaveBeenNthCalledWith(1, "slug", "the-holidays");
     expect(pageQuery.eq).toHaveBeenNthCalledWith(2, "is_public", true);
@@ -60,8 +60,17 @@ describe("getPublicActLivesDb", () => {
       error: null,
     });
 
-    const perfQuery = makeQuery(["select", "eq", "neq", "gte", "order"], {
+    const perfQuery = makeQuery(["select", "eq", "neq", "order"], {
       data: [
+        {
+          // 過去のライブもそのまま含まれる（アーカイブページ用途）
+          event_date: "2026-01-15",
+          venue_name: "水戸△△（過去公演）",
+          open_time: "18:00:00",
+          start_time: "18:30:00",
+          details: { customer_charge_yen: 2000 },
+          events: { title: "過去のワンマン", charge: 2000, status: "matched" },
+        },
         {
           event_date: "2026-09-12",
           venue_name: "水戸○○",
@@ -98,7 +107,7 @@ describe("getPublicActLivesDb", () => {
       throw new Error(`unexpected table: ${table}`);
     });
 
-    const result = await getPublicActLivesDb("the-holidays", "2026-07-28");
+    const result = await getPublicActLivesDb("the-holidays");
 
     expect(result?.artist).toEqual({
       name: "ザ・ホリデイズ",
@@ -108,6 +117,14 @@ describe("getPublicActLivesDb", () => {
     });
 
     expect(result?.events).toEqual([
+      {
+        title: "過去のワンマン",
+        date: "2026-01-15",
+        open_time: "18:00",
+        start_time: "18:30",
+        venue: "水戸△△（過去公演）",
+        charge: 2000,
+      },
       {
         title: "○○ LIVE",
         date: "2026-09-12",
@@ -127,6 +144,7 @@ describe("getPublicActLivesDb", () => {
     ]);
 
     expect(perfQuery.neq).toHaveBeenCalledWith("status", "canceled");
-    expect(perfQuery.gte).toHaveBeenCalledWith("event_date", "2026-07-28");
+    expect(perfQuery.select.mock.calls.length).toBeGreaterThan(0);
+    expect("gte" in perfQuery).toBe(false);
   });
 });
