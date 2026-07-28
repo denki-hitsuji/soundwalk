@@ -46,20 +46,20 @@ function parseCsv(text: string): VenueCsvRow[] {
 
 async function main() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
   const ownerEmailFromEnv = process.env.OWNER_PROFILE_EMAIL; // 任意
 
   if (!url) {
     console.error("ERROR: NEXT_PUBLIC_SUPABASE_URL が環境変数にありません。");
     process.exit(1);
   }
-  if (!serviceRoleKey) {
-    console.error("ERROR: SUPABASE_SERVICE_ROLE_KEY が環境変数にありません。");
+  if (!secretKey) {
+    console.error("ERROR: SUPABASE_SECRET_KEY が環境変数にありません。");
     process.exit(1);
   }
 
   console.log("Supabase URL:", url);
-  const supabase = createClient(url, serviceRoleKey);
+  const supabase = createClient(url, secretKey);
 
   // CSV 読み込み
   const csvPath = path.join(process.cwd(), "data", "venues.csv");
