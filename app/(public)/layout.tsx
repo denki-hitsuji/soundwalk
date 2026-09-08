@@ -20,6 +20,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <main className="mx-auto w-full max-w-md px-4 pb-10">{children}</main>
 
       <footer className="mx-auto w-full max-w-md px-4 py-6 text-[11px] text-gray-500">
+        <nav aria-label="サービス情報" className="mb-3 flex flex-wrap gap-4">
+          <Link href="/privacy" className="underline">プライバシーポリシー</Link>
+          <Link href="/terms" className="underline">利用規約</Link>
+        </nav>
         音がある場所を、静かに増やす。
       </footer>
     </div>
